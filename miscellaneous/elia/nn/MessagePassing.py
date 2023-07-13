@@ -1,7 +1,7 @@
 from e3nn.nn import Gate
 import torch
 from e3nn import o3
-from Convolution import Convolution
+from .Convolution import Convolution
 
 def tp_path_exists(irreps_in1, irreps_in2, ir_out):
     irreps_in1 = o3.Irreps(irreps_in1).simplify()

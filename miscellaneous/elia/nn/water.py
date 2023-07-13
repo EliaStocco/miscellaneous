@@ -1,11 +1,7 @@
-import sys, os
-folder = "/home/elia/Google-Drive/google-personal/miscellaneous/elia/nn/"
-sys.path.append(folder)
-folder = "/home/elia/Google-Drive/google-personal/miscellaneous/elia/"
-sys.path.append(folder)
-from classes import MicroState
-from train import train
-from SabiaNetwork import SabiaNetwork
+import os
+from miscellaneous.elia.classes import MicroState
+from miscellaneous.elia.nn import SabiaNetwork
+from miscellaneous.elia.nn import train
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from copy import copy

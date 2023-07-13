@@ -1,5 +1,5 @@
-from functions import get_one_file_in_folder,getproperty,output_file,get_property_header
-from functions import convert, Dict2Obj, get_attributes, merge_attributes, read_comments_xyz
+from .functions import get_one_file_in_folder,getproperty,output_file,get_property_header
+from .functions import convert, Dict2Obj, get_attributes, merge_attributes, read_comments_xyz
 import os
 from ase import io #.io import read
 from ase import Atoms
@@ -66,15 +66,18 @@ class MicroState:
         #return temp
         
     #@reloading
-    def __init__(self,options=None,what=None,toread=None):
+    def __init__(self,instructions=None,todo=None,toread=None,options=None):
 
         print("Initializing object of type 'MicroState' ...")
 
-        if options is None :
-            options= {}
+        if instructions is None :
+            instructions= dict()
 
-        if type(options) == dict :
-            options = Dict2Obj(options)
+        if options is None :
+            options= dict()
+
+        if type(instructions) == dict :
+            instructions = Dict2Obj(instructions)
         
         attribute_names  = [ "relaxed", "positions", "displacement", "velocities", "cells", "types" ]
         attribute_names += [ "eigvals", "dynmat", "eigvec", "modes", "ortho_modes", "masses" ]
@@ -85,15 +88,15 @@ class MicroState:
             if not hasattr(self,name):
                 setattr(self, name, None)
 
-        if what is None :
-            what = ""
+        if todo is None :
+            todo = ""
         if toread is None :
             toread = list()
 
-        for k in get_attributes(options):
+        for k in get_attributes(instructions):
             toread.append(k)
 
-        if what == "vib":
+        if todo == "vib":
             toread += [ "masses",\
                         "ortho_modes",\
                         "proj",\
@@ -101,7 +104,7 @@ class MicroState:
                         "hess",\
                         "eigvals"]            
 
-        if what == "proj-on-vib-modes" :
+        if todo == "proj-on-vib-modes" :
             toread += [ "relaxed",\
                         "masses",\
                         "positions",\
@@ -116,14 +119,14 @@ class MicroState:
                         #"dynmat",\
                         "properties"]
             
-        if what == "plot-vib-modes-energy" :
+        if todo == "plot-vib-modes-energy" :
             toread += [ "eigvals",\
                         "eigvec",\
                         "energy",\
                         "A-amplitudes",\
                         "properties"]
             
-        if what == "generate-thermal-state":
+        if todo == "generate-thermal-state":
             toread += [ "relaxed",\
                         "masses",\
                         "ortho_modes",\
@@ -146,8 +149,8 @@ class MicroState:
         if "relaxed" in toread:
             ###
             # reading original position
-            print("{:s}reading original/relaxed position from file '{:s}'".format(MicroStatePrivate.tab,options.relaxed))
-            tmp = io.read(options.relaxed)
+            print("{:s}reading original/relaxed position from file '{:s}'".format(MicroStatePrivate.tab,instructions.relaxed))
+            tmp = io.read(instructions.relaxed)
             atoms = tmp.get_chemical_symbols()
             relaxed = tmp.positions
             if relaxed.shape[1] != 3 :
@@ -158,13 +161,13 @@ class MicroState:
 
         if "masses" in toread:
     
-            if not hasattr(options, 'masses') or options.masses is None :
-                if not os.path.isdir(options.modes):
+            if not hasattr(instructions, 'masses') or instructions.masses is None :
+                if not os.path.isdir(instructions.modes):
                     raise ValueError("'--modes' should be a folder")            
-                file = get_one_file_in_folder(folder=options.modes,ext=".masses")
+                file = get_one_file_in_folder(folder=instructions.modes,ext=".masses")
                 
             else :
-                file = options.masses
+                file = instructions.masses
             print("{:s}reading masses from file '{:s}'".format(MicroStatePrivate.tab,file))
             self.masses = np.loadtxt(file)
 
@@ -186,8 +189,8 @@ class MicroState:
 
         if "positions" in toread:
 
-            print("{:s}reading positions from file '{:s}'".format(MicroStatePrivate.tab,options.positions))
-            positions = io.read(options.positions,index=":")
+            print("{:s}reading positions from file '{:s}'".format(MicroStatePrivate.tab,instructions.positions))
+            positions = io.read(instructions.positions,index=":")
             tmp = positions[0]
             atoms = tmp.get_chemical_symbols()
             Nconf = len(positions) 
@@ -206,17 +209,17 @@ class MicroState:
 
         if "types" in toread:
 
-            print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,options.types))
-            if not hasattr(options,"types"):
-                options.types = options.positions
-            positions = io.read(options.types,index=":")
+            print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,instructions.types))
+            if not hasattr(instructions,"types"):
+                instructions.types = instructions.positions
+            positions = io.read(instructions.types,index=":")
             self.types = [ system.get_chemical_symbols() for system in positions ]
 
 
         if "cells" in toread :
-            print("{:s}reading cells (for each configuration) from file '{:s}'".format(MicroStatePrivate.tab,options.cells))
+            print("{:s}reading cells (for each configuration) from file '{:s}'".format(MicroStatePrivate.tab,instructions.cells))
 
-            comments = read_comments_xyz(options.cells)
+            comments = read_comments_xyz(instructions.cells)
             cells = [ abcABC.search(comment) for comment in comments ]
             self.cell = np.zeros((len(cells),3,3))
             for n,cell in enumerate(cells):
@@ -240,15 +243,15 @@ class MicroState:
 
         if "velocities" in toread:
 
-            if options.velocities is None:
+            if instructions.velocities is None:
                 print("{:s}setting velocities to zero".format(MicroStatePrivate.tab))
                 if self.positions is None :
                     raise ValueError("'positions' not defined")
                 self.velocities = np.zeros(self.positions.shape)
 
             else :
-                print("{:s}reading velocities from file '{:s}'".format(MicroStatePrivate.tab,options.velocities))
-                velocities = io.read(options.velocities,index=":")
+                print("{:s}reading velocities from file '{:s}'".format(MicroStatePrivate.tab,instructions.velocities))
+                velocities = io.read(instructions.velocities,index=":")
                 Nvel = len(velocities)
                 print("{:s}read {:d} velocities".format(MicroStatePrivate.tab,Nvel))
                 if self.Nconf is not None :
@@ -258,14 +261,27 @@ class MicroState:
                     velocities[n] = velocities[n].positions.flatten()
                 self.velocities = np.asarray(velocities)
 
+        if "forces" in toread:
+
+            print("{:s}reading forces from file '{:s}'".format(MicroStatePrivate.tab,instructions.forces))
+            forces = io.read(instructions.forces,index=":")
+            Nforces = len(forces)
+            print("{:s}read {:d} forces".format(MicroStatePrivate.tab,Nforces))
+            if self.Nconf is not None :
+                if Nforces != self.Nconf :
+                    raise ValueError("number of forces and positions configuration are different")
+            for n in range(Nforces):
+                forces[n] = forces[n].positions.flatten()
+            self.forces = np.asarray(forces)
+
 
         if "ortho_modes" in toread:   
 
-            if not os.path.isdir(options.modes):
+            if not os.path.isdir(instructions.modes):
                 raise ValueError("'--modes' should be a folder")
 
-            print("{:s}searching for '*.mode' file in folder '{:s}'".format(MicroStatePrivate.tab,options.modes))            
-            file = get_one_file_in_folder(folder=options.modes,ext=".mode")
+            print("{:s}searching for '*.mode' file in folder '{:s}'".format(MicroStatePrivate.tab,instructions.modes))            
+            file = get_one_file_in_folder(folder=instructions.modes,ext=".mode")
             print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
             modes = np.loadtxt(file)
             if self.Nmodes is None :
@@ -279,10 +295,10 @@ class MicroState:
 
         if "eigvec" in toread:
 
-            if not os.path.isdir(options.modes):
+            if not os.path.isdir(instructions.modes):
                 raise ValueError("'--modes' should be a folder")
             
-            file = get_one_file_in_folder(folder=options.modes,ext=".eigvec")
+            file = get_one_file_in_folder(folder=instructions.modes,ext=".eigvec")
             print("{:s}reading eigenvectors from file '{:s}'".format(MicroStatePrivate.tab,file))
             eigvec = np.loadtxt(file)
             if self.Nmodes is None :
@@ -319,10 +335,10 @@ class MicroState:
         # I read the full hessian
         if "hess" in toread:
         
-            if not os.path.isdir(options.modes):
+            if not os.path.isdir(instructions.modes):
                     raise ValueError("'--modes' should be a folder")   
                 
-            file = get_one_file_in_folder(folder=options.modes,ext="_full.hess")
+            file = get_one_file_in_folder(folder=instructions.modes,ext="_full.hess")
             print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
             hess = np.loadtxt(file)
             if self.Nmodes is None :
@@ -335,10 +351,10 @@ class MicroState:
         # # pay attention: I never use it, so it has still to be debugged
         # if "full_hess" in toread:
 
-        #     if not os.path.isdir(options.modes):
+        #     if not os.path.isdir(instructions.modes):
         #             raise ValueError("'--modes' should be a folder")   
             
-        #     file = get_one_file_in_folder(folder=options.modes,ext="_full.hess")
+        #     file = get_one_file_in_folder(folder=instructions.modes,ext="_full.hess")
         #     print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
         #     full_hess = np.loadtxt(file)
         #     if self.Nmodes is not None :
@@ -351,10 +367,10 @@ class MicroState:
 
         if "eigvals" in toread:
 
-            if not os.path.isdir(options.modes):
+            if not os.path.isdir(instructions.modes):
                     raise ValueError("'--modes' should be a folder")   
             
-            file = get_one_file_in_folder(folder=options.modes,ext=".eigval")
+            file = get_one_file_in_folder(folder=instructions.modes,ext=".eigval")
             print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
             eigvals = np.loadtxt(file)
             if self.Nmodes is not None :
@@ -369,10 +385,10 @@ class MicroState:
             
         if "dynmat" in toread:
 
-            if not os.path.isdir(options.modes):
+            if not os.path.isdir(instructions.modes):
                     raise ValueError("'--modes' should be a folder")   
             
-            file = get_one_file_in_folder(folder=options.modes,ext=".dynmat")
+            file = get_one_file_in_folder(folder=instructions.modes,ext=".dynmat")
             print("{:s}reading the dynamical matrix from file '{:s}'".format(MicroStatePrivate.tab,file))
             dynmat = np.loadtxt(file)
             if self.Nmodes is None :
@@ -383,12 +399,12 @@ class MicroState:
                
         # if MicroStatePrivate.check :
         #     print("\n{:s}Let's do a little test".format(MicroStatePrivate.tab))
-        #     # mode      = np.loadtxt(get_one_file_in_folder(folder=options.modes,ext=".mode"))
-        #     # dynmat    = np.loadtxt(get_one_file_in_folder(folder=options.modes,ext=".dynmat"))
-        #     # full_hess = np.loadtxt(get_one_file_in_folder(folder=options.modes,ext="_full.hess"))
-        #     # eigvals    = np.loadtxt(get_one_file_in_folder(folder=options.modes,ext=".eigvals"))
-        #     # eigvec    = np.loadtxt(get_one_file_in_folder(folder=options.modes,ext=".eigvec"))
-        #     # hess      = np.loadtxt(get_one_file_in_folder(folder=options.modes,ext=".hess"))
+        #     # mode      = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".mode"))
+        #     # dynmat    = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".dynmat"))
+        #     # full_hess = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext="_full.hess"))
+        #     # eigvals    = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".eigvals"))
+        #     # eigvec    = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".eigvec"))
+        #     # hess      = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".hess"))
             
         #     if np.all(a is not None for a in [self.dynmat,self.eigvec,self.eigvals]):
         #         print("{:s}checking that D@V = E@V".format(MicroStatePrivate.tab))
@@ -412,14 +428,14 @@ class MicroState:
             
         if "energy" in toread:
     
-            file = output_file(options.output,MicroStatePrivate.ofile["energy"])
+            file = output_file(instructions.output,MicroStatePrivate.ofile["energy"])
             print("{:s}reading energy from file '{:s}'".format(MicroStatePrivate.tab,file))
             self.energy = np.loadtxt(file)
 
 
         if "A-amplitudes" in toread:
 
-            file = output_file(options.output,MicroStatePrivate.ofile["A-amplitudes"])
+            file = output_file(instructions.output,MicroStatePrivate.ofile["A-amplitudes"])
             print("{:s}reading A-amplitudes from file '{:s}'".format(MicroStatePrivate.tab,file))
             self.Aamplitudes = np.loadtxt(file)
             
@@ -429,10 +445,10 @@ class MicroState:
                     raise ValueError("energy and A-amplitudes matrix size do not match")
             
         # if "time" in toread:
-        #     if options.properties is None:
+        #     if instructions.properties is None:
         #         raise ValueError("The file with the system (time-dependent) properties is not defined")
             
-        #     t,u = getproperty(options.properties,["time"])
+        #     t,u = getproperty(instructions.properties,["time"])
         #     self.time  = t["time"]
         #     self.units = u["time"]
 
@@ -445,12 +461,12 @@ class MicroState:
 
 
         if "properties" in toread:
-            if options.properties is None:
+            if instructions.properties is None:
                 raise ValueError("The file with the system (time-dependent) properties is not defined")
             
-            header = get_property_header(options.properties,search=True)
-            p,u = getproperty(options.properties,header)
-            self.header  = get_property_header(options.properties,search=False)
+            header = get_property_header(instructions.properties,search=True)
+            p,u = getproperty(instructions.properties,header)
+            self.header  = get_property_header(instructions.properties,search=False)
             self.properties  = p
             self.units = u
             
@@ -774,16 +790,16 @@ class MicroState:
 
         pass
 
-    def plot(self,options):
+    def plot(self,instructions):
 
         if "time" in self.properties and self.properties is not None:
             time = convert(self.properties["time"],"time",_from=self.units["time"],_to="atomic_unit")
         else :
             time = np.zeros(len(self.Aamplitudes))
 
-        if options.t_min > 0 :            
-            print("\tSkipping the {:d} {:s}".format(options.t_min,self.units))
-            i = np.where( self.time >= options.t_min )[0][0]
+        if instructions.t_min > 0 :            
+            print("\tSkipping the {:d} {:s}".format(instructions.t_min,self.units))
+            i = np.where( self.time >= instructions.t_min )[0][0]
             print("\tthen skipping the first {:d} MD steps".format(i))
             self.Aamplitudes = self.Aamplitudes[i:,:]
             self.energy = self.energy[i:,:] 
@@ -812,7 +828,7 @@ class MicroState:
 
         plt.grid()
         plt.tight_layout()
-        plt.savefig(options.plot)
+        plt.savefig(instructions.plot)
 
         ###
         plt.figure().clear()
@@ -842,7 +858,7 @@ class MicroState:
 
         plt.grid()
         plt.tight_layout()
-        tmp = os.path.splitext(options.plot)
+        tmp = os.path.splitext(instructions.plot)
         file = "{:s}.{:s}{:s}".format(tmp[0],"mean-std",tmp[1])
         # plt.show()
         plt.savefig(file)
@@ -851,7 +867,7 @@ class MicroState:
         df["w [THz]"] = w
         df["mean"] = mean
         df["std"] = std
-        file = file = output_file(options.output,MicroStatePrivate.ofile["violin"])
+        file = file = output_file(instructions.output,MicroStatePrivate.ofile["violin"])
         df.to_csv(file,index=False,float_format="%22.12f")
 
         pass
@@ -1423,10 +1439,10 @@ def main():
 
     fig,ax = plt.subplots()
 
-    options = {"properties" : "not-gauge-fixed/i-pi.properties.out",\
+    instructions = {"properties" : "not-gauge-fixed/i-pi.properties.out",\
                "velocities":"not-gauge-fixed/i-pi.velocities_0.xyz",\
                "cells" : "not-gauge-fixed/i-pi.positions_0.xyz"}
-    self = MicroState(options)
+    self = MicroState(instructions)
     self.show()
     self.show_properties()
     #pol = self.fix_polarization()
@@ -1442,10 +1458,10 @@ def main():
 
     # fig,ax = plt.subplots()
 
-    options = {"properties" : "gauge-fixed/i-pi.properties.out",\
+    instructions = {"properties" : "gauge-fixed/i-pi.properties.out",\
                "velocities":"gauge-fixed/i-pi.velocities_0.xyz",\
                "cells" : "gauge-fixed/i-pi.positions_0.xyz"}
-    self = MicroState(options)
+    self = MicroState(instructions)
     self.show()
     self.show_properties()
     #pol, quantum, phases, old_phases = self.fix_polarization()
@@ -1484,10 +1500,10 @@ if __name__ == "__main__":
 
 # def _main():
 
-#     options = {"modes":"vib","relaxed":"start.xyz","types":"start.xyz"}
+#     instructions = {"modes":"vib","relaxed":"start.xyz","types":"start.xyz"}
 #     what = "vib"
 #     toread = ["relaxed","types"]
-#     data = MicroState(options=options,toread=toread,what=what)
+#     data = MicroState(instructions=instructions,toread=toread,what=what)
 
 #     df = data.vibrational_analysis_summary()
 #     print(df)

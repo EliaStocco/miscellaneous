@@ -3,7 +3,7 @@ from torch_scatter import scatter
 from e3nn import o3
 import torch
 import torch_geometric
-from MessagePassing import MessagePassing
+from .MessagePassing import MessagePassing
 from typing import Dict, Union
 
 # https://docs.e3nn.org/en/latest/guide/periodic_boundary_conditions.html
