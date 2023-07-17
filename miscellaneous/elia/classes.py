@@ -1,7 +1,7 @@
 from .functions import get_one_file_in_folder,getproperty,output_file,get_property_header
 from .functions import convert, Dict2Obj, get_attributes, merge_attributes, read_comments_xyz
 import os
-from ase import io #.io import read
+from ase import io
 from ase import Atoms
 import numpy as np
 import numpy.linalg as linalg
@@ -16,9 +16,10 @@ import re
 import ipi.utils.mathtools as mt
 from copy import deepcopy
 
+__all__ = ["MicroState"]
+
 # To Do:
-# - move all the attributes (positions, velocities, etc) to properties, or treat all the attributes in a homogeneous way
-# - 
+# - create 'trajectory' attribute, that containes positions, velocities, forces, etc as ase.Atoms object
 
 deg2rad = np.pi / 180.0
 abcABC = re.compile(r"CELL[\(\[\{]abcABC[\)\]\}]: ([-+0-9\.Ee ]*)\s*")
@@ -792,14 +793,17 @@ class MicroState:
 
     def plot(self,instructions):
 
+        if type(instructions) == dict:
+            instructions = Dict2Obj(instructions)
+
         if "time" in self.properties and self.properties is not None:
             time = convert(self.properties["time"],"time",_from=self.units["time"],_to="atomic_unit")
         else :
             time = np.zeros(len(self.Aamplitudes))
 
         if instructions.t_min > 0 :            
-            print("\tSkipping the {:d} {:s}".format(instructions.t_min,self.units))
-            i = np.where( self.time >= instructions.t_min )[0][0]
+            print("\tSkipping the {:d} {:s}".format(instructions.t_min,instructions.unit))
+            i = np.where( self.properties["time"] >= instructions.t_min )[0][0]
             print("\tthen skipping the first {:d} MD steps".format(i))
             self.Aamplitudes = self.Aamplitudes[i:,:]
             self.energy = self.energy[i:,:] 
@@ -862,6 +866,11 @@ class MicroState:
         file = "{:s}.{:s}{:s}".format(tmp[0],"mean-std",tmp[1])
         # plt.show()
         plt.savefig(file)
+        ###
+        plt.figure().clear()
+        plt.close()
+        plt.cla()
+        plt.clf()
 
         df = pd.DataFrame()
         df["w [THz]"] = w
@@ -1242,7 +1251,7 @@ class MicroState:
 
         if same_lattice:
 
-            from functions import print_cell
+            from .functions import print_cell
             
             lattice = deepcopy(self.cell[0])
             print_cell(lattice)
@@ -1346,16 +1355,15 @@ class MicroState:
         volume = self.get_volume(same_lattice=same_lattice,only_first=False)
         length = self.get_basisvectors_length(same_lattice=same_lattice,only_first=False)
         
-        # compute the phases with periodicity 'periodic'
-        # the default is 'periodic' = 1
-
+        # compute the phases with periodicity 1
         phases = np.zeros(polarization.shape)
         for xyz in range(3):
             phases[:,xyz] = polarization[:,xyz]*volume[:]/(length[:,xyz]) # e == 1 in a.u
+            phases[:,xyz] = np.unwrap(phases[:,xyz],discont=0.0,period=1.0)
         
         return phases
 
-    def get_polarization_quantum(self,same_lattice,only_first):
+    def get_polarization_quantum(self,same_lattice=True,only_first=True):
 
         if only_first:
 
@@ -1406,12 +1414,15 @@ class MicroState:
 
         phases = self.get_phases(array=array,unit=unit,same_lattice=same_lattice)
 
-        # cycle over the 3 directions
-        for xyz in range(3): 
-            # unwrap since the phases are defined modulo 1
-            # i.e. phi = phi + n 
-            # with n integer
-            phases[:,xyz] = np.unwrap(phases[:,xyz],discont=0.0,period=1.0)
+        #
+        # the phases are now fixed in 'get_phases'
+        #
+        # # cycle over the 3 directions
+        # for xyz in range(3): 
+        #     # unwrap since the phases are defined modulo 1
+        #     # i.e. phi = phi + n 
+        #     # with n integer
+        #     phases[:,xyz] = np.unwrap(phases[:,xyz],discont=0.0,period=1.0)
             
         #
         volume = self.get_volume(same_lattice=same_lattice,only_first=False)
@@ -1430,6 +1441,10 @@ class MicroState:
             self.properties["totalpol"] = polarization
 
         return polarization
+    
+    def all_types(self):
+        """Return a list of all types of atoms"""
+        return np.unique(self.types)
 
 
 def main():

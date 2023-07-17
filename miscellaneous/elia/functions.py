@@ -12,8 +12,13 @@ import os
 import itertools
 import numpy as np
 import re
-from ipi.engine.properties import Properties
+#from ipi.engine.properties import Properties
 from ipi.utils.units import unit_to_internal, unit_to_user
+
+__all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations',
+            'str2bool','get_one_file_in_folder','get_property_header','getproperty',
+            'vector_type', 'output_folder', 'save2xyz', 'print_cell', 'convert',
+            'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment']
 
 # https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten_list(_2d_list):
@@ -183,7 +188,6 @@ def getproperty(inputfile, propertyname,data=None,skip="0",show=False):
             except EOFError:
                 break
 
-
 def vector_type(arg_value):
     try:
         # Split the input string by commas and convert each element to an integer
@@ -236,7 +240,6 @@ def save2xyz(what,file,atoms,comment=""):
                     f.write("{:>2s} {:>20.12e} {:>20.12e} {:>20.12e}\n".format(atoms[ii],*pos[ii,:]))
         return
     
-
 def print_cell(cell,tab="\t\t"):
     cell = cell.T
     string = tab+"{:14s} {:1s} {:^10s} {:^10s} {:^10s}".format('','','x','y','z')
