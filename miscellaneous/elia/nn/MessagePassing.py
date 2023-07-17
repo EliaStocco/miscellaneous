@@ -16,7 +16,11 @@ def tp_path_exists(irreps_in1, irreps_in2, ir_out):
 
 
 class Compose(torch.nn.Module):
-    def __init__(self, first, second):
+
+    first : torch.nn.Module
+    second : torch.nn.Module
+
+    def __init__(self, first: torch.nn.Module, second: torch.nn.Module):
         super().__init__()
         self.first = first
         self.second = second
@@ -52,6 +56,14 @@ class MessagePassing(torch.nn.Module):
         number of neurons per layers in the fully connected network
         first layer and hidden layers but not the output layer
     """
+
+    # irreps_node_input : o3.Irreps
+    # irreps_node_hidden : o3.Irreps
+    # irreps_node_output : o3.Irreps
+    # irreps_node_attr : o3.Irreps
+    # irreps_edge_attr : o3.Irreps
+    # debug : bool
+    # layers: torch.nn.ModuleList
 
     def __init__(
         self,

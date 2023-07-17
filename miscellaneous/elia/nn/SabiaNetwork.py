@@ -5,10 +5,23 @@ import torch
 import torch_geometric
 from .MessagePassing import MessagePassing
 from typing import Dict, Union
+import typing
 
 # https://docs.e3nn.org/en/latest/guide/periodic_boundary_conditions.html
 
 class SabiaNetwork(torch.nn.Module):
+
+    # default_dtype : torch.dtype
+    # lmax : int
+    # max_radius: float
+    # number_of_basis : int
+    # num_nodes : int
+    # pool_nodes : bool
+    # debug : bool
+    # mp : MessagePassing
+    # irreps_in : o3.Irreps
+    # irreps_out : o3.Irreps
+
     def __init__(self,
         irreps_in,
         irreps_out,
@@ -22,16 +35,20 @@ class SabiaNetwork(torch.nn.Module):
         number_of_basis=10,
         p=[1,-1],
         debug=False,
-        pool_nodes=True) -> None:
+        pool_nodes=True,
+        default_dtype=torch.float64) -> None:
         
         super().__init__()
 
+        self.default_dtype = default_dtype
+        torch.set_default_dtype(self.default_dtype)
         self.lmax = lmax
         self.max_radius = max_radius
         self.number_of_basis = number_of_basis
         self.num_nodes = num_nodes
         self.pool_nodes = pool_nodes
         self.debug = debug
+
         
         if self.debug:
             print()
@@ -57,17 +74,6 @@ class SabiaNetwork(torch.nn.Module):
         self.irreps_in = self.mp.irreps_node_input
         self.irreps_out = self.mp.irreps_node_output
     
-#     @reloading
-#     def evaluate(self,dataset):
-#         self.eval()
-#         with torch.no_grad():
-#             temp = self(dataset[0])
-#             output = torch.zeros((len(dataset),*temp.shape))
-#             output[0] = temp
-#             for n in range(1,len(dataset)):
-#                 output[n] = self(dataset[n])
-#             return output
-
     # Overwriting preprocess method of SimpleNetwork to adapt for periodic boundary data
     def preprocess(self, data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
         if 'batch' in data:
@@ -83,7 +89,9 @@ class SabiaNetwork(torch.nn.Module):
         edge_batch = batch[edge_src]
         edge_vec = (data['pos'][edge_dst]
                     - data['pos'][edge_src]
-                    + torch.einsum('ni,nij->nj', data['edge_shift'], data['lattice'][edge_batch]))
+                    + torch.einsum('ni,nij->nj',
+                                    data['edge_shift'].type(self.default_dtype ),
+                                    data['lattice'][edge_batch].type(self.default_dtype )))
 
         return batch, data['x'], edge_src, edge_dst, edge_vec
 
@@ -125,3 +133,4 @@ class SabiaNetwork(torch.nn.Module):
             return scatter(node_outputs, batch, dim=0).div(self.num_nodes**0.5)
         else:
             return node_outputs
+        

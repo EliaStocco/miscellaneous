@@ -31,6 +31,20 @@ class Convolution(torch.nn.Module):
         typical number of nodes convolved over
     """
 
+    # irreps_node_input : o3.Irreps
+    # irreps_node_output : o3.Irreps
+    # irreps_node_attr : o3.Irreps
+    # irreps_edge_attr : o3.Irreps
+    # debug : bool
+    # num_neighbors: int
+    # sc : FullyConnectedTensorProduct
+    # lin1 : FullyConnectedTensorProduct
+    # fc : FullyConnectedNet
+    # tp : TensorProduct
+    # lin2 : FullyConnectedTensorProduct
+    # lin3 : FullyConnectedTensorProduct
+
+
     def __init__(
         self,\
         irreps_node_input,\

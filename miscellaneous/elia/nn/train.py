@@ -19,10 +19,11 @@ def _make_dataloader(dataset,batch_size):
 def train(model,\
           train_dataset,\
           val_dataset,\
+          #out_shape=None,\
           hyperparameters:dict=None,\
-          pp_pred=None,\
-          get_real=None,\
-          make_dataloader=None):
+          get_pred:callable=None,\
+          get_real:callable=None,\
+          make_dataloader:callable=None):
     """
     Input:
         model: torch.nn.Modules
@@ -42,9 +43,10 @@ def train(model,\
                 'lr'        : float
                 'loss'      : str (then converted to torch.nn._Loss)
                 
-        pp_pred: None(default), lambda
+        get_pred: None(default), lambda
             lambda function to be applied to the predicted value,
-            e.g. (the default is) 'lambda x : x.flatten()''
+            e.g. (the default is) 'lambda f,x : f(x).flatten()'
+            where f is the neural network and x is the input value.
             
         get_real: None(default), lambda
             lambda function to be applied to the input values to get the values to be modeled,
@@ -66,8 +68,8 @@ def train(model,\
     print("\nTraining...")
 
     # set default values
-    if pp_pred is None :
-        pp_pred = lambda x : x.flatten()   
+    if get_pred is None :
+        get_pred = lambda f,x : f(x).flatten()   
     if get_real is None :
         get_real = lambda x : x.yreal
     if make_dataloader is None:
@@ -122,15 +124,22 @@ def train(model,\
     
     # deepcopy the model into a temporary variable
     in_model = copy(model) 
-    
-    # value to be modeles of the validation test
-    y_val = None
-    
+        
     # some arrays to store information during the training process
     val_loss   = np.full(n_epochs,np.nan)
     train_std  = np.full(n_epochs,np.nan)
     train_loss = np.full(n_epochs,np.nan)
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
+
+    # compute the real values of the validation dataset only once
+    print("\nCompute validation dataset output:")
+    # if out_shape is None:
+    #     out_shape = tuple(get_real(val_dataset[0]).shape)
+    # y_val = torch.zeros((len(val_dataset),*out_shape))
+    # for n,X in enumerate(val_dataset):
+    #     y_val[n,:] = torch.tensor( get_real(X) )
+    # y_val = y_val#.flatten()
+    y_val = get_real(dataloader_val)
     
     # start the training procedure
     for epoch in range(n_epochs):    
@@ -145,7 +154,7 @@ def train(model,\
                 model.train(True)
 
                 # predict the value for the input X
-                y_pred = pp_pred(model(X))
+                y_pred = get_pred(model,X)
                 
                 # true value for the value X
                 y_train = get_real(X)
@@ -175,11 +184,7 @@ def train(model,\
                 model.eval()
 
                 # predict the value for the validation dataset
-                y_pred = pp_pred(model(dataloader_val))
-                
-                # compute the real values of the validation dataset only once
-                if y_val is None:
-                    y_val = torch.tensor( [ get_real(X) for X in val_dataset ] )
+                y_pred = get_pred(model,dataloader_val)
 
                 # compute the loss function
                 val_loss[epoch] = loss_fn(y_pred,y_val)
