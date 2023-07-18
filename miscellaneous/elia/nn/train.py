@@ -151,13 +151,13 @@ def train(model,\
             for step,X in bar:
 
                 # necessary to train the model
-                model.train(True)
+                model.train(mode=True)
 
                 # predict the value for the input X
-                y_pred = get_pred(model,X)
+                y_pred = get_pred(model=model,X=X)
                 
                 # true value for the value X
-                y_train = get_real(X)
+                y_train = get_real(X=X)
                 
                 # compute the loss function
                 loss = loss_fn(y_pred,y_train)

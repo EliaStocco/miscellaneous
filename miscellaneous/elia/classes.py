@@ -215,6 +215,7 @@ class MicroState:
                 instructions.types = instructions.positions
             positions = io.read(instructions.types,index=":")
             self.types = [ system.get_chemical_symbols() for system in positions ]
+            self.numbers = [ system.numbers for system in positions ]
 
 
         if "cells" in toread :
@@ -1445,6 +1446,10 @@ class MicroState:
     def all_types(self):
         """Return a list of all types of atoms"""
         return np.unique(self.types)
+    
+    def atomic_numbers(self):
+        """Return a list of all types of atoms"""
+        return self.numbers
 
 
 def main():

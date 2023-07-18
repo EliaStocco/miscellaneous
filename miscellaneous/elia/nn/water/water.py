@@ -7,21 +7,17 @@ torch.set_default_dtype(default_dtype)
 
 import os
 from miscellaneous.elia.classes import MicroState
-from miscellaneous.elia.nn import SabiaNetwork
+#from miscellaneous.elia.nn import SabiaNetwork
 from miscellaneous.elia.nn import train
-from miscellaneous.elia.nn import get_type_onehot_encoding
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from copy import copy
 import pandas as pd
 import numpy as np
 import random
-from ase.io import read
-from ase import Atoms
-from torch_geometric.data import Data
-from tqdm import tqdm
-from ase.neighborlist import neighbor_list
-import jax
+from miscellaneous.elia.nn.water.make_dataset import make_dataset
+from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
 
 # Documentation
 # - https://pytorch.org/docs/stable/autograd.html
@@ -29,57 +25,13 @@ import jax
 
 #----------------------------------------------------------------#
 
-def make_dataset(data:MicroState,\
-                 radial_cutoff:float):
-    
-    species = data.all_types()
-    type_onehot, type_encoding = get_type_onehot_encoding(species)    
-
-    systems = data.to_ase()
-
-    energy       = torch.tensor(data.properties["potential"])
-    polarization = torch.tensor(data.properties["totalpol"])
-    forces       = torch.tensor(data.forces)
-
-    dataset = [None] * len(systems)
-    n = 0 
-    for crystal, e, p, f in tqdm(zip(systems,energy,polarization,forces),
-                                 total=len(systems), 
-                                 bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
-        
-        # edge_src and edge_dst are the indices of the central and neighboring atom, respectively
-        # edge_shift indicates whether the neighbors are in different images / copies of the unit cell
-        edge_src, edge_dst, edge_shift = \
-            neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
-        
-        pos     = torch.tensor(crystal.get_positions())
-        lattice = torch.tensor(crystal.cell.array).unsqueeze(0) # We add a dimension for batching
-        x       = type_onehot[[type_encoding[atom] for atom in crystal.get_chemical_symbols()]]
-
-        edge_index = torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim=0)
-
-        data = Data(
-            pos=pos,
-            lattice=lattice,  
-            x=x,
-            symbols = crystal.get_chemical_symbols(),
-            edge_index=edge_index,
-            edge_shift=torch.tensor(edge_shift),
-            energy=e, # energy
-            polarization=p, # polarization
-            forces=f, # forces
-            Natoms=crystal.get_global_number_of_atoms(), # valid only if all the structures have the same number of atoms
-        )
-
-        dataset[n] = data
-        n += 1
-    return dataset
-
-#----------------------------------------------------------------#
-
 def main():
 
     radial_cutoff = 6.0
+
+    ##########################################
+
+    OUTPUT = "EPF"
 
     ##########################################
 
@@ -108,35 +60,44 @@ def main():
     RESTART = False 
     READ = True
     SAVE = True
-    savefile = "data/dataset.torch"
+    savefile = "data/dataset"
 
-    if not READ or not os.path.exists(savefile) or RESTART :
+    if not READ or not os.path.exists(savefile+".train.torch") or RESTART :
         print("building dataset")
-        dataset = make_dataset( data=data,radial_cutoff=radial_cutoff)
+
+        if os.path.exists(savefile+".torch"):
+            dataset = torch.load(savefile+".torch")
+        else :
+            dataset = make_dataset( data=data,radial_cutoff=radial_cutoff)
+
+        # shuffle
+        random.shuffle(dataset)
+
+        # train, test, validation
+        #p_test = 20/100 # percentage of data in test dataset
+        #p_val  = 20/100 # percentage of data in validation dataset
+        n = 2000
+        i = 500#int(p_test*len(dataset))
+        j = 500#int(p_val*len(dataset))
+
+        train_dataset = dataset[:n]
+        val_dataset   = dataset[n:n+j]
+        test_dataset  = dataset[n+j:n+j+i]
+
+        del dataset
+
     else :
-        print("reading dataset from file {:s}".format(savefile))
-        dataset = torch.load(savefile)
+        print("reading datasets from file {:s}".format(savefile))
+        train_dataset = torch.load(savefile+".train.torch")
+        val_dataset   = torch.load(savefile+".val.torch")
+        test_dataset  = torch.load(savefile+".test.torch")
         SAVE = False
             
     if SAVE :
         print("saving dataset to file {:s}".format(savefile))
-        torch.save(dataset,savefile)
-
-    # shuffle
-    random.shuffle(dataset)
-
-    ##########################################
-
-    # train, test, validation
-    #p_test = 20/100 # percentage of data in test dataset
-    #p_val  = 20/100 # percentage of data in validation dataset
-    n = 2000
-    i = 500#int(p_test*len(dataset))
-    j = 500#int(p_val*len(dataset))
-
-    train_dataset = dataset[:n]
-    val_dataset   = dataset[n:n+j]
-    test_dataset  = dataset[n+j:n+j+i]
+        torch.save(train_dataset,savefile+".train.torch")
+        torch.save(val_dataset,  savefile+".val.torch")
+        torch.save(test_dataset, savefile+".test.torch")
 
     print(" test:",len(test_dataset))
     print("  val:",len(val_dataset))
@@ -151,10 +112,15 @@ def main():
     ##########################################
 
     irreps_in = "{:d}x0e".format(len(data.all_types()))
+    if OUTPUT == "E":
+        irreps_out = "1x0e"
+    elif OUTPUT in ["EP","EPF"]:
+        irreps_out = "1x0e + 1x1o"
+
     radial_cutoff = 6.0
     model_kwargs = {
         "irreps_in":irreps_in,      # One hot scalars (L=0 and even parity) on each atom to represent atom type
-        "irreps_out":"1x0e + 1x1o", # vector (L=1 and odd parity) to output the polarization
+        "irreps_out":irreps_out, # vector (L=1 and odd parity) to output the polarization
         "max_radius":radial_cutoff, # Cutoff radius for convolution
         "num_neighbors":2,          # scaling factor based on the typical number of neighbors
         "pool_nodes":True,          # We pool nodes to predict total energy
@@ -165,130 +131,110 @@ def main():
         "p":[1],
         "default_dtype" : default_dtype,
     }
-    net = SabiaNetwork(**model_kwargs)
+    net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)
     print(net)
     del net
 
-    #----------------------------------------------------------------#
-
-    def make_datapoint(lattice, positions, radial_cutoff, symbols):
-
-        with torch.no_grad():
-            lattice = lattice#.unsqueeze(0) # We add a dimension for batching
-            crystal = Atoms(cell=lattice,positions=positions,symbols=symbols)
-
-        species = np.unique(symbols)
-        type_onehot, type_encoding = get_type_onehot_encoding(species)
-
-        edge_src, edge_dst, edge_shift = neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
-        
-        return Data(
-                pos=positions.reshape((-1,3)),
-                lattice=lattice.unsqueeze(0),  # We add a dimension for batching
-                x=type_onehot[[type_encoding[atom] for atom in crystal.symbols]],
-                edge_index=torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim=0),
-                edge_shift=torch.tensor(edge_shift),
-            )
 
     ##########################################
-    m  = None # model 
-    l  = None # lattice
-    rc = None # radial_cutoff
-    s  = None # symbols
+    # m  = None # model 
+    # l  = None # lattice
+    # rc = None # radial_cutoff
+    # s  = None # symbols
 
-    def pes(R):
-        # this ambda should capute the above variable by reference
-        global m  # model 
-        global l  # lattice
-        global rc # radial_cutoff
-        global s  # symbols
+    # def pes(R):
+    #     # this ambda should capute the above variable by reference
+    #     global m  # model 
+    #     global l  # lattice
+    #     global rc # radial_cutoff
+    #     global s  # symbols
 
-        print(l)
-        print(rc)
-        print(s)
-        return m(make_datapoint(lattice=l,\
-                                    radial_cutoff=rc,\
-                                    symbols=s,\
-                                    positions=R))#[:,0].reshape(())
+    #     print(l)
+    #     print(rc)
+    #     print(s)
+    #     return m(make_datapoint(lattice=l,\
+    #                                 radial_cutoff=rc,\
+    #                                 symbols=s,\
+    #                                 positions=R))#[:,0].reshape(())
     
-    jac = torch.func.vjp(pes)
-    forces_grad = torch.func.grad(pes)
-    der2 = torch.func.grad(forces_grad)
+    # jac = torch.func.vjp(pes)
+    # forces_grad = torch.func.grad(pes)
+    # der2 = torch.func.grad(forces_grad)
     
-    def forces(model,X):
-        """This function compute the forces as the gradient of the model w.r.t. the atomic position.
-        The function takes as input a Data object"""
+    # def forces(model,X):
+    #     """This function compute the forces as the gradient of the model w.r.t. the atomic position.
+    #     The function takes as input a Data object"""
 
-        global m  # model 
-        global l  # lattice
-        global rc # radial_cutoff
-        global s  # symbols
+    #     global m  # model 
+    #     global l  # lattice
+    #     global rc # radial_cutoff
+    #     global s  # symbols
 
-        batch_size = len(np.unique(X.batch))
+    #     batch_size = len(np.unique(X.batch))
 
-        out = torch.zeros(X.pos.shape,requires_grad=True).reshape((batch_size,-1))
+    #     out = torch.zeros(X.pos.shape,requires_grad=True).reshape((batch_size,-1))
 
-        for n in range(batch_size):
+    #     for n in range(batch_size):
 
-            index = X.batch == n
-            l = X.lattice[n]
-            s = X.symbols[n]
-            rc = radial_cutoff
-            m = model            
-            R = X.pos[index].requires_grad_(True)
+    #         index = X.batch == n
+    #         l = X.lattice[n]
+    #         s = X.symbols[n]
+    #         rc = radial_cutoff
+    #         m = model            
+    #         R = X.pos[index].requires_grad_(True)
 
-            # return only the energy
-            # pes = lambda R: model(make_datapoint(lattice=lattice,\
-            #                                      radial_cutoff=radial_cutoff,\
-            #                                      symbols=symbols,\
-            #                                      positions=R))[:,0].reshape(())
+    #         # return only the energy
+    #         # pes = lambda R: model(make_datapoint(lattice=lattice,\
+    #         #                                      radial_cutoff=radial_cutoff,\
+    #         #                                      symbols=symbols,\
+    #         #                                      positions=R))[:,0].reshape(())
             
-            #temp = jacobian(func=pes,inputs=R)
-            temp = forces_grad(R)
-            out.data[n,:] = temp.flatten()
+    #         #temp = jacobian(func=pes,inputs=R)
+    #         temp = forces_grad(R)
+    #         out.data[n,:] = temp.flatten()
 
-        return out
+    #     return out
     
-    ##########################################
+    # ##########################################
 
-    def EPFpred(model,X)->torch.Tensor:
-        """return Energy, Polarization and Forces"""
-        p = X.polarization.reshape(-1,3)
-        lenX = len(p)
-        a = 3
-        if hasattr(X.Natoms,"__len__"):
-            b = int(X.Natoms[0])*3
-        else :
-            b = int(X.Natoms)*3
-        y = torch.zeros((lenX,1+a+b)) 
-        EP = model(X)
-        y[:,0]         = EP[:,0]         # 1st column  for the energy
-        y[:,1:a+1]     = EP[:,1:4]       # 3rd columns for the polarization
-        y[:,a+1:a+b+1] = forces(model,X) # 3rd columns for the forces
-        return y
+    # def EPFpred(model,X)->torch.Tensor:
+    #     """return Energy, Polarization and Forces"""
+    #     p = X.polarization.reshape(-1,3)
+    #     lenX = len(p)
+    #     a = 3
+    #     if hasattr(X.Natoms,"__len__"):
+    #         b = int(X.Natoms[0])*3
+    #     else :
+    #         b = int(X.Natoms)*3
+    #     y = torch.zeros((lenX,1+a+b)) 
+    #     EP = model(X)
+    #     y[:,0]         = EP[:,0]         # 1st column  for the energy
+    #     y[:,1:a+1]     = EP[:,1:4]       # 3rd columns for the polarization
+    #     y[:,a+1:a+b+1] = forces(model,X) # 3rd columns for the forces
+    #     return y
         
-    ##########################################
+    # ##########################################
 
-    def EPFreal(X)->torch.Tensor:
-        """return Energy, Polarization and Forces"""
+    # def EPFreal(X)->torch.Tensor:
+    #     """return Energy, Polarization and Forces"""
 
-        batch_size = len(np.unique(X.batch))
+    #     batch_size = len(np.unique(X.batch))
 
-        if batch_size > 1 :
-            y = torch.zeros((batch_size,1+3+3*X.Natoms[0]))
-            y[:,0]   = X.energy#.reshape((batch_size,-1))
-            y[:,1:4] = X.polarization.reshape((batch_size,-1))
-            y[:,4:]  = X.forces.reshape((batch_size,-1))
+    #     if batch_size > 1 :
+    #         y = torch.zeros((batch_size,1+3+3*X.Natoms[0]))
+    #         y[:,0]   = X.energy#.reshape((batch_size,-1))
+    #         y[:,1:4] = X.polarization.reshape((batch_size,-1))
+    #         y[:,4:]  = X.forces.reshape((batch_size,-1))
 
-        else:
-            y = torch.zeros((1+3+X.Natoms*3))
-            y[0]   = X.energy#.reshape((batch_size,-1))
-            y[1:4] = X.polarization.reshape((batch_size,-1))
-            y[4:]  = X.forces.reshape((batch_size,-1))
+    #     else:
+    #         y = torch.zeros((1+3+X.Natoms*3))
+    #         y[0]   = X.energy#.reshape((batch_size,-1))
+    #         y[1:4] = X.polarization.reshape((batch_size,-1))
+    #         y[4:]  = X.forces.reshape((batch_size,-1))
 
-        return y
+    #     return y
 
-    ##########################################
+    # ##########################################
 
     n = 0
     all_bs = np.arange(30,101,10)
@@ -312,11 +258,11 @@ def main():
             print("\tbatch_size={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(batch_size,lr,n+1,Ntot))
 
             print("\n\trebuilding network...\n")
-            net = SabiaNetwork(**model_kwargs)#.to(device)
+            net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)#.to(device)
 
             hyperparameters = {
                 'batch_size': batch_size,
-                'n_epochs'  : 200,
+                'n_epochs'  : 5,
                 'optimizer' : "Adam",
                 'lr'        : lr,
                 'loss'      : "MSE"
@@ -327,8 +273,8 @@ def main():
                                         train_dataset=train_dataset,\
                                         val_dataset=val_dataset,\
                                         hyperparameters=hyperparameters,\
-                                        get_pred=EPFpred,\
-                                        get_real=EPFreal,\
+                                        get_pred=net.get_pred,#EPFpred,\
+                                        get_real=lambda X: net.get_real(X=X,output=net.output),#EPFreal,\
                                         make_dataloader=None)
             
             savefile = "./results/networks/{:s}.torch".format(df.at[n,"file"])                
@@ -373,6 +319,8 @@ def main():
                 print("Some error during plotting")
 
             n += 1
+
+            df[:n].to_csv("temp-info.csv",index=False)
 
     df.to_csv("info.csv",index=False)
 

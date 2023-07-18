@@ -5,7 +5,11 @@ import torch
 import torch_geometric
 from .MessagePassing import MessagePassing
 from typing import Dict, Union
-import typing
+from typing import TypeVar
+T = TypeVar('T', bound='SabiaNetwork')
+# See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
+# of `T` to annotate `self`. Many methods of `Module` return `self` and we want those return values to be
+# the type of the subclass, not the looser type of `Module`.
 
 # https://docs.e3nn.org/en/latest/guide/periodic_boundary_conditions.html
 

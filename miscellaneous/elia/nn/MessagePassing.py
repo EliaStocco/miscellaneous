@@ -2,6 +2,12 @@ from e3nn.nn import Gate
 import torch
 from e3nn import o3
 from .Convolution import Convolution
+from typing import TypeVar
+C = TypeVar('C', bound='Compose')
+T = TypeVar('T', bound='MessagePassing')
+# See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
+# of `T` to annotate `self`. Many methods of `Module` return `self` and we want those return values to be
+# the type of the subclass, not the looser type of `Module`.
 
 def tp_path_exists(irreps_in1, irreps_in2, ir_out):
     irreps_in1 = o3.Irreps(irreps_in1).simplify()
@@ -20,12 +26,12 @@ class Compose(torch.nn.Module):
     first : torch.nn.Module
     second : torch.nn.Module
 
-    def __init__(self, first: torch.nn.Module, second: torch.nn.Module):
+    def __init__(self:C, first: torch.nn.Module, second: torch.nn.Module)->None:
         super().__init__()
         self.first = first
         self.second = second
 
-    def forward(self, *input):
+    def forward(self:C, *input):
         x = self.first(*input)
         return self.second(x)
 
@@ -66,7 +72,7 @@ class MessagePassing(torch.nn.Module):
     # layers: torch.nn.ModuleList
 
     def __init__(
-        self,
+        self:T,
         irreps_node_input,
         irreps_node_hidden,
         irreps_node_output,
@@ -145,7 +151,7 @@ class MessagePassing(torch.nn.Module):
             )
         )
 
-    def forward(self, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
+    def forward(self:T, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
         if self.debug:
             print("MessagePassing:1")
         for lay in self.layers:
