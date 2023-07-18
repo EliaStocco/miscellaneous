@@ -7,11 +7,48 @@ from . import get_type_onehot_encoding
 from ase import Atoms
 import numpy as np
 
-def make_dataset(data:MicroState,\
-                 radial_cutoff:float):
+
+#----------------------------------------------------------------#
+
+def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype):
+        
+    species = np.unique(symbols)
+    type_onehot, type_encoding = get_type_onehot_encoding(species)
+    x=type_onehot[[type_encoding[atom] for atom in symbols]]
+
+    pos=positions.reshape((-1,3))
+    batch = pos.new_zeros(pos.shape[0], dtype=torch.long)
     
-    species = data.all_types()
-    type_onehot, type_encoding = get_type_onehot_encoding(species)    
+    crystal = Atoms(cell=lattice,positions=pos,symbols=symbols)
+    edge_src, edge_dst, edge_shift = neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
+
+    # I need these lines here before calling 'einsum'
+    edge_shift = torch.tensor(edge_shift,dtype=default_dtype)
+    lattice = torch.tensor(lattice.unsqueeze(0),dtype=default_dtype)# We add a dimension for batching
+
+    edge_batch = batch[edge_src]
+    edge_vec = (pos[edge_dst]
+                - pos[edge_src]
+                + torch.einsum('ni,nij->nj',
+                            edge_shift,
+                            lattice[edge_batch]))
+    edge_index = torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim=0)
+    x = type_onehot[[type_encoding[atom] for atom in symbols]]
+
+    #pos = pos.type(default_dtype)
+    #edge_vec = torch.tensor(edge_vec)
+    #edge_index = torch.tensor(edge_index)
+
+    return pos, lattice, x, edge_vec, edge_index
+
+#----------------------------------------------------------------#
+
+def make_dataset(data:MicroState,
+                 radial_cutoff:float,
+                 default_dtype=torch.float64):
+    
+    # species = data.all_types()
+    # type_onehot, type_encoding = get_type_onehot_encoding(species)    
 
     systems = data.to_ase()
 
@@ -27,14 +64,21 @@ def make_dataset(data:MicroState,\
         
         # edge_src and edge_dst are the indices of the central and neighboring atom, respectively
         # edge_shift indicates whether the neighbors are in different images / copies of the unit cell
-        edge_src, edge_dst, edge_shift = \
-            neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
-        
-        pos     = torch.tensor(crystal.get_positions())
-        lattice = torch.tensor(crystal.cell.array).unsqueeze(0) # We add a dimension for batching
-        x       = type_onehot[[type_encoding[atom] for atom in crystal.get_chemical_symbols()]]
+        # edge_src, edge_dst, edge_shift = \
+        #     neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
 
-        edge_index = torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim=0)
+        pos, lattice, x, edge_vec, edge_index = preprocess( lattice=crystal.cell.array,
+                                                            positions=crystal.get_positions(),#.flatten(),
+                                                            symbols=crystal.get_chemical_symbols(),
+                                                            radial_cutoff=radial_cutoff,
+                                                            default_dtype=default_dtype)
+
+        
+        # pos     = torch.tensor(crystal.get_positions())
+        # lattice = torch.tensor(crystal.cell.array).unsqueeze(0) # We add a dimension for batching
+        # x       = type_onehot[[type_encoding[atom] for atom in crystal.get_chemical_symbols()]]
+
+        # edge_index = torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim=0)
 
         data = Data(
             pos=pos,
@@ -43,7 +87,7 @@ def make_dataset(data:MicroState,\
             radial_cutoff = radial_cutoff,
             symbols = crystal.get_chemical_symbols(),
             edge_index=edge_index,
-            edge_shift=torch.tensor(edge_shift),
+            edge_vec=edge_vec,
             energy=e, # energy
             polarization=p, # polarization
             forces=f, # forces
@@ -56,40 +100,14 @@ def make_dataset(data:MicroState,\
 
 #----------------------------------------------------------------#
 
-def make_datapoint(lattice, positions,fake,radial_cutoff, symbols):
+def make_datapoint(lattice, positions, symbols, radial_cutoff, default_dtype=torch.float64):#, fake=None):
 
-    from copy import copy
-
-    #with torch.no_grad():
-    #lattice = lattice#.unsqueeze(0) # We add a dimension for batching
-    positions = positions.reshape((-1,3))
-    fake = fake.reshape((-1,3))
-
-    #pos = np.asarray(positions.detach())
-    crystal = Atoms(cell=lattice,positions=fake,symbols=symbols)
-
-    species = np.unique(symbols)
-    type_onehot, type_encoding = get_type_onehot_encoding(species)
-
-    # def neighbor_list(quantities, a, cutoff, self_interaction=False,
-    #                   max_nbins=1e6):
-    
-
-    # edge_src, edge_dst, edge_shift = primitive_neighbor_list(quantities="ijS",
-    #                         pbc= (True,True,True),
-    #                         cell=lattice,
-    #                         positions=positions,
-    #                         cutoff=radial_cutoff,
-    #                         numbers=Atoms(symbols=symbols).numbers,
-    #                         self_interaction=True,
-    #                         max_nbins=1e6)
-
-    edge_src, edge_dst, edge_shift = neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
+    pos, lattice, x, edge_vec, edge_index = preprocess(lattice, positions, symbols, radial_cutoff, default_dtype)
     
     return Data(
-            pos=positions.reshape((-1,3)),
-            lattice=lattice.unsqueeze(0),  # We add a dimension for batching
-            x=type_onehot[[type_encoding[atom] for atom in crystal.symbols]],
-            edge_index=torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim=0),
-            edge_shift=torch.tensor(edge_shift),
+            pos=pos,
+            lattice=lattice,  
+            x=x,
+            edge_index=edge_index,
+            edge_vec=edge_vec,
         )

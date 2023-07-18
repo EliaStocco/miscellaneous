@@ -3,6 +3,7 @@ from torch_scatter import scatter
 from e3nn import o3
 import torch
 import torch_geometric
+from torch_cluster import radius_graph
 from .MessagePassing import MessagePassing
 from typing import Dict, Union
 from typing import TypeVar
@@ -54,14 +55,11 @@ class SabiaNetwork(torch.nn.Module):
         self.debug = debug
 
         
-        if self.debug:
-            print()
-            print("irreps_in:",irreps_in)
-            print("irreps_out:",irreps_out)
+        if self.debug: print("irreps_in:",irreps_in)
+        if self.debug: print("irreps_out:",irreps_out)
 
         irreps_node_hidden = o3.Irreps([(mul, (l, pp)) for l in range(lmax + 1) for pp in p])
-        if self.debug:
-            print("irreps_node_hidden:",irreps_node_hidden)
+        if self.debug: print("irreps_node_hidden:",irreps_node_hidden)
         #irreps_node_hidden = o3.Irreps([(mul, (l, 1)) for l in range(lmax + 1) ])
 
         self.mp = MessagePassing(
@@ -85,31 +83,37 @@ class SabiaNetwork(torch.nn.Module):
         else:
             batch = data['pos'].new_zeros(data['pos'].shape[0], dtype=torch.long)
 
-        edge_src = data['edge_index'][0]  # Edge source
-        edge_dst = data['edge_index'][1]  # Edge destination
+        if "edge_index" in data:
+            edge_src = data['edge_index'][0]  # Edge source
+            edge_dst = data['edge_index'][1]  # Edge destination
+        else :
+            edge_index = radius_graph(data["pos"], self.max_radius, batch)
+            edge_src = edge_index[0]
+            edge_dst = edge_index[1]
 
-        # We need to compute this in the computation graph to backprop to positions
-        # We are computing the relative distances + unit cell shifts from periodic boundaries
-        edge_batch = batch[edge_src]
-        edge_vec = (data['pos'][edge_dst]
-                    - data['pos'][edge_src]
-                    + torch.einsum('ni,nij->nj',
-                                    data['edge_shift'].type(self.default_dtype ),
+        if "edge_vec" in data:
+            edge_vec = data['edge_vec']
+        
+        else :
+            # We need to compute this in the computation graph to backprop to positions
+            # We are computing the relative distances + unit cell shifts from periodic boundaries
+            edge_batch = batch[edge_src]
+            edge_vec = (data['pos'][edge_dst]
+                        - data['pos'][edge_src]
+                        + torch.einsum('ni,nij->nj',
+                                        data['edge_shift'].type(self.default_dtype ),
                                     data['lattice'][edge_batch].type(self.default_dtype )))
 
         return batch, data['x'], edge_src, edge_dst, edge_vec
 
     def forward(self, data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]]) -> torch.Tensor: 
-        if self.debug:
-            print("SabiaNetwork:1")
+        if self.debug: print("SabiaNetwork:1")
         batch, node_inputs, edge_src, edge_dst, edge_vec = self.preprocess(data)
         del data
-        if self.debug:
-            print("SabiaNetwork:2")
+        if self.debug: print("SabiaNetwork:2")
 
         edge_attr = o3.spherical_harmonics( range(self.lmax + 1), edge_vec, True, normalization="component")
-        if self.debug:
-            print("SabiaNetwork:3")
+        if self.debug: print("SabiaNetwork:3")
         
         # Edge length embedding
         edge_length = edge_vec.norm(dim=1)
@@ -121,17 +125,14 @@ class SabiaNetwork(torch.nn.Module):
             basis="cosine",  # the cosine basis with cutoff = True goes to zero at max_radius
             cutoff=True,  # no need for an additional smooth cutoff
         ).mul(self.number_of_basis**0.5)
-        if self.debug:
-            print("SabiaNetwork:4")
+        if self.debug: print("SabiaNetwork:4")
 
         # Node attributes are not used here
         node_attr = node_inputs.new_ones(node_inputs.shape[0], 1)
-        if self.debug:
-            print("SabiaNetwork:5")
+        if self.debug: print("SabiaNetwork:5")
 
         node_outputs = self.mp(node_inputs, node_attr, edge_src, edge_dst, edge_attr, edge_length_embedding)
-        if self.debug:
-            print("SabiaNetwork:6")
+        if self.debug: print("SabiaNetwork:6")
         
         if self.pool_nodes:
             return scatter(node_outputs, batch, dim=0).div(self.num_nodes**0.5)
