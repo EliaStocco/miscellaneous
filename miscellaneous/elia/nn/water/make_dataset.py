@@ -24,7 +24,7 @@ def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype):
 
     # I need these lines here before calling 'einsum'
     edge_shift = torch.tensor(edge_shift,dtype=default_dtype)
-    lattice = torch.tensor(lattice.unsqueeze(0),dtype=default_dtype)# We add a dimension for batching
+    lattice = torch.tensor(lattice,dtype=default_dtype).unsqueeze(0)# We add a dimension for batching
 
     edge_batch = batch[edge_src]
     edge_vec = (pos[edge_dst]
@@ -68,7 +68,7 @@ def make_dataset(data:MicroState,
         #     neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
 
         pos, lattice, x, edge_vec, edge_index = preprocess( lattice=crystal.cell.array,
-                                                            positions=crystal.get_positions(),#.flatten(),
+                                                            positions=torch.tensor(crystal.get_positions()),#.flatten(),
                                                             symbols=crystal.get_chemical_symbols(),
                                                             radial_cutoff=radial_cutoff,
                                                             default_dtype=default_dtype)

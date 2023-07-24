@@ -1,5 +1,5 @@
-from .functions import get_one_file_in_folder,getproperty,output_file,get_property_header
-from .functions import convert, Dict2Obj, get_attributes, merge_attributes, read_comments_xyz
+from miscellaneous.elia.functions import get_one_file_in_folder,getproperty,output_file,get_property_header
+from miscellaneous.elia.functions import convert, Dict2Obj, get_attributes, merge_attributes, read_comments_xyz
 import os
 from ase import io
 from ase import Atoms
@@ -1453,6 +1453,33 @@ class MicroState:
 
 
 def main():
+
+    from miscellaneous.elia.classes import MicroState
+    from miscellaneous.elia.functions import segment
+    import matplotlib.pyplot as plt
+    from itertools import product    
+    import pandas as pd
+    from ase.io import read
+
+    inverted = read("inverted.xyz").positions
+    standard = read("standard.xyz").positions
+    symbols = read("standard.xyz").get_chemical_symbols()
+    print("inverted:\n",inverted,"\n")
+    print("standard:\n",standard)
+
+    N = 50
+    sequence = segment(standard,inverted,N)
+
+    #sequence = np.asarray([ i.positions for i in read("sequence.xyz",":")])
+    # standard = sequence[0]
+    # inverted = sequence[-1]
+
+
+    data = MicroState()
+    data.save2xyz(what=sequence,file="test.xyz",atoms=symbols)
+
+
+def _main():
 
 
     xyz = 0

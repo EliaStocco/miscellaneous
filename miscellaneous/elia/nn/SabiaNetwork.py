@@ -3,7 +3,7 @@ from torch_scatter import scatter
 from e3nn import o3
 import torch
 import torch_geometric
-from torch_cluster import radius_graph
+from torch_geometric.nn import radius_graph
 from .MessagePassing import MessagePassing
 from typing import Dict, Union
 from typing import TypeVar
@@ -31,14 +31,14 @@ class SabiaNetwork(torch.nn.Module):
         irreps_in,
         irreps_out,
         max_radius,
-        #irreps_node_attr,
         num_neighbors,
         num_nodes,
+        irreps_node_attr="0e",
         mul=10,
         layers=1,
         lmax=1,
         number_of_basis=10,
-        p=[1,-1],
+        p=["o","e"],
         debug=False,
         pool_nodes=True,
         default_dtype=torch.float64) -> None:
@@ -58,15 +58,17 @@ class SabiaNetwork(torch.nn.Module):
         if self.debug: print("irreps_in:",irreps_in)
         if self.debug: print("irreps_out:",irreps_out)
 
-        irreps_node_hidden = o3.Irreps([(mul, (l, pp)) for l in range(lmax + 1) for pp in p])
-        if self.debug: print("irreps_node_hidden:",irreps_node_hidden)
+        tmp = ["{:d}x{:d}{:s}".format(mul,l,pp) for l in range(lmax + 1) for pp in p]
+        irreps_node_hidden = o3.Irreps("+".join(tmp))
+        #irreps_node_hidden = o3.Irreps([(mul, (l, pp)) for l in range(lmax + 1) for pp in p])
+        if self.debug: print("irreps_node_hidden:",tmp)
         #irreps_node_hidden = o3.Irreps([(mul, (l, 1)) for l in range(lmax + 1) ])
 
         self.mp = MessagePassing(
             irreps_node_input=irreps_in,
             irreps_node_hidden=irreps_node_hidden,
             irreps_node_output=irreps_out,
-            irreps_node_attr="0e",
+            irreps_node_attr=irreps_node_attr,
             irreps_edge_attr=o3.Irreps.spherical_harmonics(lmax),
             layers=layers,
             fc_neurons=[self.number_of_basis, 100],

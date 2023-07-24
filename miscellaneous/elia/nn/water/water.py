@@ -7,7 +7,7 @@ torch.set_default_dtype(default_dtype)
 
 import os
 from miscellaneous.elia.classes import MicroState
-#from miscellaneous.elia.nn import SabiaNetwork
+from miscellaneous.elia.nn.utils.utils_model import visualize_layers
 from miscellaneous.elia.nn import train
 
 import matplotlib.pyplot as plt
@@ -46,7 +46,7 @@ def main():
                 "positions":infile,\
                 "cells":infile,\
                 "types":infile,\
-                "forces":"i-pi.forces_0.xyz"}
+                "forces":"data/i-pi.forces_0.xyz"}
         data = MicroState(instructions)
     else :
         data = MicroState.load(savefile)
@@ -125,116 +125,17 @@ def main():
         "num_neighbors":2,          # scaling factor based on the typical number of neighbors
         "pool_nodes":True,          # We pool nodes to predict total energy
         "num_nodes":2,
-        "mul":4,
-        "layers":3,
+        #"irreps_node_attr":"1o",
+        "mul":10,
+        "layers":10,
         "lmax":1,
-        "p":[1],
+        #"p":["o","e"],
         "default_dtype" : default_dtype,
     }
     net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)
     print(net)
+    #visualize_layers(net)
     del net
-
-
-    ##########################################
-    # m  = None # model 
-    # l  = None # lattice
-    # rc = None # radial_cutoff
-    # s  = None # symbols
-
-    # def pes(R):
-    #     # this ambda should capute the above variable by reference
-    #     global m  # model 
-    #     global l  # lattice
-    #     global rc # radial_cutoff
-    #     global s  # symbols
-
-    #     print(l)
-    #     print(rc)
-    #     print(s)
-    #     return m(make_datapoint(lattice=l,\
-    #                                 radial_cutoff=rc,\
-    #                                 symbols=s,\
-    #                                 positions=R))#[:,0].reshape(())
-    
-    # jac = torch.func.vjp(pes)
-    # forces_grad = torch.func.grad(pes)
-    # der2 = torch.func.grad(forces_grad)
-    
-    # def forces(model,X):
-    #     """This function compute the forces as the gradient of the model w.r.t. the atomic position.
-    #     The function takes as input a Data object"""
-
-    #     global m  # model 
-    #     global l  # lattice
-    #     global rc # radial_cutoff
-    #     global s  # symbols
-
-    #     batch_size = len(np.unique(X.batch))
-
-    #     out = torch.zeros(X.pos.shape,requires_grad=True).reshape((batch_size,-1))
-
-    #     for n in range(batch_size):
-
-    #         index = X.batch == n
-    #         l = X.lattice[n]
-    #         s = X.symbols[n]
-    #         rc = radial_cutoff
-    #         m = model            
-    #         R = X.pos[index].requires_grad_(True)
-
-    #         # return only the energy
-    #         # pes = lambda R: model(make_datapoint(lattice=lattice,\
-    #         #                                      radial_cutoff=radial_cutoff,\
-    #         #                                      symbols=symbols,\
-    #         #                                      positions=R))[:,0].reshape(())
-            
-    #         #temp = jacobian(func=pes,inputs=R)
-    #         temp = forces_grad(R)
-    #         out.data[n,:] = temp.flatten()
-
-    #     return out
-    
-    # ##########################################
-
-    # def EPFpred(model,X)->torch.Tensor:
-    #     """return Energy, Polarization and Forces"""
-    #     p = X.polarization.reshape(-1,3)
-    #     lenX = len(p)
-    #     a = 3
-    #     if hasattr(X.Natoms,"__len__"):
-    #         b = int(X.Natoms[0])*3
-    #     else :
-    #         b = int(X.Natoms)*3
-    #     y = torch.zeros((lenX,1+a+b)) 
-    #     EP = model(X)
-    #     y[:,0]         = EP[:,0]         # 1st column  for the energy
-    #     y[:,1:a+1]     = EP[:,1:4]       # 3rd columns for the polarization
-    #     y[:,a+1:a+b+1] = forces(model,X) # 3rd columns for the forces
-    #     return y
-        
-    # ##########################################
-
-    # def EPFreal(X)->torch.Tensor:
-    #     """return Energy, Polarization and Forces"""
-
-    #     batch_size = len(np.unique(X.batch))
-
-    #     if batch_size > 1 :
-    #         y = torch.zeros((batch_size,1+3+3*X.Natoms[0]))
-    #         y[:,0]   = X.energy#.reshape((batch_size,-1))
-    #         y[:,1:4] = X.polarization.reshape((batch_size,-1))
-    #         y[:,4:]  = X.forces.reshape((batch_size,-1))
-
-    #     else:
-    #         y = torch.zeros((1+3+X.Natoms*3))
-    #         y[0]   = X.energy#.reshape((batch_size,-1))
-    #         y[1:4] = X.polarization.reshape((batch_size,-1))
-    #         y[4:]  = X.forces.reshape((batch_size,-1))
-
-    #     return y
-
-    # ##########################################
 
     n = 0
     all_bs = np.arange(30,101,10)

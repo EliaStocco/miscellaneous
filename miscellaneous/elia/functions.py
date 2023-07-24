@@ -325,7 +325,7 @@ def segment(A,B,N):
     """
     assert A.shape == B.shape
     
-    sequence = [np.zeros(A.shape)]*(N+2)
+    sequence = np.zeros((N+2,*A.shape))
     # N = 0 -> t=0,1
     # N = 1 -> t=0,0.5,1
     for n in range(N+2):
