@@ -665,7 +665,7 @@ class MicroState:
 
         A2 = ( np.square(proj_displ) + np.square(proj_vel) )
         energy = ( self.eigvals * A2 / 2.0 ) # w^2 A^2 / 2
-        energy [ energy == np.inf ] = np.nan
+        #energy [ energy == np.inf ] = np.nan
         normalized_energy = ( ( self.Nmodes - 3 ) * energy.T / energy.sum(axis=1).T ).T
         Aamplitudes = np.sqrt(A2)
 
@@ -1106,7 +1106,7 @@ class MicroState:
         #cols = [ "eigvals [a.u.]" , "w [a.u.]", "w [THz]", "w [cm^-1]", "T [a.u.]", "T [ps]","E [a.u.]", "n [a.u.]"]
         df = pd.DataFrame()
         eigvals = self.eigvals.copy()
-        eigvals [ eigvals == MicroStatePrivate.smallest_float ] = np.nan
+        eigvals [ eigvals == MicroStatePrivate.smallest_float ] = 0.0
         df["eigvals [a.u.]"] = eigvals
         df["w [a.u.]"]  = [ np.sqrt(i) if i > 0. else None for i in eigvals ]
         df["w [THz]"]   = convert(df["w [a.u.]"],"frequency",_from="atomic_unit",_to="thz")

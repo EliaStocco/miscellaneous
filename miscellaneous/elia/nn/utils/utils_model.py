@@ -2,7 +2,7 @@ from typing import Dict, Union
 
 import torch
 from torch_geometric.data import Data
-from torch_cluster import radius_graph
+from torch_geometric.nn import radius_graph
 
 from e3nn import o3
 from e3nn.math import soft_one_hot_linspace

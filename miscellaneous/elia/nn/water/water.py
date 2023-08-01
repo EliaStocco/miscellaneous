@@ -7,7 +7,7 @@ torch.set_default_dtype(default_dtype)
 
 import os
 from miscellaneous.elia.classes import MicroState
-from miscellaneous.elia.nn.utils.utils_model import visualize_layers
+#from miscellaneous.elia.nn.utils.utils_model import visualize_layers
 from miscellaneous.elia.nn import train
 
 import matplotlib.pyplot as plt
@@ -127,7 +127,7 @@ def main():
         "num_nodes":2,
         #"irreps_node_attr":"1o",
         "mul":10,
-        "layers":10,
+        "layers":2,
         "lmax":1,
         #"p":["o","e"],
         "default_dtype" : default_dtype,
@@ -153,7 +153,7 @@ def main():
 
             df.at[n,"bs"] = batch_size
             df.at[n,"lr"] = lr
-            df.at[n,"file"] = "bs={:d}.lr={:.1e}.pdf".format(batch_size,lr)
+            df.at[n,"file"] = "bs={:d}.lr={:.1e}".format(batch_size,lr)
             
             print("\n#########################\n")
             print("\tbatch_size={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(batch_size,lr,n+1,Ntot))
@@ -219,6 +219,7 @@ def main():
             except:
                 print("Some error during plotting")
 
+            df.at[n,"file"] = df.at[n,"file"] + ".pdf"
             n += 1
 
             df[:n].to_csv("temp-info.csv",index=False)
