@@ -63,14 +63,14 @@ class Convolution(torch.nn.Module):
         self.num_neighbors = num_neighbors
         self.debug = debug
 
-        if self.debug:
+        if self.debug: 
             print()
             print("Convolution.irreps_node_input (in-1)",self.irreps_node_input)
             print("Convolution.irreps_node_attr (in-2)",self.irreps_node_attr)
             print("Convolution.irreps_node_output (out)",self.irreps_node_output)
         self.sc = FullyConnectedTensorProduct(self.irreps_node_input, self.irreps_node_attr, self.irreps_node_output)
 
-        if self.debug:
+        if self.debug: 
             print("Convolution.irreps_node_input (in-1)",self.irreps_node_input)
             print("Convolution.irreps_node_attr (in-2)",self.irreps_node_attr)
             print("Convolution.irreps_node_input (out)",self.irreps_node_input)
@@ -90,7 +90,7 @@ class Convolution(torch.nn.Module):
 
         instructions = [(i_1, i_2, p[i_out], mode, train) for i_1, i_2, i_out, mode, train in instructions]
 
-        if self.debug:
+        if self.debug: 
             print("TensorProduct.tp.irreps_node_input (in-1)",self.irreps_node_input)
             print("TensorProduct.tp.irreps_edge_attr (in-2)",self.irreps_edge_attr)
             print("TensorProduct.tp.irreps_mid (out)",irreps_mid)
@@ -106,45 +106,41 @@ class Convolution(torch.nn.Module):
         self.tp = tp
 
         self.lin2 = FullyConnectedTensorProduct(irreps_mid, self.irreps_node_attr, self.irreps_node_output)
+
+        # Elia: undertand if the final '0e' is okay even when I add a vectorial input to the nodes
         self.lin3 = FullyConnectedTensorProduct(irreps_mid, self.irreps_node_attr, "0e")
 
     def forward(self, node_input, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
-        if self.debug:
-            print("Convolution:1")
+        if self.debug: print("Convolution:1")
         weight = self.fc(edge_scalars)
 
-        if self.debug:
+        if self.debug: 
             print("Convolution:2")
             print("node_input:",node_input)
             print("node_attr:",node_attr)
         node_self_connection = self.sc(node_input, node_attr)
         
-        if self.debug:
-            print("Convolution:3")
+        if self.debug: print("Convolution:3")
         node_features = self.lin1(node_input, node_attr)
 
-        if self.debug:
+        if self.debug: 
             print("Convolution:4")
             print("node_features[edge_src]:",node_features[edge_src])
             print("edge_attr:",node_attr)
             print("weight:",weight)
         edge_features = self.tp(node_features[edge_src], edge_attr, weight)
         
-        if self.debug:
-            print("Convolution:5")
+        if self.debug: print("Convolution:5")
         node_features = scatter(edge_features, edge_dst, dim=0, dim_size=node_input.shape[0]).div(self.num_neighbors**0.5)
 
-        if self.debug:
-            print("Convolution:6")
+        if self.debug: print("Convolution:6")
         node_conv_out = self.lin2(node_features, node_attr)
         
-        if self.debug:
-            print("Convolution:7")
+        if self.debug: print("Convolution:7")
         node_angle = 0.1 * self.lin3(node_features, node_attr)
         #            ^^^------ start small, favor self-connection
         
-        if self.debug:
-            print("Convolution:8")
+        if self.debug: print("Convolution:8")
         cos, sin = node_angle.cos(), node_angle.sin()
         m = self.sc.output_mask
         sin = (1 - m) + sin * m

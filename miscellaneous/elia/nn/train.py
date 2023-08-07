@@ -6,8 +6,45 @@ from torch.optim import Adam
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
+import warnings
+import os
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
-def _make_dataloader(dataset,batch_size):
+__all__ = ["train","_make_dataloader"]
+
+def plot_learning_curves(train_loss,val_loss,file,title=None):
+    try :
+
+        fig,ax = plt.subplots(figsize=(10,4))
+        x = np.arange(len(train_loss))
+
+        ax.plot(x,train_loss,color="red",label="train",marker=".",linewidth=0.7,markersize=2)
+        ax.plot(val_loss,color="navy",label="val",marker="x",linewidth=0.7,markersize=2)
+
+        plt.ylabel("loss")
+        plt.xlabel("epoch")
+        plt.yscale("log")
+        plt.legend()
+        plt.grid(True, which="both",ls="-")
+        plt.xlim(0,x.max())
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        if title is not None :
+            plt.title(title)
+
+        plt.tight_layout()
+        plt.savefig(file)
+        # plt.close(fig)
+
+        # plt.figure().clear()
+        # plt.cla()
+        # plt.clf()
+
+    except:
+        print("Some error during plotting")
+    pass
+
+def _make_dataloader(dataset,batch_size=1):
             
         dataloader = DataLoader(dataset,\
                                 batch_size=batch_size,\
@@ -23,7 +60,10 @@ def train(model,\
           hyperparameters:dict=None,\
           get_pred:callable=None,\
           get_real:callable=None,\
-          make_dataloader:callable=None):
+          make_dataloader:callable=None,\
+          correlation:callable=None,\
+          output=None,\
+          name=None):
     """
     Input:
         model: torch.nn.Modules
@@ -77,6 +117,27 @@ def train(model,\
     if hyperparameters is None:
         hyperparameters = dict()
     
+    # output folder
+    if output is None :
+        warnings.warn("'output' is None: specify a folder name to print some information to file")
+
+    else :
+        if name is None :
+            warnings.warn("'name' is None: specify a filename to distinguish the results from other hyperparameters")
+            name = "untitled"
+
+        folders = {"networks"     :"{output}/networks",\
+                   "networks-temp":"{output}/networks-temp",\
+                   "dataframes"   :"{output}/dataframes",\
+                   "images"       :"{output}/images",\
+                   "correlations" :"{output}/correlations"}
+        
+        for folder in folders:
+            if not os.path.exists(folder):
+                print("creating folder '{folder}'")
+                os.mkdir(folder)
+
+    # hyperparameters    
     if "batch_size" not in hyperparameters:
         hyperparameters["batch_size"] = 32
     if "n_epochs" not in hyperparameters:
@@ -89,26 +150,44 @@ def train(model,\
         hyperparameters["loss"] = MSELoss()
         
     # print hyperparameters to screen
+    def tryprint(obj):
+        #if hasattr(obj,'__str__'):
+        try :
+            if type(obj).__str__ is not object.__str__ or hasattr(obj,'__str__'):
+                return obj
+            else :
+                return "not printable object, sorry for that :("
+        except :
+            return "some problem, but don't worry :("
+        
     print("\nHyperparameters:")
-    print("\tbatch_size:{:d}".format(hyperparameters["batch_size"]))
-    print("\tn_epochs:{:d}".format(hyperparameters["n_epochs"]))
-    print("\toptimizer:{:s}".format(hyperparameters["optimizer"]))
-    print("\tlr:{:.2e}".format(hyperparameters["lr"]))
-    print("\tloss_fn:{:s}".format(hyperparameters["loss"]))    
+    print("\tbatch_size:{:d}".format(tryprint(hyperparameters["batch_size"])))
+    print("\tn_epochs:{:d}".format(tryprint(hyperparameters["n_epochs"])))
+    print("\toptimizer:{:s}".format(tryprint(hyperparameters["optimizer"])))
+    print("\tlr:{:.2e}".format(tryprint(hyperparameters["lr"])))
+    # I had some problems with the loss
+    if type(hyperparameters["loss"]) == str : print("\tloss_fn:{:s}".format(tryprint(hyperparameters["loss"])))
        
     # extract hyperparameters for the dict 'hyperparameters'
     batch_size = int(hyperparameters["batch_size"])
     n_epochs   = int(hyperparameters["n_epochs"])
-    optimizer  = str(hyperparameters["optimizer"])
+    optimizer  = hyperparameters["optimizer"]
     lr         = float(hyperparameters["lr"])
-    loss_fn    = str(hyperparameters["loss"])
+    loss_fn    = hyperparameters["loss"]
     
     # set default values for some hyperparameters
-    if optimizer.lower() == "adam":
+    if type(optimizer) == str and optimizer.lower() == "adam":
         optimizer = Adam(model.parameters(), lr=lr)
     
-    if loss_fn.lower() == "mse":
+    if type(loss_fn) == str and loss_fn.lower() == "mse":
         loss_fn = MSELoss()
+
+    def get_all_dataloader(dataset):
+        return next(iter(make_dataloader(dataset,len(dataset))))
+
+    def get_all(dataset):
+        all_dataloader = get_all_dataloader(dataset)
+        return get_real(all_dataloader)
     
     # prepare the dataloaders for the train and validation datasets
     dataloader_train = make_dataloader(train_dataset,batch_size)
@@ -126,20 +205,24 @@ def train(model,\
     in_model = copy(model) 
         
     # some arrays to store information during the training process
-    val_loss   = np.full(n_epochs,np.nan)
-    train_std  = np.full(n_epochs,np.nan)
-    train_loss = np.full(n_epochs,np.nan)
+    val_loss = train_std = train_loss = np.full(n_epochs,np.nan)
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
+
+    # dataframne
+    arrays = pd.DataFrame({ "train_loss":train_loss,\
+                            "train_std":train_std,\
+                            "val_loss":val_loss})
 
     # compute the real values of the validation dataset only once
     print("\nCompute validation dataset output:")
-    # if out_shape is None:
-    #     out_shape = tuple(get_real(val_dataset[0]).shape)
-    # y_val = torch.zeros((len(val_dataset),*out_shape))
-    # for n,X in enumerate(val_dataset):
-    #     y_val[n,:] = torch.tensor( get_real(X) )
-    # y_val = y_val#.flatten()
-    y_val = get_real(dataloader_val)
+    yval_real   = get_all(val_dataset)
+    ytrain_real = get_all(train_dataset)
+
+    # correlation
+    corr = None
+    if correlation is not None:
+        all_dataloader_train = get_all_dataloader(train_dataset)
+        corr = pd.DataFrame(columns=["train","val"],index=np.arange(n_epochs))
     
     # start the training procedure
     for epoch in range(n_epochs):    
@@ -176,33 +259,64 @@ def train(model,\
                                 test=val_loss[epoch-1] if epoch != 0 else 0.0,\
                                 loss=np.mean(train_loss_one_epoch[:step+1]))
 
+            # evaluate model on the test dataset
+            # with torch.no_grad():
+            # I am not using 'with torch.no_grad()' anymore because 
+            # maybe it inferferes with the calculation of the forces
+            model.eval()
+                
+            if output is not None :
+                savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
+                torch.save(model, savefile)
+
+            # compute the loss function
+            # predict the value for the validation dataset
+            yval_pred = get_pred(model,dataloader_val)
+            val_loss[epoch] = loss_fn(yval_pred,yval_real)
+
+            # set arrays
             train_loss[epoch] = np.mean(train_loss_one_epoch)
             train_std [epoch] = np.std(train_loss_one_epoch)
 
-            # evaluate model on the test dataset
-            with torch.no_grad():
-                model.eval()
+            arrays.at[epoch,"train_loss"] = train_loss[epoch]
+            arrays.at[epoch,"train_std" ] = train_std [epoch]
+            arrays.at[epoch,"val_loss"  ] = val_loss  [epoch]
 
-                # predict the value for the validation dataset
-                y_pred = get_pred(model,dataloader_val)
+            if output is not None :
+                savefile =  "{:s}/{:s}.csv".format(folders["dataframes"],name)
+                arrays.to_csv(savefile,index=False)
 
-                # compute the loss function
-                val_loss[epoch] = loss_fn(y_pred,y_val)
+            if correlation is not None :
+                ytrain_pred = model(all_dataloader_train)
+                corr["train"][epoch] = correlation(ytrain_pred, ytrain_real)
+                corr["val"][epoch] = correlation(yval_pred, yval_real)
+
+                if output is not None :
+                    savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
+                    corr.to_csv(savefile,index=False)
+
+            if output is not None :
+                savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
+                plot_learning_curves(train_loss[:epoch],\
+                                     val_loss[:epoch],\
+                                     file=savefile,\
+                                     title=name if name != "untitled" else None)
 
             # print progress
             bar.set_postfix(epoch=epoch,\
                             val=val_loss[epoch],\
                             loss=train_loss[epoch])
             
-    arrays = pd.DataFrame({ "train_loss":train_loss,\
-              "train_std":train_std,\
-              "val_loss":val_loss})
+    # arrays = pd.DataFrame({ "train_loss":train_loss,\
+    #           "train_std":train_std,\
+    #           "val_loss":val_loss})
             
     # deepcopy the trained model into the output variable
     out_model = copy(model)
+
     # restore the original value of 'model'
     model = in_model
 
     print("\nTraining done!\n")
     
-    return out_model, arrays
+    return out_model, arrays, corr

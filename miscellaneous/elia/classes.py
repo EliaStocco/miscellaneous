@@ -1002,6 +1002,7 @@ class MicroState:
     
     def show(self):
         '''show the attributes of the class'''
+        
         print("Attributes of the object:")
         attribs = get_attributes(self)
         for a in attribs:
@@ -1009,6 +1010,7 @@ class MicroState:
 
     def show_properties(self):
         '''show the properties of the class'''
+
         print("Properties of the object:")
         keys = list(self.properties.keys())
         size = [None]*len(keys)
@@ -1156,7 +1158,7 @@ class MicroState:
         return obj
     
     @staticmethod
-    def _cart2lattice(array,lattice,matrixT=None,get_matrix=False,*argc,**argv):
+    def _cart2lattice(array,lattice,matrixT=None,get_matrix=False): #,*argc,**argv):
         """ Cartesian to lattice coordinates
         
         Input:
@@ -1202,7 +1204,7 @@ class MicroState:
             return out
     
     @staticmethod
-    def _lattice2cart(array,lattice,matrixT=None,*argc,**argv):
+    def _lattice2cart(array,lattice,matrixT=None): #,*argc,**argv):
         """ Lattice to Cartesian coordinates
         
         Input:
@@ -1352,7 +1354,7 @@ class MicroState:
                                             same_lattice=same_lattice,\
                                             reshape=None)
             
-        # compute the volumen and the norm of the lattice vectors
+        # compute the volume and the norm of the lattice vectors
         volume = self.get_volume(same_lattice=same_lattice,only_first=False)
         length = self.get_basisvectors_length(same_lattice=same_lattice,only_first=False)
         
@@ -1541,8 +1543,8 @@ def _main():
 
     print("\n\tJob done :)\n")
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
 
 # def _main():

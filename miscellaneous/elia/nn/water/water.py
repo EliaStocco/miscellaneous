@@ -1,5 +1,6 @@
 import torch
-from torch.autograd.functional import jacobian
+#from torch.autograd.functional import jacobian
+from torch.nn import MSELoss
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 # Device configuration
@@ -8,10 +9,10 @@ torch.set_default_dtype(default_dtype)
 import os
 from miscellaneous.elia.classes import MicroState
 #from miscellaneous.elia.nn.utils.utils_model import visualize_layers
-from miscellaneous.elia.nn import train
+from miscellaneous.elia.nn import train, _make_dataloader
 
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+# import matplotlib.pyplot as plt
+# from matplotlib.ticker import MaxNLocator
 from copy import copy
 import pandas as pd
 import numpy as np
@@ -27,11 +28,17 @@ from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
 
 def main():
 
+    x = torch.tensor([1,2,3.0])
+    x.requires_grad_(True)    
+    y = (x*x).norm() + 4*x.norm()
+    y.backward()
+    print(x.grad)
+
     radial_cutoff = 6.0
 
     ##########################################
 
-    OUTPUT = "EP"
+    OUTPUT = "EF"
 
     ##########################################
 
@@ -105,14 +112,18 @@ def main():
 
     ##########################################
 
-    for folder in ["results/","results/networks/","results/dataframes","results/images"]:
+    for folder in [ "results/",\
+                    "results/networks/",\
+                    "results/dataframes",\
+                    "results/images",\
+                    "results/correlations" ]:
         if not os.path.exists(folder):
             os.mkdir(folder)
 
     ##########################################
 
     irreps_in = "{:d}x0e".format(len(data.all_types()))
-    if OUTPUT == "E":
+    if OUTPUT in ["E","EF"]:
         irreps_out = "1x0e"
     elif OUTPUT in ["EP","EPF"]:
         irreps_out = "1x0e + 1x1o"
@@ -135,6 +146,15 @@ def main():
     net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)
     print(net)
     #visualize_layers(net)
+    d = _make_dataloader(train_dataset,batch_size=1)
+    X = next(iter(d))
+
+    # y = (X.pos * 4).norm() 
+    # y.backward()
+    # print(X.pos.grad)
+
+    # net.eval()
+    net.forces(X)
     del net
 
     n = 0
@@ -166,17 +186,20 @@ def main():
                 'n_epochs'  : 5,
                 'optimizer' : "Adam",
                 'lr'        : lr,
-                'loss'      : "MSE"
+                'loss'      : net.loss(lE=1,lF=10)
             }
 
             print("\n\ttraining network...\n")
-            out_model, arrays = train(  model=net,\
+            out_model, arrays, corr = train(  model=net,\
                                         train_dataset=train_dataset,\
                                         val_dataset=val_dataset,\
                                         hyperparameters=hyperparameters,\
                                         get_pred=net.get_pred,#EPFpred,\
                                         get_real=lambda X: net.get_real(X=X,output=net.output),#EPFreal,\
-                                        make_dataloader=None)
+                                        #make_dataloader=None,
+                                        correlation=SabiaNetworkManager.correlation,
+                                        output="results",\
+                                        name=df.at[n,"file"])
             
             savefile = "./results/networks/{:s}.torch".format(df.at[n,"file"])                
             print("saving network to file {:s}".format(savefile))
@@ -186,38 +209,41 @@ def main():
             print("saving arrays to file {:s}".format(savefile))
             arrays.to_csv(savefile,index=False)
 
-            try :
-                train_loss = arrays["train_loss"]
-                val_loss = arrays["val_loss"]
+            savefile = "results/correlations/{:s}.csv".format(df.at[n,"file"])  
+            print("saving correlations to file {:s}".format(savefile))
+            corr.to_csv(savefile,index=False)
 
-                print("\n\tplotting losses...\n")
-                fig,ax = plt.subplots(figsize=(10,4))
-                x = np.arange(len(train_loss))
+            # try :
+            #     train_loss = arrays["train_loss"]
+            #     val_loss = arrays["val_loss"]
 
-                ax.plot(x,train_loss,color="blue",label="train",marker=".",linewidth=0.7,markersize=2)
-                ax.plot(val_loss,color="red",label="val",marker="x",linewidth=0.7,markersize=2)
+            #     print("\n\tplotting losses...\n")
+            #     fig,ax = plt.subplots(figsize=(10,4))
+            #     x = np.arange(len(train_loss))
 
-                plt.ylabel("loss")
-                plt.xlabel("epoch")
-                plt.yscale("log")
-                plt.legend()
-                plt.grid(True, which="both",ls="-")
-                plt.xlim(0,hyperparameters["n_epochs"])
-                ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-                plt.title("batch_size={:d}, lr={:.1e}.pdf".format(batch_size,lr))
+            #     ax.plot(x,train_loss,color="blue",label="train",marker=".",linewidth=0.7,markersize=2)
+            #     ax.plot(val_loss,color="red",label="val",marker="x",linewidth=0.7,markersize=2)
 
-                plt.tight_layout()
-                savefile = "results/images/{:s}.pdf".format(df.at[n,"file"])
-                plt.savefig(savefile)
-                plt.close(fig)
+            #     plt.ylabel("loss")
+            #     plt.xlabel("epoch")
+            #     plt.yscale("log")
+            #     plt.legend()
+            #     plt.grid(True, which="both",ls="-")
+            #     plt.xlim(0,hyperparameters["n_epochs"])
+            #     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            #     plt.title("batch_size={:d}, lr={:.1e}.pdf".format(batch_size,lr))
 
-                plt.figure().clear()
-                plt.cla()
-                plt.clf()
+            #     plt.tight_layout()
+            #     savefile = "results/images/{:s}.pdf".format(df.at[n,"file"])
+            #     plt.savefig(savefile)
+            #     plt.close(fig)
 
+            #     plt.figure().clear()
+            #     plt.cla()
+            #     plt.clf()
 
-            except:
-                print("Some error during plotting")
+            # except:
+            #     print("Some error during plotting")
 
             df.at[n,"file"] = df.at[n,"file"] + ".pdf"
             n += 1

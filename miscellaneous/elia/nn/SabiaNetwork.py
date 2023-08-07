@@ -75,6 +75,8 @@ class SabiaNetwork(torch.nn.Module):
             num_neighbors=num_neighbors,
         )
 
+        self.sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")
+
         self.irreps_in = self.mp.irreps_node_input
         self.irreps_out = self.mp.irreps_node_output
     
@@ -111,14 +113,16 @@ class SabiaNetwork(torch.nn.Module):
     def forward(self, data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]]) -> torch.Tensor: 
         if self.debug: print("SabiaNetwork:1")
         batch, node_inputs, edge_src, edge_dst, edge_vec = self.preprocess(data)
-        del data
+        # del data
         if self.debug: print("SabiaNetwork:2")
 
-        edge_attr = o3.spherical_harmonics( range(self.lmax + 1), edge_vec, True, normalization="component")
+        # edge_attr = o3.spherical_harmonics( range(self.lmax + 1), edge_vec, True, normalization="component")
+        edge_attr = self.sh(edge_vec)
         if self.debug: print("SabiaNetwork:3")
         
         # Edge length embedding
         edge_length = edge_vec.norm(dim=1)
+        # Elia: this can be improved
         edge_length_embedding = soft_one_hot_linspace(
             edge_length,
             0.0,
@@ -137,6 +141,7 @@ class SabiaNetwork(torch.nn.Module):
         if self.debug: print("SabiaNetwork:6")
         
         if self.pool_nodes:
+            # Elia: understand what 'scatter' does
             return scatter(node_outputs, batch, dim=0).div(self.num_nodes**0.5)
         else:
             return node_outputs

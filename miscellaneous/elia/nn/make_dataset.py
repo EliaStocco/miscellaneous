@@ -5,7 +5,7 @@ from ase.neighborlist import neighbor_list
 from miscellaneous.elia.classes import MicroState
 import numpy as np
 
-def get_type_onehot_encoding(species):
+def get_type_onehot_encoding(species)->(torch.tensor,dict):
     type_encoding = {}
     for n,s in enumerate(species):
         type_encoding[s] = n
