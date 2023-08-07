@@ -8,6 +8,7 @@ from tqdm import tqdm
 import pandas as pd
 import warnings
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
@@ -16,6 +17,7 @@ __all__ = ["train","_make_dataloader"]
 def plot_learning_curves(train_loss,val_loss,file,title=None):
     try :
 
+        matplotlib.use('Agg')
         fig,ax = plt.subplots(figsize=(10,4))
         x = np.arange(len(train_loss))
 
@@ -126,15 +128,15 @@ def train(model,\
             warnings.warn("'name' is None: specify a filename to distinguish the results from other hyperparameters")
             name = "untitled"
 
-        folders = {"networks"     :"{output}/networks",\
-                   "networks-temp":"{output}/networks-temp",\
-                   "dataframes"   :"{output}/dataframes",\
-                   "images"       :"{output}/images",\
-                   "correlations" :"{output}/correlations"}
+        folders = {"networks"     :"{:s}/networks".format(output),\
+                   "networks-temp":"{:s}/networks-temp".format(output),\
+                   "dataframes"   :"{:s}/dataframes".format(output),\
+                   "images"       :"{:s}/images".format(output),\
+                   "correlations" :"{:s}/correlations".format(output)}
         
-        for folder in folders:
+        for folder in [output,*folders.values()]:
             if not os.path.exists(folder):
-                print("creating folder '{folder}'")
+                print("creating folder '{:s}'".format(folder))
                 os.mkdir(folder)
 
     # hyperparameters    
@@ -255,9 +257,16 @@ def train(model,\
                 optimizer.step()
 
                 # print progress
-                bar.set_postfix(epoch=epoch,\
-                                test=val_loss[epoch-1] if epoch != 0 else 0.0,\
-                                loss=np.mean(train_loss_one_epoch[:step+1]))
+                if correlation is None :
+                    bar.set_postfix(epoch=epoch,
+                                    train=np.mean(train_loss_one_epoch[:step+1]),
+                                    val=val_loss[epoch-1] if epoch != 0 else np.nan)
+                else :
+                    bar.set_postfix(epoch=epoch,
+                                    train=np.mean(train_loss_one_epoch[:step+1]),
+                                    corr_train=corr["train"][epoch-1] if epoch != 0 else np.nan,
+                                    val=val_loss[epoch-1] if epoch != 0 else np.nan,
+                                    corr_val=corr["val"][epoch-1] if epoch != 0 else np.nan)
 
             # evaluate model on the test dataset
             # with torch.no_grad():
@@ -295,17 +304,24 @@ def train(model,\
                     savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
                     corr.to_csv(savefile,index=False)
 
-            if output is not None :
+            if output is not None and epoch > 1:
                 savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
-                plot_learning_curves(train_loss[:epoch],\
-                                     val_loss[:epoch],\
+                plot_learning_curves(train_loss[:epoch+1],\
+                                     val_loss[:epoch+1],\
                                      file=savefile,\
                                      title=name if name != "untitled" else None)
 
             # print progress
-            bar.set_postfix(epoch=epoch,\
-                            val=val_loss[epoch],\
-                            loss=train_loss[epoch])
+            if correlation is None :
+                bar.set_postfix(epoch=epoch,
+                                train=train_loss[epoch],
+                                val=val_loss[epoch])
+            else :
+                bar.set_postfix(epoch=epoch,
+                                train=train_loss[epoch],
+                                corr_train=corr["train"][epoch],
+                                val=val_loss[epoch],
+                                corr_val=corr["val"][epoch])
             
     # arrays = pd.DataFrame({ "train_loss":train_loss,\
     #           "train_std":train_std,\
@@ -317,6 +333,11 @@ def train(model,\
     # restore the original value of 'model'
     model = in_model
 
+    # Important message
+    print("The following quantities have been saved to these folders:")
+    for k in folders:
+        print("\t{:<20s}:{:<20s}".format(k,folders[k]))
+    
     print("\nTraining done!\n")
     
     return out_model, arrays, corr

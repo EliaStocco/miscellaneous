@@ -19,6 +19,7 @@ __all__ = ["SabiaNetworkManager"]
 
 class SabiaNetworkManager(SabiaNetwork):
 
+    output:str
     lattice: torch.Tensor
     radial_cutoff: float
     _radial_cutoff: float
@@ -33,21 +34,21 @@ class SabiaNetworkManager(SabiaNetwork):
         if self.output not in ["E", "P", "EP", "EF", "EPF"]:
             raise ValueError("'output' must be 'E', 'P', 'EF', 'EP' or 'EPF'")
 
-        self.grad = None
-        self.bec = None
-        self.lattice = None
-        self.radial_cutoff = None
+        #self.grad = None
+        #self.bec = None
+        self.lattice = torch.Tensor()
+        self.radial_cutoff = 0.0
         self._radial_cutoff = radial_cutoff
-        self.symbols = None
-        self.X = None
-        self.R = None
+        self.symbols = list()
+        self.X = Data()
+        self.R = torch.Tensor()
         pass
 
-    def train(self: T, mode: bool) -> T:
-        if self.grad is not None:
-            del self.grad     # delete the gradient
-            self.grad = None  # build an empty gradient
-        return super(SabiaNetworkManager, self).train(mode)
+    # def train(self: T, mode: bool) -> T:
+    #     if self.grad is not None:
+    #         del self.grad     # delete the gradient
+    #         self.grad = None  # build an empty gradient
+    #     return super(SabiaNetworkManager, self).train(mode)
 
     # @torch.jit.script
     def PES(self: T, R) -> torch.tensor:
@@ -281,10 +282,11 @@ class SabiaNetworkManager(SabiaNetwork):
             #---- code starts here ----#
             if True:
                 
-                start = time.process_time()
+                # print("Ciao")
+                #start = time.process_time()
                 #R = X.pos[index].requires_grad_(True)#.flatten()
                 tmp = torch.autograd.functional.jacobian(self.PES, R,create_graph=True)
-                print("TIME:",time.process_time() - start)
+                #print("TIME:",time.process_time() - start)
 
                 # dR = torch.zeros((3,3))
                 # dR[0,0] = 0.05 
@@ -467,7 +469,7 @@ class SabiaNetworkManager(SabiaNetwork):
         N = x.shape[1]
         out = np.zeros(N)
         for i in range(N):
-            out[i] = spearmanr(x[i],y[i])
+            out[i] = spearmanr(x[:,i],y[:,i]).correlation
 
         return out
 

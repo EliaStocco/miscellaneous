@@ -46,7 +46,11 @@ def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,require
 
     pos=positions.reshape((-1,3))
     if requires_grad["pos"] is not None :
-        pos = torch.tensor(pos).requires_grad_(requires_grad["pos"])
+        if isinstance(pos,torch.Tensor):
+            pos.requires_grad_(requires_grad["pos"])
+        else :
+            pos = torch.tensor(pos,requires_grad=requires_grad["pos"])
+    pos = pos.to(default_dtype)
 
     batch = pos.new_zeros(pos.shape[0], dtype=torch.long)
 
@@ -67,9 +71,12 @@ def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,require
     # I need these lines here before calling 'einsum'
     edge_shift = torch.tensor(edge_shift,dtype=default_dtype)
     #lattice = torch.tensor(lattice,dtype=default_dtype).unsqueeze(0)# We add a dimension for batching
-    lattice = lattice.to(default_dtype).unsqueeze(0)
     if requires_grad["lattice"] is not None :
-        lattice = torch.tensor(lattice).requires_grad_(requires_grad["lattice"])
+        if isinstance(pos,torch.Tensor):
+            lattice.requires_grad_(requires_grad["lattice"])
+        else :
+            lattice = torch.tensor(lattice,requires_grad=requires_grad["lattice"])
+    lattice = lattice.to(default_dtype).unsqueeze(0)
 
     edge_batch = batch[edge_src]
     edge_vec = (pos[edge_dst]

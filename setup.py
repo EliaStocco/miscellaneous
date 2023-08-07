@@ -7,13 +7,13 @@ setup(
     name="miscellaneous",
     version="0.0.0",
     description="Some scripts",
-    package_dir={"": "miscellaneous"},
-    packages=find_packages(where="miscellaneous"),
+    #package_dir={"": "miscellaneous"},
+    packages=find_packages(), # where="miscellaneous"
     long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="git@github.com:EliaStocco/miscellaneous.git",
+    #long_description_content_type="text/markdown",
+    #url="git@github.com:EliaStocco/miscellaneous.git",
     author="Elia Stocco",
-    author_email="stocco@fhi-berlin.mpg.de",
+    #author_email="stocco@fhi-berlin.mpg.de",
     # license="MIT",
     # classifiers=[
     #     "License :: OSI Approved :: MIT License",

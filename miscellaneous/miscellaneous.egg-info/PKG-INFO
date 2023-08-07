@@ -5,11 +5,7 @@ Summary: Some scripts
 Home-page: git@github.com:EliaStocco/miscellaneous.git
 Author: Elia Stocco
 Author-email: stocco@fhi-berlin.mpg.de
-License: UNKNOWN
-Platform: UNKNOWN
 Description-Content-Type: text/markdown
 
 # miscellaneous
 Here I propose to gather useful scripts doing nontrivial tasks which other people might have a need for.
-
-
