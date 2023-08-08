@@ -1,6 +1,6 @@
 import torch
 #from torch.autograd.functional import jacobian
-f#rom torch.nn import MSELoss
+#from torch.nn import MSELoss
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 # Device configuration
@@ -15,7 +15,7 @@ from miscellaneous.elia.nn import train#, _make_dataloader
 
 # import matplotlib.pyplot as plt
 # from matplotlib.ticker import MaxNLocator
-f#rom copy import copy
+from copy import copy
 import pandas as pd
 import numpy as np
 import random
@@ -33,8 +33,8 @@ def main():
     ##########################################
     # some parameters
 
-    OUTPUT = "P"
-    #radial_cutoff = 6.0
+    OUTPUT = "D"
+    radial_cutoff = 6.0
     output_folder = "results"
 
     ##########################################
@@ -69,7 +69,7 @@ def main():
     if not READ or not os.path.exists(savefile+".train.torch") or RESTART :
         print("building dataset")
 
-        if os.path.exists(savefile+".torch"):
+        if os.path.exists(savefile+".torch") and not RESTART:
             dataset = torch.load(savefile+".torch")
         else :
             dataset = make_dataset( data=data,radial_cutoff=radial_cutoff)
@@ -80,7 +80,7 @@ def main():
         # train, test, validation
         #p_test = 20/100 # percentage of data in test dataset
         #p_val  = 20/100 # percentage of data in validation dataset
-        n = 2000
+        n = 1000
         i = 500#int(p_test*len(dataset))
         j = 500#int(p_val*len(dataset))
 
@@ -124,20 +124,19 @@ def main():
     irreps_in = "{:d}x0e".format(len(data.all_types()))
     if OUTPUT in ["E","EF"]:
         irreps_out = "1x0e"
-    elif OUTPUT in ["EP","EPF"]:
+    elif OUTPUT in ["ED","EDF"]:
         irreps_out = "1x0e + 1x1o"
-    elif OUTPUT == "P":
+    elif OUTPUT == "D":
         irreps_out = "1x1o"
 
     # for layers in [1,2,3,4,5,6]:
     #     for mul in [1,2,3,4,5,6]:
-    radial_cutoff = 6.0
     mul = 4
-    layers = 3
+    layers = 10
     lmax = 1
     model_kwargs = {
         "irreps_in":irreps_in,      # One hot scalars (L=0 and even parity) on each atom to represent atom type
-        "irreps_out":irreps_out, # vector (L=1 and odd parity) to output the polarization
+        "irreps_out":irreps_out,    # vector (L=1 and odd parity) to output the polarization
         "max_radius":radial_cutoff, # Cutoff radius for convolution
         "num_neighbors":2,          # scaling factor based on the typical number of neighbors
         "pool_nodes":True,          # We pool nodes to predict total energy
@@ -148,7 +147,7 @@ def main():
         "default_dtype" : default_dtype,
     }
     net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)
-    #print(net)
+    print(net)
     N = 0 
     for i in net.parameters():
         N += len(i)
@@ -165,17 +164,19 @@ def main():
 
     # net.eval()
     # net.forces(X)
-    del net
+    # del net
 
     n = 0
-    all_bs = [10,50,100]#np.arange(30,101,10)
-    all_lr = [1e-4,1e-3,1e-2]#np.logspace(-1, -4.0, num=8)
+    all_bs = [50]#np.arange(30,101,10)
+    all_lr = [1e-4]#np.logspace(-1, -4.0, num=8)
     Ntot = len(all_bs)*len(all_lr)
     print("\n")
     print("all batch_size:",all_bs)
     print("all lr:",all_lr)
     print("\n")
     df = pd.DataFrame(columns=["bs","lr","file"],index=np.arange(len(all_bs)*len(all_lr)))
+
+    init_model = copy(net) 
 
     for batch_size in all_bs :
 
@@ -189,18 +190,19 @@ def main():
             print("\tbatch_size={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(batch_size,lr,n+1,Ntot))
 
             print("\n\trebuilding network...\n")
-            net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)#.to(device)
+            net = copy(init_model)
+            #net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)#.to(device)
 
             hyperparameters = {
                 'batch_size': batch_size,
-                'n_epochs'  : 100,
+                'n_epochs'  : 10000,
                 'optimizer' : "Adam",
                 'lr'        : lr,
                 'loss'      : net.loss(lE=1,lF=10) #if OUTPUT == 'P' lE and lF will be ignored
             }
 
             print("\n\ttraining network...\n")
-            out_model, arrays, corr = train(  model=net,
+            model, arrays, corr = train(  model=net,
                                         train_dataset=train_dataset,
                                         val_dataset=val_dataset,
                                         hyperparameters=hyperparameters,
@@ -208,7 +210,8 @@ def main():
                                         get_real=lambda X: net.get_real(X=X,output=net.output),
                                         correlation=SabiaNetworkManager.correlation,
                                         output=output_folder,
-                                        name=df.at[n,"file"])
+                                        name=df.at[n,"file"],
+                                        opts={"plot":{"N":50}})
             
             # savefile = "./results/networks/{:s}.torch".format(df.at[n,"file"])                
             # print("saving network to file {:s}".format(savefile))

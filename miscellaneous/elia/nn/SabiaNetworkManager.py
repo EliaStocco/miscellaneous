@@ -27,12 +27,12 @@ class SabiaNetworkManager(SabiaNetwork):
     x: Data
     R:torch.Tensor
 
-    def __init__(self: T, radial_cutoff: float = 0.0, output: str = "EP", **kwargs) -> None:
+    def __init__(self: T, radial_cutoff: float = 0.0, output: str = "ED", **kwargs) -> None:
         super(SabiaNetworkManager, self).__init__(**kwargs)
 
         self.output = output
-        if self.output not in ["E", "P", "EP", "EF", "EPF"]:
-            raise ValueError("'output' must be 'E', 'P', 'EF', 'EP' or 'EPF'")
+        if self.output not in ["E", "D", "ED", "EF", "EDF"]:
+            raise ValueError("'output' must be 'E', 'D', 'EF', 'ED' or 'EDF'")
 
         #self.grad = None
         #self.bec = None
@@ -72,21 +72,21 @@ class SabiaNetworkManager(SabiaNetwork):
     def pol(self: T, R) -> torch.tensor:
         self.X.pos = R.reshape((-1,3))
         y = self(self.X)
-        if self.output == "P":
+        if self.output == "D":
             return y
-        elif self.output in ["EP","EPF"]:
+        elif self.output in ["ED","EDF"]:
             return y[:,1:4]
         
-    def polarization(self: T, X: Data,requires_grad:bool=True) -> torch.tensor:
-        """Polarization
+    def dipole(self: T, X: Data,requires_grad:bool=True) -> torch.tensor:
+        """Electric dipole
         Input:
             - R: (N,3) tensor of positions
         Output:
-            - polarization
+            - dipole
         """
 
-        if self.output not in ["P","EP","EPF"]:
-            raise ValueError("'polarization' not present in the output of this torch.nn.Module")
+        if self.output not in ["D","ED","EDF"]:
+            raise ValueError("'dipole' not present in the output of this torch.nn.Module")
         
         batch_size = len(np.unique(X.batch))
         y = torch.zeros((batch_size,3), requires_grad=requires_grad)
@@ -98,9 +98,9 @@ class SabiaNetworkManager(SabiaNetwork):
         
             tmp = self(self.X)
 
-            if self.output == "P":
+            if self.output == "D":
                 y.data[n,:] = tmp
-            elif self.output in ["EP","EPF"]:
+            elif self.output in ["ED","EDF"]:
                 y.data[n,:] = tmp[:,1:4]
 
         return y
@@ -373,18 +373,18 @@ class SabiaNetworkManager(SabiaNetwork):
     def get_pred(model: T, X: Data) -> torch.tensor:
         """return Energy, Polarization and Forces"""
 
-        N = {"E": 1, "P": 3, "EP": 4, "EF": 1+3*X.Natoms[0], "EPF": 1+3+3*X.Natoms[0]}
+        N = {"E": 1, "D": 3, "ED": 4, "EF": 1+3*X.Natoms[0], "EDF": 1+3+3*X.Natoms[0]}
         N = N[model.output]
         batch_size = len(np.unique(X.batch))
         y = torch.zeros((batch_size, N))
 
-        if model.output in ["E", "EP","P"]:
+        if model.output in ["E", "ED","D"]:
             y = model(X)
 
-        elif model.output == "EPF":
+        elif model.output == "EDF":
             EP = model(X)
             y[:, 0] = EP[:, 0]         # 1st column for the energy
-            y[:, 1:4] = EP[:, 1:4]     # 2nd to 4th columns for the polarization
+            y[:, 1:4] = EP[:, 1:4]     # 2nd to 4th columns for the dipole
             y[:, 4:] = model.forces(X) # other columns for the forces
 
         elif model.output == "EF":
@@ -399,7 +399,7 @@ class SabiaNetworkManager(SabiaNetwork):
         """return Energy, Polarization and Forces"""
 
         # 'EPF' has to be modified in case we have different molecules in the dataset
-        N = {"E": 1, "EF": 1+3*X.Natoms[0], "P": 3, "EP": 4, "EPF": 1+3+3*X.Natoms[0]}
+        N = {"E": 1, "EF": 1+3*X.Natoms[0], "D": 3, "ED": 4, "EDF": 1+3+3*X.Natoms[0]}
         N = N[output]
         batch_size = len(np.unique(X.batch))
 
@@ -407,20 +407,20 @@ class SabiaNetworkManager(SabiaNetwork):
 
         y = torch.zeros((batch_size, N))
 
-        if output in ["E", "EF", "EP", "EPF"]:
+        if output in ["E", "EF", "ED", "EDF"]:
             y[:, 0] = X.energy
 
-            if output in ["EP", "EPF"]:
-                y[:, 1:4] = X.polarization.reshape((batch_size, -1))
+            if output in ["ED", "EDF"]:
+                y[:, 1:4] = X.dipole.reshape((batch_size, -1))
 
-            elif output == "EPF":
+            elif output == "EDF":
                 y[:, 4:] = X.forces.reshape((batch_size, -1))
 
             if output == "EF":
                 y[:, 1:] = X.forces.reshape((batch_size, -1))
 
-        elif output == "P":
-            y[:,0:3] = X.polarization.reshape((batch_size, -1))
+        elif output == "D":
+            y[:,0:3] = X.dipole.reshape((batch_size, -1))
 
         return y
 
@@ -430,10 +430,11 @@ class SabiaNetworkManager(SabiaNetwork):
         lF = lF if lF is not None else 1.0
         lP = lP if lP is not None else 1.0
 
-        if self.output in ["E","P"]:
-            return MSELoss()
+        if self.output in ["E","D"]:
+            return MSELoss(reduce='sum')
+            #return lambda x,y: MSELoss()(x,y)
         
-        elif self.output == "EP":
+        elif self.output == "ED":
             def loss_EP(x,y):
                 E = MSELoss()(x[:,0],y[:,0])
                 P = MSELoss()(x[:,1:4],y[:,1:4])
@@ -447,7 +448,7 @@ class SabiaNetworkManager(SabiaNetwork):
                 return lE * E + lF * F
             return loss_EF
         
-        elif self.output == "EPF":
+        elif self.output == "EDF":
             def loss_EPF(x,y):
                 E = MSELoss()(x[:,0],y[:,0])
                 P = MSELoss()(x[:,1:4],y[:,1:4])
@@ -620,9 +621,9 @@ def main():
     irreps_in = "{:d}x0e".format(len(data.all_types()))
     if OUTPUT == "E":
         irreps_out = "1x0e"
-    elif OUTPUT in ["EP","EPF"]:
+    elif OUTPUT in ["ED","EDF"]:
         irreps_out = "1x0e + 1x1o"
-    elif OUTPUT == "P":
+    elif OUTPUT == "D":
         irreps_out = "1x1o"
 
     print("irreps_out:",irreps_out)
@@ -630,7 +631,7 @@ def main():
     radial_cutoff = 6.0
     model_kwargs = {
         "irreps_in":irreps_in,      # One hot scalars (L=0 and even parity) on each atom to represent atom type
-        "irreps_out":irreps_out,    # vector (L=1 and odd parity) to output the polarization
+        "irreps_out":irreps_out,    # vector (L=1 and odd parity) to output the dipole
         "max_radius":radial_cutoff, # Cutoff radius for convolution
         "num_neighbors":2,          # scaling factor based on the typical number of neighbors
         "pool_nodes":True,          # We pool nodes to predict total energy
@@ -654,7 +655,7 @@ def main():
 
         # the water molecule has 3 atoms
         # this means that all the coordinates have lenght 9
-        # if we predict energy and polarization the output will have lenght 4
+        # if we predict energy and dipole the output will have lenght 4
 
         y = net(X)
         print("y.shape:",y.shape)           #>> y.shape: torch.Size([50, 4])
@@ -665,8 +666,8 @@ def main():
         F = net.forces(X)
         print("F.shape:",F.shape)           #>> F.shape: torch.Size([50, 9])
         
-        if OUTPUT in ["EP","P"] :
-            P = net.polarization(X)
+        if OUTPUT in ["ED","D"] :
+            P = net.dipole(X)
             print("P.shape:",P.shape)           #>> P.shape: torch.Size([50, 3])
             
             BEC = net.BEC(X)

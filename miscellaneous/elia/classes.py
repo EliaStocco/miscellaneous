@@ -191,13 +191,16 @@ class MicroState:
         if "positions" in toread:
 
             print("{:s}reading positions from file '{:s}'".format(MicroStatePrivate.tab,instructions.positions))
-            positions = io.read(instructions.positions,index=":")
-            tmp = positions[0]
+            positions0 = io.read(instructions.positions,index=":")
+            
+            tmp = positions0[0]
             atoms = tmp.get_chemical_symbols()
-            Nconf = len(positions) 
+            Nconf = len(positions0) 
 
+            a = tmp.positions.shape[0] * tmp.positions.shape[1]
+            positions = np.zeros((len(positions0),a))
             for n in range(Nconf):
-                positions[n] = positions[n].positions.flatten()
+                positions[n] = positions0[n].positions.flatten()
 
             if self.Nmodes is None :
                 self.Nmodes = len(positions[0])
@@ -208,14 +211,22 @@ class MicroState:
             self.positions = np.asarray(positions)
             self.Nconf = Nconf
 
-        if "types" in toread:
+            if "types" in toread:
+                print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,instructions.types))
+                self.types = [ system.get_chemical_symbols() for system in positions0 ]
+                self.numbers = [ system.numbers for system in positions0 ]
 
-            print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,instructions.types))
-            if not hasattr(instructions,"types"):
-                instructions.types = instructions.positions
-            positions = io.read(instructions.types,index=":")
-            self.types = [ system.get_chemical_symbols() for system in positions ]
-            self.numbers = [ system.numbers for system in positions ]
+            del positions
+            del positions0
+
+        # if "types" in toread:
+
+        #     print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,instructions.types))
+        #     if not hasattr(instructions,"types"):
+        #         instructions.types = instructions.positions
+        #     positions = io.read(instructions.types,index=":")
+        #     self.types = [ system.get_chemical_symbols() for system in positions ]
+        #     self.numbers = [ system.numbers for system in positions ]
 
 
         if "cells" in toread :
@@ -1027,9 +1038,26 @@ class MicroState:
         df["unit"] = [ self.units[k] for k in keys ]
         df["shape"] = size
         return df
+    
+    families = {    "energy"        :["conserved","kinetic_md","potential"],
+                    "polarization"  :["totalpol"],
+                    "dipole"        :["electric-dipole"],
+                    "time"          :["time"]
+                }
+    
+    @staticmethod
+    def search_family(what):
+        for k in MicroState.families:
+            if what in MicroState.families[k]:
+                return k
+        else :
+            raise ValueError('family {:s} not found. \
+                             But you can add it to the "MicroState.families" dict :) \
+                             to improve the code '.format(what))
 
-    def convert_property(self,what,unit,family,inplace=True):
-        # family = get_family(name)
+    def convert_property(self,what,unit,family=None,inplace=True):
+        if family is None:
+            family = self.search_family(what)
         factor = convert(1,family,_from=self.units[what],_to=unit)
         if inplace :
             self.properties[what] = self.properties[what] * factor
@@ -1098,8 +1126,8 @@ class MicroState:
         else :
             return 0
 
-    def __repr__(self)->None:
-        self.show()
+    # def __repr__(self)->None:
+    #     self.show()
 
     # @reloading
     def vibrational_analysis_summary(self)->pd.DataFrame:
@@ -1365,6 +1393,17 @@ class MicroState:
             phases[:,xyz] = np.unwrap(phases[:,xyz],discont=0.0,period=1.0)
         
         return phases
+    
+    def get_dipole(self,same_lattice=True,inplace=True):
+
+        volume = self.get_volume(same_lattice=same_lattice,only_first=False)
+        polarization = self.properties["totalpol"]
+
+        dipole = (polarization.T * volume).T
+        if inplace :
+            self.properties["electric-dipole"] = dipole
+
+        return dipole
 
     def get_polarization_quantum(self,same_lattice=True,only_first=True):
 

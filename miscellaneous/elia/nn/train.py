@@ -1,4 +1,3 @@
-from torch_geometric.loader import DataLoader
 from copy import copy
 import torch
 from torch.nn import MSELoss
@@ -8,53 +7,11 @@ from tqdm import tqdm
 import pandas as pd
 import warnings
 import os
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from .make_dataloader import _make_dataloader
+from .plot import plot_learning_curves
 
-__all__ = ["train","_make_dataloader"]
+#__all__ = ["train"]
 
-def plot_learning_curves(train_loss,val_loss,file,title=None):
-    try :
-
-        matplotlib.use('Agg')
-        fig,ax = plt.subplots(figsize=(10,4))
-        x = np.arange(len(train_loss))
-
-        ax.plot(x,train_loss,color="red",label="train",marker=".",linewidth=0.7,markersize=2)
-        ax.plot(val_loss,color="navy",label="val",marker="x",linewidth=0.7,markersize=2)
-
-        plt.ylabel("loss")
-        plt.xlabel("epoch")
-        plt.yscale("log")
-        plt.legend()
-        plt.grid(True, which="both",ls="-")
-        plt.xlim(0,x.max())
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-        if title is not None :
-            plt.title(title)
-
-        plt.tight_layout()
-        plt.savefig(file)
-        # plt.close(fig)
-
-        # plt.figure().clear()
-        # plt.cla()
-        # plt.clf()
-
-    except:
-        print("Some error during plotting")
-    pass
-
-def _make_dataloader(dataset,batch_size=1):
-            
-        dataloader = DataLoader(dataset,\
-                                batch_size=batch_size,\
-                                drop_last=True,\
-                                shuffle=True)
-    
-        return dataloader
-    
 def train(model,\
           train_dataset,\
           val_dataset,\
@@ -65,7 +22,8 @@ def train(model,\
           make_dataloader:callable=None,\
           correlation:callable=None,\
           output=None,\
-          name=None):
+          name=None,
+          opts=None):
     """
     Input:
         model: torch.nn.Modules
@@ -108,6 +66,10 @@ def train(model,\
     """
     
     print("\nTraining...")
+
+    if opts is None :
+        opts = {}
+        opts["plot"] = {}
 
     # set default values
     if get_pred is None :
@@ -204,7 +166,7 @@ def train(model,\
     print("train dataset size:",len(train_dataset))
     
     # deepcopy the model into a temporary variable
-    in_model = copy(model) 
+    # in_model = copy(model) 
         
     # some arrays to store information during the training process
     val_loss = train_std = train_loss = np.full(n_epochs,np.nan)
@@ -212,11 +174,11 @@ def train(model,\
 
     # dataframne
     arrays = pd.DataFrame({ "train_loss":train_loss,\
-                            "train_std":train_std,\
-                            "val_loss":val_loss})
+                            "train_std":train_std})#,\
+                            #"val_loss":val_loss})
 
     # compute the real values of the validation dataset only once
-    print("\nCompute validation dataset output:")
+    print("\nCompute validation dataset output (this will save time in the future)")
     yval_real   = get_all(val_dataset)
     ytrain_real = get_all(train_dataset)
 
@@ -227,6 +189,7 @@ def train(model,\
         corr = pd.DataFrame(columns=["train","val"],index=np.arange(n_epochs))
     
     # start the training procedure
+    print("\n...and here we go!")
     for epoch in range(n_epochs):    
         
         with tqdm(enumerate(dataloader_train),\
@@ -242,10 +205,10 @@ def train(model,\
                 y_pred = get_pred(model=model,X=X)
                 
                 # true value for the value X
-                y_train = get_real(X=X)
+                y_real = get_real(X=X)
                 
                 # compute the loss function
-                loss = loss_fn(y_pred,y_train)
+                loss = loss_fn(y_pred,y_real)
 
                 # store the loss function in an array
                 train_loss_one_epoch[step] = float(loss)
@@ -257,7 +220,7 @@ def train(model,\
                 optimizer.step()
 
                 # print progress
-                if correlation is None :
+                if True: #correlation is None :
                     bar.set_postfix(epoch=epoch,
                                     train=np.mean(train_loss_one_epoch[:step+1]),
                                     val=val_loss[epoch-1] if epoch != 0 else np.nan)
@@ -284,11 +247,12 @@ def train(model,\
             val_loss[epoch] = loss_fn(yval_pred,yval_real)
 
             # set arrays
-            train_loss[epoch] = np.mean(train_loss_one_epoch)
-            train_std [epoch] = np.std(train_loss_one_epoch)
+            ytrain_pred = model(all_dataloader_train)
+            train_loss[epoch] = loss_fn(ytrain_pred,ytrain_real) #np.mean(train_loss_one_epoch)
+            #train_std [epoch] = np.std(train_loss_one_epoch)
 
             arrays.at[epoch,"train_loss"] = train_loss[epoch]
-            arrays.at[epoch,"train_std" ] = train_std [epoch]
+            #arrays.at[epoch,"train_std" ] = train_std [epoch]
             arrays.at[epoch,"val_loss"  ] = val_loss  [epoch]
 
             if output is not None :
@@ -309,10 +273,11 @@ def train(model,\
                 plot_learning_curves(train_loss[:epoch+1],\
                                      val_loss[:epoch+1],\
                                      file=savefile,\
-                                     title=name if name != "untitled" else None)
+                                     title=name if name != "untitled" else None,\
+                                     opts=opts["plot"])
 
             # print progress
-            if correlation is None :
+            if True: #correlation is None :
                 bar.set_postfix(epoch=epoch,
                                 train=train_loss[epoch],
                                 val=val_loss[epoch])
@@ -328,16 +293,16 @@ def train(model,\
     #           "val_loss":val_loss})
             
     # deepcopy the trained model into the output variable
-    out_model = copy(model)
+    #out_model = copy(model)
 
     # restore the original value of 'model'
-    model = in_model
+    #model = in_model
 
     # Important message
-    print("The following quantities have been saved to these folders:")
+    print("\n\nThe following quantities have been saved to these folders:")
     for k in folders:
-        print("\t{:<20s}:{:<20s}".format(k,folders[k]))
+        print("\t{:<20s}: {:<20s}".format(k,folders[k]))
     
     print("\nTraining done!\n")
     
-    return out_model, arrays, corr
+    return model, arrays, corr

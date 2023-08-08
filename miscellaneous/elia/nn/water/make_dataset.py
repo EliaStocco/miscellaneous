@@ -34,11 +34,17 @@ def my_neighbor_list(lattice,pos,radial_cutoff):
 def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,requires_grad=None):
         
     if requires_grad is None :
-        requires_grad = {   "pos"        : True,\
-                            "lattice"    : True,\
-                            "x"          : None,\
-                            "edge_vec"   : None,\
-                            "edge_index" : None }
+        requires_grad = {}
+
+    default = { "pos"        : True,\
+                "lattice"    : True,\
+                "x"          : None,\
+                "edge_vec"   : None,\
+                "edge_index" : None }
+    
+    for k in default:
+        if k not in requires_grad:
+            requires_grad[k] = default[k]
 
     species = np.unique(symbols)
     type_onehot, type_encoding = get_type_onehot_encoding(species)
@@ -113,12 +119,13 @@ def make_dataset(data:MicroState,
     systems = data.to_ase()
 
     energy       = torch.tensor(data.properties["potential"])
-    polarization = torch.tensor(data.properties["totalpol"])
+    # polarization = torch.tensor(data.properties["totalpol"])
+    dipole       = torch.tensor(data.get_dipole(same_lattice=False))
     forces       = torch.tensor(data.forces)
 
     dataset = [None] * len(systems)
     n = 0 
-    for crystal, e, p, f in tqdm(zip(systems,energy,polarization,forces),
+    for crystal, e, d, f in tqdm(zip(systems,energy,dipole,forces),
                                  total=len(systems), 
                                  bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
         
@@ -132,7 +139,8 @@ def make_dataset(data:MicroState,
                         positions=torch.from_numpy(crystal.get_positions()),#.flatten(),
                         symbols=crystal.get_chemical_symbols(),
                         radial_cutoff=radial_cutoff,
-                        default_dtype=default_dtype)
+                        default_dtype=default_dtype,
+                        requires_grad={"pos":False,"lattice":False})
 
         
         # pos     = torch.tensor(crystal.get_positions())
@@ -151,7 +159,8 @@ def make_dataset(data:MicroState,
             edge_vec=edge_vec,
             edge_shift = edge_shift,
             energy=e, # energy
-            polarization=p, # polarization
+            # polarization=p, # polarization
+            dipole=d, # dipole
             forces=f, # forces
             Natoms=torch.tensor(crystal.get_global_number_of_atoms()).to(int), # valid only if all the structures have the same number of atoms
         )
