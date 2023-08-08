@@ -1,1 +1,1 @@
-from ..get_type_onehot_encoding import get_type_onehot_encoding
+from ..get_type_onehot_encoding import symbols2x

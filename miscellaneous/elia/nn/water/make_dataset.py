@@ -4,7 +4,7 @@ from tqdm import tqdm
 from ase.neighborlist import neighbor_list, primitive_neighbor_list
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import add_default
-from . import get_type_onehot_encoding
+from . import symbols2x
 from ase import Atoms
 import numpy as np
 
@@ -42,9 +42,7 @@ def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,require
 
     requires_grad = add_default(requires_grad,default)
 
-    species = np.unique(symbols)
-    type_onehot, type_encoding = get_type_onehot_encoding(species)
-    x=type_onehot[[type_encoding[atom] for atom in symbols]]
+    x = symbols2x(symbols)
 
     pos=positions.reshape((-1,3))
     if requires_grad["pos"] is not None :
@@ -93,7 +91,7 @@ def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,require
     if requires_grad["edge_index"] is not None:
         edge_index.requires_grad_(requires_grad["edge_index"])
 
-    x = type_onehot[[type_encoding[atom] for atom in symbols]]
+    #x = type_onehot[[type_encoding[atom] for atom in symbols]]
     if requires_grad["x"] is not None :
         x = torch.tensor(x).requires_grad_(requires_grad["x"])
 

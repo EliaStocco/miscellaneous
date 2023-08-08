@@ -115,17 +115,18 @@ def main():
     print("dipole mean :",mu)
     print("dipole sigma:",sigma)
 
-    norm = {
+    metadata = {
         "mean": list(mu),
         "std": list(sigma),
+        "cutoff":radial_cutoff,
     }
 
     # Specify the file path
-    file_path = "normalization.json"
+    file_path = "metadata.json"
 
     # Write the dictionary to the JSON file
     with open(file_path, "w") as json_file:
-        json.dump(norm, json_file, indent=4)  # The 'indent' parameter is optional for pretty formatting
+        json.dump(metadata, json_file, indent=4)  # The 'indent' parameter is optional for pretty formatting
 
 
     print("nomalizing the 'dipole' variable of all the dataset")
