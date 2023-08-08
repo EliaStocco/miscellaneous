@@ -68,7 +68,10 @@ def train(model,\
     
     print("\nTraining...")
 
-    default = {"plot":{},"dataloader":{"shuffle":False}}
+    # output
+    info = "all good"
+
+    default = {"plot":{},"dataloader":{"shuffle":False},"thr":{"exit"}}
     opts = add_default(opts,default)
 
 
@@ -199,6 +202,9 @@ def train(model,\
     # start the training procedure
     print("\n...and here we go!")
     for epoch in range(n_epochs):    
+
+        if info != "all good":
+            break
         
         with tqdm(enumerate(dataloader_train),\
                   total=batches_per_epoch,\
@@ -261,6 +267,10 @@ def train(model,\
                 train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real)) #np.mean(train_loss_one_epoch)
                 #train_std [epoch] = np.std(train_loss_one_epoch)
 
+                if train_loss[epoch] > opts["thr"]["exit"]:
+                    info = "try again"
+                    break
+
                 arrays.at[epoch,"train"] = train_loss[epoch]
                 #arrays.at[epoch,"train_std" ] = train_std [epoch]
                 arrays.at[epoch,"val"  ] = val_loss  [epoch]
@@ -308,11 +318,15 @@ def train(model,\
     # restore the original value of 'model'
     #model = in_model
 
-    # Important message
-    print("\n\nThe following quantities have been saved to these folders:")
-    for k in folders:
-        print("\t{:<20s}: {:<20s}".format(k,folders[k]))
+    if info == "all good":
+        # Important message
+        print("\n\nThe following quantities have been saved to these folders:")
+        for k in folders:
+            print("\t{:<20s}: {:<20s}".format(k,folders[k]))
+        
+        print("\nTraining done!\n")
+
+    elif info == "try again":
+        print("\nTraining stopped: let's try again\n")
     
-    print("\nTraining done!\n")
-    
-    return model, arrays, corr
+    return model, arrays, corr, info

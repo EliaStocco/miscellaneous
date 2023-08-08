@@ -157,18 +157,6 @@ def main():
 
     ##########################################
 
-    # output_folder = "results"
-
-    # for folder in [ "results/",\
-    #                 "results/networks/",\
-    #                 "results/dataframes",\
-    #                 "results/images",\
-    #                 "results/correlations" ]:
-    #     if not os.path.exists(folder):
-    #         os.mkdir(folder)
-
-    ##########################################
-
     irreps_in = "{:d}x0e".format(len(data.all_types()))
     if OUTPUT in ["E","EF"]:
         irreps_out = "1x0e"
@@ -200,23 +188,9 @@ def main():
     for i in net.parameters():
         N += len(i)
     print("tot. number of parameters: ",N)
-    #print("\n HELOOOOO : l={:d}, m={:d}, n={:d}".format(layers,mul,N))
 
-    #visualize_layers(net)
-    # d = _make_dataloader(train_dataset,batch_size=1)
-    # X = next(iter(d))
-
-    # y = (X.pos * 4).norm() 
-    # y.backward()
-    # print(X.pos.grad)
-
-    # net.eval()
-    # net.forces(X)
-    # del net
-
-    n = 0
-    all_bs = [50]#np.arange(30,101,10)
-    all_lr = [1e-3]#np.logspace(-1, -4.0, num=8)
+    all_bs = [10,30,90]#np.arange(30,101,10)
+    all_lr = [4e-5,2e-4,1e-3]#np.logspace(-1, -4.0, num=8)
     Ntot = len(all_bs)*len(all_lr)
     print("\n")
     print("all batch_size:",all_bs)
@@ -226,6 +200,9 @@ def main():
 
     init_model = copy(net) 
 
+    n = 0
+    info = "all good"
+    max_try = 5
     for batch_size in all_bs :
 
         for lr in all_lr:
@@ -239,78 +216,54 @@ def main():
 
             print("\n\trebuilding network...\n")
             net = copy(init_model)
-            #net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)#.to(device)
-
+            
             hyperparameters = {
                 'batch_size': batch_size,
-                'n_epochs'  : 10000,
+                'n_epochs'  : 10,
                 'optimizer' : "Adam",
                 'lr'        : lr,
-                'loss'      : net.loss(lE=1,lF=10) #if OUTPUT == 'P' lE and lF will be ignored
+                'loss'      : net.loss()#net.loss(lE=1,lF=10) #if OUTPUT == 'P' lE and lF will be ignored
             }
 
             print("\n\ttraining network...\n")
-            model, arrays, corr = train(  model=net,
-                                        train_dataset=train_dataset,
-                                        val_dataset=val_dataset,
-                                        hyperparameters=hyperparameters,
-                                        get_pred=net.get_pred,
-                                        get_real=lambda X: net.get_real(X=X,output=net.output),
-                                        correlation=SabiaNetworkManager.correlation,
-                                        output=output_folder,
-                                        name=df.at[n,"file"],
-                                        opts={"plot":{"N":1},"dataloader":{"shuffle":True}})
-            
-            # savefile = "./results/networks/{:s}.torch".format(df.at[n,"file"])                
-            # print("saving network to file {:s}".format(savefile))
-            # torch.save(out_model, savefile)
+            count_try = 0
+            while (info == "try again" and count_try < max_try) or count_try == 0 :
+                model, arrays, corr, info = \
+                    train(  model=net,
+                            train_dataset=train_dataset,
+                            val_dataset=val_dataset,
+                            hyperparameters=hyperparameters,
+                            get_pred=net.get_pred,
+                            get_real=lambda X: net.get_real(X=X,output=net.output),
+                            #correlation=SabiaNetworkManager.correlation,
+                            output=output_folder,
+                            name=df.at[n,"file"],
+                            opts={"plot":{"N":1},"dataloader":{"shuffle":True}})
+                count_try += 1
 
-            # savefile = "results/dataframes/{:s}.csv".format(df.at[n,"file"])  
-            # print("saving arrays to file {:s}".format(savefile))
-            # arrays.to_csv(savefile,index=False)
-
-            # savefile = "results/correlations/{:s}.csv".format(df.at[n,"file"])  
-            # print("saving correlations to file {:s}".format(savefile))
-            # corr.to_csv(savefile,index=False)
-
-            # try :
-            #     train_loss = arrays["train_loss"]
-            #     val_loss = arrays["val_loss"]
-
-            #     print("\n\tplotting losses...\n")
-            #     fig,ax = plt.subplots(figsize=(10,4))
-            #     x = np.arange(len(train_loss))
-
-            #     ax.plot(x,train_loss,color="blue",label="train",marker=".",linewidth=0.7,markersize=2)
-            #     ax.plot(val_loss,color="red",label="val",marker="x",linewidth=0.7,markersize=2)
-
-            #     plt.ylabel("loss")
-            #     plt.xlabel("epoch")
-            #     plt.yscale("log")
-            #     plt.legend()
-            #     plt.grid(True, which="both",ls="-")
-            #     plt.xlim(0,hyperparameters["n_epochs"])
-            #     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-            #     plt.title("batch_size={:d}, lr={:.1e}.pdf".format(batch_size,lr))
-
-            #     plt.tight_layout()
-            #     savefile = "results/images/{:s}.pdf".format(df.at[n,"file"])
-            #     plt.savefig(savefile)
-            #     plt.close(fig)
-
-            #     plt.figure().clear()
-            #     plt.cla()
-            #     plt.clf()
-
-            # except:
-            #     print("Some error during plotting")
+            if info == "try again":
+                print("\nAborted training. Let's go on!\n") 
 
             df.at[n,"file"] = df.at[n,"file"] + ".pdf"
             n += 1
 
             df[:n].to_csv("temp-info.csv",index=False)
 
-    df.to_csv("info.csv",index=False)
+    # writo information to file 'info.csv'
+    try : 
+        df.to_csv("info.csv",index=False)
+
+        # remove 'temp-info.csv'
+        file_path = "temp-info.csv"  # Replace with the path to your file
+        try:
+            os.remove(file_path)
+            print(f"File '{file_path}' deleted successfully.")
+        except OSError as e:
+            print(f"Error deleting file '{e}'")
+    except OSError as e:
+        print(f"Error writing file '{e}'")
+
+    os.remove("temp-info.csv")
 
     print("\nJob done :)")
 

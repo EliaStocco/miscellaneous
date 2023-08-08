@@ -396,7 +396,7 @@ class SabiaNetworkManager(SabiaNetwork):
 
     @staticmethod
     def get_real(X: Data, output: str = "E") -> torch.tensor:
-        """return Energy, Polarization and Forces"""
+        """return Energy, Polarization and/or Forces"""
 
         # 'EPF' has to be modified in case we have different molecules in the dataset
         N = {"E": 1, "EF": 1+3*X.Natoms[0], "D": 3, "ED": 4, "EDF": 1+3+3*X.Natoms[0]}
