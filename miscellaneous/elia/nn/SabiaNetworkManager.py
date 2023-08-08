@@ -431,7 +431,7 @@ class SabiaNetworkManager(SabiaNetwork):
         lP = lP if lP is not None else 1.0
 
         if self.output in ["E","D"]:
-            return MSELoss(reduce='sum')
+            return MSELoss() #MSELoss(reduction='mean') # MSELoss(reduce='sum')
             #return lambda x,y: MSELoss()(x,y)
         
         elif self.output == "ED":

@@ -7,11 +7,13 @@ torch.set_default_dtype(default_dtype)
 #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 import os
+import json
 #os.environ["QT_QPA_PLATFORM"] = "wayland"
 # Now you can import PyQt5 or other Qt-related libraries and run your application.
 from miscellaneous.elia.classes import MicroState
 #from miscellaneous.elia.nn.utils.utils_model import visualize_layers
 from miscellaneous.elia.nn import train#, _make_dataloader
+from miscellaneous.elia.nn import compute_normalization_factors, normalize
 
 # import matplotlib.pyplot as plt
 # from matplotlib.ticker import MaxNLocator
@@ -103,9 +105,55 @@ def main():
         torch.save(val_dataset,  savefile+".val.torch")
         torch.save(test_dataset, savefile+".test.torch")
 
-    print(" test:",len(test_dataset))
-    print("  val:",len(val_dataset))
     print("train:",len(train_dataset))
+    print("  val:",len(val_dataset))
+    print(" test:",len(test_dataset))
+    
+    ##########################################
+    print("computing normalization factors for the 'dipole' variable of the train dataset")
+    mu, sigma     = compute_normalization_factors(train_dataset,"dipole")
+    print("dipole mean :",mu)
+    print("dipole sigma:",sigma)
+
+    norm = {
+        "mean": list(mu),
+        "std": list(sigma),
+    }
+
+    # Specify the file path
+    file_path = "normalization.json"
+
+    # Write the dictionary to the JSON file
+    with open(file_path, "w") as json_file:
+        json.dump(norm, json_file, indent=4)  # The 'indent' parameter is optional for pretty formatting
+
+
+    print("nomalizing the 'dipole' variable of all the dataset")
+    train_dataset = normalize(train_dataset,mu,sigma,"dipole")
+    val_dataset   = normalize(val_dataset,  mu,sigma,"dipole")
+    test_dataset  = normalize(test_dataset ,mu,sigma,"dipole")
+
+    print("final mean and std of the 'dipole' variable of all the dataset")
+    mu, sigma     = compute_normalization_factors(train_dataset,"dipole")
+    print("train :",mu,",",sigma)
+    mu, sigma     = compute_normalization_factors(val_dataset  ,"dipole")
+    print("val   :",mu,",",sigma)
+    mu, sigma     = compute_normalization_factors(test_dataset ,"dipole")
+    print("test  :",mu,",",sigma)
+
+    # # Let's do a simple test!
+    # # If your NN is not working, let's focus only on one datapoint!
+    # # The NN should train and the loss on the validation dataset get really high
+    # # If this does not happen ... there is a bug somewhere
+    # # You can also read this post: 
+    # # https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn
+    
+    # train_dataset = train_dataset[0:1] 
+    # val_dataset   = val_dataset  [0:1] 
+
+    # print("train:",len(train_dataset))
+    # print("  val:",len(val_dataset))
+    # print(" test:",len(test_dataset))
 
     ##########################################
 
@@ -168,7 +216,7 @@ def main():
 
     n = 0
     all_bs = [50]#np.arange(30,101,10)
-    all_lr = [1e-4]#np.logspace(-1, -4.0, num=8)
+    all_lr = [1e-3]#np.logspace(-1, -4.0, num=8)
     Ntot = len(all_bs)*len(all_lr)
     print("\n")
     print("all batch_size:",all_bs)
@@ -211,7 +259,7 @@ def main():
                                         correlation=SabiaNetworkManager.correlation,
                                         output=output_folder,
                                         name=df.at[n,"file"],
-                                        opts={"plot":{"N":50}})
+                                        opts={"plot":{"N":1},"dataloader":{"shuffle":True}})
             
             # savefile = "./results/networks/{:s}.torch".format(df.at[n,"file"])                
             # print("saving network to file {:s}".format(savefile))

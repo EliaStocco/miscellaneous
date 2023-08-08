@@ -18,7 +18,70 @@ from ipi.utils.units import unit_to_internal, unit_to_user
 __all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations',
             'str2bool','get_one_file_in_folder','get_property_header','getproperty',
             'vector_type', 'output_folder', 'save2xyz', 'print_cell', 'convert',
-            'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment']
+            'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
+            'recursive_copy', 'add_default']
+
+def recursive_copy(source_dict:dict, target_dict:dict)->dict:
+    """
+    Recursively copy keys and values from a source dictionary to a target dictionary, if they are not present in the target.
+
+    This function takes two dictionaries, 'source_dict' and 'target_dict', and copies keys and values from 'source_dict' to 'target_dict'. If a key exists in both dictionaries and both values are dictionaries, the function recursively calls itself to copy nested keys and values. If a key does not exist in 'target_dict', it is added along with its corresponding value from 'source_dict'.
+
+    Args:
+        source_dict (dict): The source dictionary containing keys and values to be copied.
+        target_dict (dict): The target dictionary to which keys and values are copied if missing.
+
+    Returns:
+        dict: The modified 'target_dict' with keys and values copied from 'source_dict'.
+
+    Example:
+        >>> dict_A = {"a": 1, "b": {"b1": 2, "b2": {"b2_1": 3}}, "c": 4}
+        >>> dict_B = {"a": 10, "b": {"b1": 20, "b2": {"b2_2": 30}}, "d": 40}
+        >>> result = recursive_copy(dict_A, dict_B)
+        >>> print(result)
+        {'a': 10, 'b': {'b1': 20, 'b2': {'b2_1': 3, 'b2_2': 30}}, 'd': 40}
+    """
+    for key, value in source_dict.items():
+        if isinstance(value, dict) and key in target_dict and isinstance(target_dict[key], dict):
+            recursive_copy(value, target_dict[key])
+        else:
+            if key not in target_dict:
+                target_dict[key] = value
+    return target_dict
+
+
+def add_default(dictionary: dict = None, default: dict = None) -> dict:
+    """
+    Add default key-value pairs to a dictionary if they are not present.
+
+    This function takes two dictionaries: 'dictionary' and 'default'. It checks each key in the 'default' dictionary, and if the key is not already present in the 'dictionary', it is added along with its corresponding value from the 'default' dictionary. If 'dictionary' is not provided, an empty dictionary is used as the base.
+
+    Args:
+        dictionary (dict, optional): The input dictionary to which default values are added. If None, an empty dictionary is used. Default is None.
+        default (dict): A dictionary containing the default key-value pairs to be added to 'dictionary'.
+
+    Returns:
+        dict: The modified 'dictionary' with default values added.
+
+    Raises:
+        ValueError: If 'dictionary' is not of type 'dict'.
+
+    Example:
+        >>> existing_dict = {'a': 1, 'b': 2}
+        >>> default_values = {'b': 0, 'c': 3}
+        >>> result = add_default(existing_dict, default_values)
+        >>> print(result)
+        {'a': 1, 'b': 2, 'c': 3}
+    """
+    if dictionary is None:
+        dictionary = {}
+
+    if not isinstance(dictionary, dict):
+        raise ValueError("'dictionary' has to be of 'dict' type")
+
+    return recursive_copy(source_dict=default, target_dict=dictionary)
+
+
 
 # https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten_list(_2d_list):

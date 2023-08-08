@@ -8,6 +8,7 @@ import pandas as pd
 import warnings
 import os
 from .make_dataloader import _make_dataloader
+from ..functions import add_default
 from .plot import plot_learning_curves
 
 #__all__ = ["train"]
@@ -67,9 +68,9 @@ def train(model,\
     
     print("\nTraining...")
 
-    if opts is None :
-        opts = {}
-        opts["plot"] = {}
+    default = {"plot":{},"dataloader":{"shuffle":False}}
+    opts = add_default(opts,default)
+
 
     # set default values
     if get_pred is None :
@@ -77,7 +78,11 @@ def train(model,\
     if get_real is None :
         get_real = lambda x : x.yreal
     if make_dataloader is None:
-        make_dataloader = _make_dataloader
+        make_dataloader = \
+            lambda dataset,batch_size,shuffle=opts["dataloader"]["shuffle"]: \
+                _make_dataloader(dataset=dataset,\
+                                 batch_size=batch_size,\
+                                 shuffle=shuffle)
     if hyperparameters is None:
         hyperparameters = dict()
     
@@ -147,7 +152,7 @@ def train(model,\
         loss_fn = MSELoss()
 
     def get_all_dataloader(dataset):
-        return next(iter(make_dataloader(dataset,len(dataset))))
+        return next(iter(make_dataloader(dataset,len(dataset),False)))
 
     def get_all(dataset):
         all_dataloader = get_all_dataloader(dataset)
@@ -155,7 +160,7 @@ def train(model,\
     
     # prepare the dataloaders for the train and validation datasets
     dataloader_train = make_dataloader(train_dataset,batch_size)
-    dataloader_val   = next(iter(make_dataloader(val_dataset,len(val_dataset))))
+    #dataloader_val   = next(iter(make_dataloader(val_dataset,len(val_dataset))))
     batches_per_epoch = len(dataloader_train)
     
     # give a summary of the length of the following for cycles
@@ -169,23 +174,26 @@ def train(model,\
     # in_model = copy(model) 
         
     # some arrays to store information during the training process
-    val_loss = train_std = train_loss = np.full(n_epochs,np.nan)
+    val_loss = np.full(n_epochs,np.nan)
+    train_loss = np.full(n_epochs,np.nan)
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
 
     # dataframne
-    arrays = pd.DataFrame({ "train_loss":train_loss,\
-                            "train_std":train_std})#,\
-                            #"val_loss":val_loss})
+    arrays = pd.DataFrame({ "train":train_loss,\
+                            #"train_std":train_std})#,\
+                            "val":val_loss})
 
     # compute the real values of the validation dataset only once
     print("\nCompute validation dataset output (this will save time in the future)")
     yval_real   = get_all(val_dataset)
+    #if not opts["dataloader"]["shuffle"]:
     ytrain_real = get_all(train_dataset)
+    all_dataloader_train = get_all_dataloader(train_dataset)
+    all_dataloader_val   = get_all_dataloader(val_dataset)
 
     # correlation
     corr = None
-    if correlation is not None:
-        all_dataloader_train = get_all_dataloader(train_dataset)
+    if correlation is not None:        
         corr = pd.DataFrame(columns=["train","val"],index=np.arange(n_epochs))
     
     # start the training procedure
@@ -223,6 +231,7 @@ def train(model,\
                 if True: #correlation is None :
                     bar.set_postfix(epoch=epoch,
                                     train=np.mean(train_loss_one_epoch[:step+1]),
+                                    #train=train_loss_one_epoch[step],
                                     val=val_loss[epoch-1] if epoch != 0 else np.nan)
                 else :
                     bar.set_postfix(epoch=epoch,
@@ -235,58 +244,59 @@ def train(model,\
             # with torch.no_grad():
             # I am not using 'with torch.no_grad()' anymore because 
             # maybe it inferferes with the calculation of the forces
-            model.eval()
+            #model.eval()
+            with torch.no_grad():
                 
-            if output is not None :
-                savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
-                torch.save(model, savefile)
+                if output is not None :
+                    savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
+                    torch.save(model, savefile)
 
-            # compute the loss function
-            # predict the value for the validation dataset
-            yval_pred = get_pred(model,dataloader_val)
-            val_loss[epoch] = loss_fn(yval_pred,yval_real)
+                # compute the loss function
+                # predict the value for the validation dataset
+                yval_pred = get_pred(model,all_dataloader_val)
+                val_loss[epoch] = float(loss_fn(yval_pred,yval_real))
 
-            # set arrays
-            ytrain_pred = model(all_dataloader_train)
-            train_loss[epoch] = loss_fn(ytrain_pred,ytrain_real) #np.mean(train_loss_one_epoch)
-            #train_std [epoch] = np.std(train_loss_one_epoch)
-
-            arrays.at[epoch,"train_loss"] = train_loss[epoch]
-            #arrays.at[epoch,"train_std" ] = train_std [epoch]
-            arrays.at[epoch,"val_loss"  ] = val_loss  [epoch]
-
-            if output is not None :
-                savefile =  "{:s}/{:s}.csv".format(folders["dataframes"],name)
-                arrays.to_csv(savefile,index=False)
-
-            if correlation is not None :
+                # set arrays
                 ytrain_pred = model(all_dataloader_train)
-                corr["train"][epoch] = correlation(ytrain_pred, ytrain_real)
-                corr["val"][epoch] = correlation(yval_pred, yval_real)
+                train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real)) #np.mean(train_loss_one_epoch)
+                #train_std [epoch] = np.std(train_loss_one_epoch)
+
+                arrays.at[epoch,"train"] = train_loss[epoch]
+                #arrays.at[epoch,"train_std" ] = train_std [epoch]
+                arrays.at[epoch,"val"  ] = val_loss  [epoch]
 
                 if output is not None :
-                    savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
-                    corr.to_csv(savefile,index=False)
+                    savefile =  "{:s}/{:s}.csv".format(folders["dataframes"],name)
+                    arrays.to_csv(savefile,index=False)
 
-            if output is not None and epoch > 1:
-                savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
-                plot_learning_curves(train_loss[:epoch+1],\
-                                     val_loss[:epoch+1],\
-                                     file=savefile,\
-                                     title=name if name != "untitled" else None,\
-                                     opts=opts["plot"])
+                if correlation is not None :
+                    ytrain_pred = model(all_dataloader_train)
+                    corr["train"][epoch] = correlation(ytrain_pred, ytrain_real)
+                    corr["val"][epoch] = correlation(yval_pred, yval_real)
 
-            # print progress
-            if True: #correlation is None :
-                bar.set_postfix(epoch=epoch,
-                                train=train_loss[epoch],
-                                val=val_loss[epoch])
-            else :
-                bar.set_postfix(epoch=epoch,
-                                train=train_loss[epoch],
-                                corr_train=corr["train"][epoch],
-                                val=val_loss[epoch],
-                                corr_val=corr["val"][epoch])
+                    if output is not None :
+                        savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
+                        corr.to_csv(savefile,index=False)
+
+                if output is not None and epoch > 1:
+                    savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
+                    plot_learning_curves(train_loss[:epoch+1],\
+                                        val_loss[:epoch+1],\
+                                        file=savefile,\
+                                        title=name if name != "untitled" else None,\
+                                        opts=opts["plot"])
+
+                # print progress
+                if True: #correlation is None :
+                    bar.set_postfix(epoch=epoch,
+                                    train=train_loss[epoch],
+                                    val=val_loss[epoch])
+                else :
+                    bar.set_postfix(epoch=epoch,
+                                    train=train_loss[epoch],
+                                    corr_train=corr["train"][epoch],
+                                    val=val_loss[epoch],
+                                    corr_val=corr["val"][epoch])
             
     # arrays = pd.DataFrame({ "train_loss":train_loss,\
     #           "train_std":train_std,\

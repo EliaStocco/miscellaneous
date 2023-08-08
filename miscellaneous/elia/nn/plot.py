@@ -25,7 +25,7 @@ def plot_learning_curves(train_loss,val_loss,file,title=None,opts=None):
             plt.xscale("log")
             plt.legend()
             plt.grid(True, which="both",ls="-")
-            plt.xlim(0,x.max())
+            plt.xlim(1,x.max())
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             if title is not None :
                 plt.title(title)

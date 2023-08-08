@@ -3,6 +3,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 from ase.neighborlist import neighbor_list, primitive_neighbor_list
 from miscellaneous.elia.classes import MicroState
+from miscellaneous.elia.functions import add_default
 from . import get_type_onehot_encoding
 from ase import Atoms
 import numpy as np
@@ -33,18 +34,13 @@ def my_neighbor_list(lattice,pos,radial_cutoff):
 
 def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,requires_grad=None):
         
-    if requires_grad is None :
-        requires_grad = {}
-
     default = { "pos"        : True,\
                 "lattice"    : True,\
                 "x"          : None,\
                 "edge_vec"   : None,\
                 "edge_index" : None }
-    
-    for k in default:
-        if k not in requires_grad:
-            requires_grad[k] = default[k]
+
+    requires_grad = add_default(requires_grad,default)
 
     species = np.unique(symbols)
     type_onehot, type_encoding = get_type_onehot_encoding(species)
