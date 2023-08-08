@@ -167,9 +167,9 @@ def main():
 
     # for layers in [1,2,3,4,5,6]:
     #     for mul in [1,2,3,4,5,6]:
-    mul = 4
-    layers = 10
-    lmax = 1
+    mul = 3
+    layers = 3
+    lmax = 2
     model_kwargs = {
         "irreps_in":irreps_in,      # One hot scalars (L=0 and even parity) on each atom to represent atom type
         "irreps_out":irreps_out,    # vector (L=1 and odd parity) to output the polarization
@@ -189,8 +189,8 @@ def main():
         N += len(i)
     print("tot. number of parameters: ",N)
 
-    all_bs = [10,30,90]#np.arange(30,101,10)
-    all_lr = [4e-5,2e-4,1e-3]#np.logspace(-1, -4.0, num=8)
+    all_bs = [50]#[10,30,60,90]
+    all_lr = [1e-3]#[2e-4,1e-3,5e-3]
     Ntot = len(all_bs)*len(all_lr)
     print("\n")
     print("all batch_size:",all_bs)
@@ -219,7 +219,7 @@ def main():
             
             hyperparameters = {
                 'batch_size': batch_size,
-                'n_epochs'  : 10,
+                'n_epochs'  : 100,
                 'optimizer' : "Adam",
                 'lr'        : lr,
                 'loss'      : net.loss()#net.loss(lE=1,lF=10) #if OUTPUT == 'P' lE and lF will be ignored

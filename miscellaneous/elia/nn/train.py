@@ -71,7 +71,7 @@ def train(model,\
     # output
     info = "all good"
 
-    default = {"plot":{},"dataloader":{"shuffle":False},"thr":{"exit"}}
+    default = {"plot":{},"dataloader":{"shuffle":False},"thr":{"exit":100}}
     opts = add_default(opts,default)
 
 
@@ -155,11 +155,40 @@ def train(model,\
         loss_fn = MSELoss()
 
     def get_all_dataloader(dataset):
-        return next(iter(make_dataloader(dataset,len(dataset),False)))
+        """
+        Get a data loader for the entire dataset without shuffling.
+
+        This function returns a data loader for the given dataset, allowing access to all data points without shuffling. It's important to set 'shuffle' to False to ensure accurate computation of loss functions.
+
+        Args:
+            dataset: Dataset to create the data loader for.
+
+        Returns:
+            DataLoader: Data loader for the entire dataset without shuffling.
+        """
+        # Pay attention!
+        # 'shuffle' has to be False!
+        # otherwise we will compute the loss function
+        # against the wrong data point
+        return next(iter(make_dataloader(dataset=dataset,
+                                        batch_size=len(dataset),
+                                        shuffle=False)))
 
     def get_all(dataset):
+        """
+        Get the real values of the entire dataset.
+
+        This function returns the real values of the entire dataset by utilizing the 'get_all_dataloader' function to retrieve a data loader and then extracting the real values from it.
+
+        Args:
+            dataset: Dataset to extract real values from.
+
+        Returns:
+            torch.Tensor: Real values of the entire dataset.
+        """
         all_dataloader = get_all_dataloader(dataset)
         return get_real(all_dataloader)
+
     
     # prepare the dataloaders for the train and validation datasets
     dataloader_train = make_dataloader(train_dataset,batch_size)
@@ -189,10 +218,12 @@ def train(model,\
     # compute the real values of the validation dataset only once
     print("\nCompute validation dataset output (this will save time in the future)")
     yval_real   = get_all(val_dataset)
-    #if not opts["dataloader"]["shuffle"]:
+    all_dataloader_val   = get_all_dataloader(val_dataset)
+
+    print("\nCompute training dataset output (this will save time in the future)")
     ytrain_real = get_all(train_dataset)
     all_dataloader_train = get_all_dataloader(train_dataset)
-    all_dataloader_val   = get_all_dataloader(val_dataset)
+    
 
     # correlation
     corr = None
