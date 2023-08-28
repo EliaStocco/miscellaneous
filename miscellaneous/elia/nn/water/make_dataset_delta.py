@@ -21,7 +21,8 @@ def add_reference(datapoint: Data,
     """
     # Subtract the dipole
     # Actually, I could avoid subtraxting the dipole ...
-    datapoint.dipole -= dipole
+    # Let's remove it for semplicity
+    # datapoint.dipole -= dipole
 
     # Compute distance to the reference configuration and add it to the input features
     deltaR = datapoint.pos - pos

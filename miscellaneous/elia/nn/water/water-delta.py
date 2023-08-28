@@ -21,7 +21,7 @@ from copy import copy
 import pandas as pd
 import numpy as np
 import random
-#from miscellaneous.elia.nn.water.make_dataset_delta import make_dataset_delta
+from miscellaneous.elia.nn.water.make_dataset_delta import make_dataset_delta
 from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
 
 # Documentation
@@ -64,7 +64,7 @@ def main():
 
     ########################################## 
 
-    RESTART = False 
+    RESTART = True 
     READ = True
     SAVE = True
     savefile = "data/dataset-delta"
