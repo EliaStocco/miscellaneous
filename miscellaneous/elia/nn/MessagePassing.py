@@ -139,6 +139,10 @@ class MessagePassing(torch.nn.Module):
                 [act_gates[ir.p] for _, ir in irreps_gates],  # gates (scalars)
                 irreps_gated,  # gated tensors
             )
+            print("irreps_node:",irreps_node)
+            print("irreps_node_attr:",self.irreps_node_attr)
+            print("irreps_edge_attr:",self.irreps_edge_attr)
+            print("irreps_in:",gate.irreps_in)
             conv = Convolution(
                 irreps_node, self.irreps_node_attr, self.irreps_edge_attr, gate.irreps_in, fc_neurons, num_neighbors
             )

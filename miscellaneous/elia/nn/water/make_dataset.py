@@ -11,7 +11,7 @@ import numpy as np
 
 #----------------------------------------------------------------#
 
-def my_neighbor_list(lattice,pos,radial_cutoff):
+def my_neighbor_list(lattice,pos,max_radius):
 
     # detach
     if isinstance(lattice, torch.Tensor):
@@ -24,7 +24,7 @@ def my_neighbor_list(lattice,pos,radial_cutoff):
         pbc=[True]*3,
         cell=lattice,
         positions=pos,
-        cutoff=radial_cutoff,
+        cutoff=max_radius,
         self_interaction=True
     )
 
@@ -32,7 +32,7 @@ def my_neighbor_list(lattice,pos,radial_cutoff):
 
 #----------------------------------------------------------------#
 
-def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,requires_grad=None):
+def preprocess(lattice, positions, symbols, max_radius, default_dtype,requires_grad=None):
         
     default = { "pos"        : True,\
                 "lattice"    : True,\
@@ -54,17 +54,17 @@ def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,require
 
     batch = pos.new_zeros(pos.shape[0], dtype=torch.long)
 
-    edge_src, edge_dst, edge_shift = my_neighbor_list(lattice,pos,radial_cutoff)
+    edge_src, edge_dst, edge_shift = my_neighbor_list(lattice,pos,max_radius)
     
     # crystal = Atoms(cell=lattice,positions=pos,symbols=symbols,pbc=True)
-    # edge_src, edge_dst, edge_shift = neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
+    # edge_src, edge_dst, edge_shift = neighbor_list("ijS", a=crystal, cutoff=max_radius, self_interaction=True)
 
     # edge_src, edge_dst, edge_shift = primitive_neighbor_list(
     #     quantities="ijS",
     #     pbc=[True]*3,
     #     cell=lattice,
     #     positions=pos,
-    #     cutoff=radial_cutoff,
+    #     cutoff=max_radius,
     #     self_interaction=True
     # )
 
@@ -104,7 +104,7 @@ def preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,require
 #----------------------------------------------------------------#
 
 def make_dataset(data:MicroState,
-                 radial_cutoff:float,
+                 max_radius:float,
                  default_dtype=torch.float64):
     
     # species = data.all_types()
@@ -113,7 +113,6 @@ def make_dataset(data:MicroState,
     systems = data.to_ase()
 
     energy       = torch.tensor(data.properties["potential"])
-    # polarization = torch.tensor(data.properties["totalpol"])
     dipole       = torch.tensor(data.get_dipole(same_lattice=False))
     forces       = torch.tensor(data.forces)
 
@@ -126,13 +125,13 @@ def make_dataset(data:MicroState,
         # edge_src and edge_dst are the indices of the central and neighboring atom, respectively
         # edge_shift indicates whether the neighbors are in different images / copies of the unit cell
         # edge_src, edge_dst, edge_shift = \
-        #     neighbor_list("ijS", a=crystal, cutoff=radial_cutoff, self_interaction=True)
+        #     neighbor_list("ijS", a=crystal, cutoff=max_radius, self_interaction=True)
 
         pos, lattice, x, edge_vec, edge_index, edge_shift = \
             preprocess( lattice=torch.from_numpy(crystal.cell.array),
                         positions=torch.from_numpy(crystal.get_positions()),#.flatten(),
                         symbols=crystal.get_chemical_symbols(),
-                        radial_cutoff=radial_cutoff,
+                        max_radius=max_radius,
                         default_dtype=default_dtype,
                         requires_grad={"pos":False,"lattice":False})
 
@@ -147,13 +146,12 @@ def make_dataset(data:MicroState,
             pos=pos,
             lattice=lattice,  
             x=x,
-            radial_cutoff = radial_cutoff,
+            max_radius = max_radius,
             symbols = crystal.get_chemical_symbols(),
             edge_index=edge_index,
             edge_vec=edge_vec,
             edge_shift = edge_shift,
             energy=e, # energy
-            # polarization=p, # polarization
             dipole=d, # dipole
             forces=f, # forces
             Natoms=torch.tensor(crystal.get_global_number_of_atoms()).to(int), # valid only if all the structures have the same number of atoms
@@ -165,10 +163,10 @@ def make_dataset(data:MicroState,
 
 #----------------------------------------------------------------#
 
-def make_datapoint(lattice, positions, symbols, radial_cutoff, default_dtype=torch.float64,**argv)->Data:
+def make_datapoint(lattice, positions, symbols, max_radius, default_dtype=torch.float64,**argv)->Data:
 
     pos, lattice, x, edge_vec, edge_index, edge_shift = \
-        preprocess(lattice, positions, symbols, radial_cutoff, default_dtype,**argv)
+        preprocess(lattice, positions, symbols, max_radius, default_dtype,**argv)
     
     return Data(
             pos=pos,

@@ -9,6 +9,7 @@ import time
 #import jax.numpy as jnp
 from .SabiaNetwork import SabiaNetwork
 from miscellaneous.elia.nn.water.make_dataset import make_datapoint
+from miscellaneous.elia.nn.water.make_dataset_delta import make_datapoint_delta
 from typing import TypeVar
 T = TypeVar('T', bound='SabiaNetworkManager')
 # See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
@@ -19,30 +20,61 @@ __all__ = ["SabiaNetworkManager"]
 
 class SabiaNetworkManager(SabiaNetwork):
 
-    output:str
-    lattice: torch.Tensor
-    radial_cutoff: float
-    _radial_cutoff: float
-    symbols: list
-    x: Data
-    R:torch.Tensor
+    # output:str
+    # lattice: torch.Tensor
+    # max_radius: float
+    # _radial_cutoff: float
+    # symbols: list
+    # x: Data
+    # R:torch.Tensor
+    # _make_datapoint:callable
 
-    def __init__(self: T, radial_cutoff: float = 0.0, output: str = "ED", **kwargs) -> None:
+    def __init__(self: T, 
+                 output: str = "ED",
+                 reference:bool=False,
+                 dipole:torch.tensor=None,
+                 pos:torch.tensor=None,
+                 mean:torch.tensor=torch.zeros(0),
+                 std:torch.tensor=torch.zeros(0),
+                 #_make_datapoint:callable=make_datapoint,
+                 **kwargs) -> None:
+        
         super(SabiaNetworkManager, self).__init__(**kwargs)
 
         self.output = output
         if self.output not in ["E", "D", "ED", "EF", "EDF"]:
             raise ValueError("'output' must be 'E', 'D', 'EF', 'ED' or 'EDF'")
 
-        #self.grad = None
-        #self.bec = None
         self.lattice = torch.Tensor()
-        self.radial_cutoff = 0.0
-        self._radial_cutoff = radial_cutoff
         self.symbols = list()
         self.X = Data()
         self.R = torch.Tensor()
+        self.reference = reference
+
+        if self.reference :
+
+            if dipole is None :
+                raise ValueError("'dipole' can not be 'None'")
+            self.ref_dipole = torch.tensor(dipole)
+            
+            if pos is None :
+                raise ValueError("'pos' can not be 'None'")
+            self.ref_pos = torch.tensor(pos)
+
+            self.mean = torch.tensor(mean)
+            self.std = torch.tensor(std)
+
         pass
+
+    def make_datapoint(self,**argv)->Data:
+
+        if self.reference:
+            return make_datapoint_delta(self.ref_dipole,self.ref_pos,**argv)
+        else :
+            return make_datapoint(**argv)
+
+    def get(self,X,requires_grad=True)-> torch.tensor:
+        return self(X)*self.std._requires_grad(requires_grad) + self.mean._requires_grad(requires_grad)
 
     # def train(self: T, mode: bool) -> T:
     #     if self.grad is not None:
@@ -60,7 +92,7 @@ class SabiaNetworkManager(SabiaNetwork):
         Comments:
             - this methods will be automatically differentiated to get the forces"""
         # x = make_datapoint( lattice=self.lattice,\
-        #                     radial_cutoff=self.radial_cutoff,\
+        #                     max_radius=self.max_radius,\
         #                     symbols=self.symbols,\
         #                     positions=R)#,
         #                     #fake = R.detach() if hasattr(R,"detach")  else R)
@@ -111,7 +143,7 @@ class SabiaNetworkManager(SabiaNetwork):
     #     index = X.batch == n
     #     self.lattice = X.lattice[n]
     #     self.symbols = X.symbols[n]
-    #     self.radial_cutoff = float( X.radial_cutoff[n] if hasattr(X, "radial_cutoff") else self._radial_cutoff)
+    #     self.max_radius = float( X.max_radius[n] if hasattr(X, "max_radius") else self._radial_cutoff)
     #     self.R = X.pos[index]
 
     #     # replace values
@@ -120,8 +152,8 @@ class SabiaNetworkManager(SabiaNetwork):
     #             self.lattice = replace["lattice"]
     #         if "symbols" in replace :
     #             self.symbols = replace["symbols"]
-    #         if "radial_cutoff" in replace :
-    #             self.radial_cutoff = replace["radial_cutoff"]
+    #         if "max_radius" in replace :
+    #             self.max_radius = replace["max_radius"]
     #         if "R" in replace :
     #             self.R = replace["R"]
 
@@ -132,7 +164,7 @@ class SabiaNetworkManager(SabiaNetwork):
 
     #     # create the Data object
     #     self.X = make_datapoint(lattice=self.lattice,
-    #                     radial_cutoff=self.radial_cutoff,
+    #                     max_radius=self.max_radius,
     #                     symbols=self.symbols,
     #                     positions=self.R,
     #                     default_dtype=self.default_dtype,
@@ -146,7 +178,7 @@ class SabiaNetworkManager(SabiaNetwork):
         index = X.batch == n
         lattice = X.lattice[n]
         symbols = X.symbols[n]
-        radial_cutoff = float( X.radial_cutoff[n] if hasattr(X, "radial_cutoff") else self._radial_cutoff)
+        max_radius = float( X.max_radius[n] if hasattr(X, "max_radius") else self.max_radius)
         R = X.pos[index]
 
         # replace values
@@ -155,8 +187,8 @@ class SabiaNetworkManager(SabiaNetwork):
                 lattice = replace["lattice"]
             if "symbols" in replace :
                 symbols = replace["symbols"]
-            if "radial_cutoff" in replace :
-                radial_cutoff = replace["radial_cutoff"]
+            if "max_radius" in replace :
+                max_radius = replace["max_radius"]
             if "R" in replace :
                 R = replace["R"]
 
@@ -166,8 +198,8 @@ class SabiaNetworkManager(SabiaNetwork):
             lattice  = torch.einsum("ij,zj->zi",rotate,lattice.reshape((1,-1))).reshape((-1,3))
 
         # create the Data object
-        X = make_datapoint(lattice=lattice,
-                        radial_cutoff=radial_cutoff,
+        X = self.make_datapoint(lattice=lattice,
+                        max_radius=max_radius,
                         symbols=symbols,
                         positions=R,
                         default_dtype=self.default_dtype,
@@ -184,14 +216,14 @@ class SabiaNetworkManager(SabiaNetwork):
             # index = X.batch == n
             # self.lattice = X.lattice[n]
             # self.symbols = X.symbols[n]
-            # self.radial_cutoff = X.radial_cutoff if hasattr(
-            #     X, "radial_cutoff") else self._radial_cutoff
+            # self.max_radius = X.max_radius if hasattr(
+            #     X, "max_radius") else self._radial_cutoff
             # if batch_size == 1 :
-            #     self.radial_cutoff = float(self.radial_cutoff)
+            #     self.max_radius = float(self.max_radius)
             # self.R = X.pos[index]#.flatten()
             # 
             # self.X = make_datapoint(lattice=self.lattice,
-            #                         radial_cutoff=self.radial_cutoff,
+            #                         max_radius=self.max_radius,
             #                         symbols=self.symbols,
             #                         positions=self.R,
             #                         default_dtype=self.default_dtype)
@@ -227,12 +259,12 @@ class SabiaNetworkManager(SabiaNetwork):
             # index = X.batch == n
             # self.lattice = X.lattice[n]
             # self.symbols = X.symbols[n]
-            # self.radial_cutoff = X.radial_cutoff if hasattr(
-            #     X, "radial_cutoff") else self._radial_cutoff
+            # self.max_radius = X.max_radius if hasattr(
+            #     X, "max_radius") else self._radial_cutoff
             # R = X.pos[index]#.flatten()
             # 
             # self.X = make_datapoint(lattice=self.lattice,
-            #                         radial_cutoff=self.radial_cutoff,
+            #                         max_radius=self.max_radius,
             #                         symbols=self.symbols,
             #                         positions=R,
             #                         default_dtype=self.default_dtype)
@@ -539,7 +571,7 @@ def main():
     # Changing the current working directory
     os.chdir('./water/')
 
-    radial_cutoff = 6.0
+    max_radius = 6.0
 
     ##########################################
 
@@ -576,7 +608,7 @@ def main():
         if os.path.exists(savefile+".torch"):
             dataset = torch.load(savefile+".torch")
         else :
-            dataset = make_dataset( data=data,radial_cutoff=radial_cutoff)
+            dataset = make_dataset( data=data,max_radius=max_radius)
 
         # train, test, validation
         #p_test = 20/100 # percentage of data in test dataset
@@ -628,11 +660,11 @@ def main():
 
     print("irreps_out:",irreps_out)
 
-    radial_cutoff = 6.0
+    max_radius = 6.0
     model_kwargs = {
         "irreps_in":irreps_in,      # One hot scalars (L=0 and even parity) on each atom to represent atom type
         "irreps_out":irreps_out,    # vector (L=1 and odd parity) to output the dipole
-        "max_radius":radial_cutoff, # Cutoff radius for convolution
+        "max_radius":max_radius, # Cutoff radius for convolution
         "num_neighbors":2,          # scaling factor based on the typical number of neighbors
         "pool_nodes":True,          # We pool nodes to predict total energy
         "num_nodes":2,
@@ -641,7 +673,7 @@ def main():
         "lmax":1,
         "default_dtype" : default_dtype,
     }
-    net = SabiaNetworkManager(output=OUTPUT,radial_cutoff=radial_cutoff,**model_kwargs)
+    net = SabiaNetworkManager(output=OUTPUT,**model_kwargs)
     print(net)
     print("net.irreps_in:",net.irreps_in)   #>> net.irreps_in: 2x0e
     print("net.irreps_out:",net.irreps_out) #>> net.irreps_out: 1x0e+1x1o

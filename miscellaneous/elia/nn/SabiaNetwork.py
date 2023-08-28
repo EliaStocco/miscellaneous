@@ -54,6 +54,9 @@ class SabiaNetwork(torch.nn.Module):
         self.pool_nodes = pool_nodes
         self.debug = debug
 
+        # if irreps_node_attr is None :
+        #     irreps_node_attr = irreps_in
+
         
         if self.debug: print("irreps_in:",irreps_in)
         if self.debug: print("irreps_out:",irreps_out)
@@ -75,7 +78,7 @@ class SabiaNetwork(torch.nn.Module):
             num_neighbors=num_neighbors,
         )
 
-        self.sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")
+        #self.sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")
 
         self.irreps_in = self.mp.irreps_node_input
         self.irreps_out = self.mp.irreps_node_output
@@ -111,14 +114,12 @@ class SabiaNetwork(torch.nn.Module):
         return batch, data['x'], edge_src, edge_dst, edge_vec
 
     def forward(self, data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]]) -> torch.Tensor: 
-        if self.debug: print("SabiaNetwork:1")
+        
         batch, node_inputs, edge_src, edge_dst, edge_vec = self.preprocess(data)
         # del data
-        if self.debug: print("SabiaNetwork:2")
 
-        # edge_attr = o3.spherical_harmonics( range(self.lmax + 1), edge_vec, True, normalization="component")
-        edge_attr = self.sh(edge_vec)
-        if self.debug: print("SabiaNetwork:3")
+        edge_attr = o3.spherical_harmonics( range(self.lmax + 1), edge_vec, True, normalization="component")
+        #edge_attr = self.sh(edge_vec)
         
         # Edge length embedding
         edge_length = edge_vec.norm(dim=1)
@@ -131,14 +132,11 @@ class SabiaNetwork(torch.nn.Module):
             basis="cosine",  # the cosine basis with cutoff = True goes to zero at max_radius
             cutoff=True,  # no need for an additional smooth cutoff
         ).mul(self.number_of_basis**0.5)
-        if self.debug: print("SabiaNetwork:4")
 
         # Node attributes are not used here
         node_attr = node_inputs.new_ones(node_inputs.shape[0], 1)
-        if self.debug: print("SabiaNetwork:5")
 
         node_outputs = self.mp(node_inputs, node_attr, edge_src, edge_dst, edge_attr, edge_length_embedding)
-        if self.debug: print("SabiaNetwork:6")
         
         if self.pool_nodes:
             # Elia: understand what 'scatter' does
