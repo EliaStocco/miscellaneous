@@ -21,6 +21,7 @@ from copy import copy
 import pandas as pd
 import numpy as np
 import random
+from miscellaneous.elia.nn.water.make_dataset_delta import make_dataset_delta
 from miscellaneous.elia.nn.water.make_dataset import make_dataset
 from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
 
@@ -35,9 +36,11 @@ def main():
     ##########################################
     # some parameters
 
-    OUTPUT = "EF"
+    reference = True
+    OUTPUT = "D"
     max_radius = 6.0
     output_folder = "results"
+    ref_index = 0 
 
     ##########################################
 
@@ -66,16 +69,28 @@ def main():
     RESTART = False 
     READ = True
     SAVE = True
-    savefile = "data/dataset"
+    savefile = "data/dataset-delta" if reference else "data/dataset"
 
     if not READ or not os.path.exists(savefile+".train.torch") or RESTART :
         print("building dataset")
 
         if os.path.exists(savefile+".torch") and not RESTART:
             dataset = torch.load(savefile+".torch")
+            if reference:
+                dipole  = dataset[ref_index].dipole
+                pos     = dataset[ref_index].pos
+            else :
+                dipole = None
+                pos = None
         else :
-            dataset = make_dataset( data=data,max_radius=max_radius)
-
+            if reference :
+                dataset, dipole, pos = make_dataset_delta(  ref_index = ref_index,
+                                                            data = data,
+                                                            max_radius = max_radius)
+            else :
+                dataset = make_dataset( data=data,max_radius=max_radius)
+                dipole = None
+                pos = None
         # shuffle
         random.shuffle(dataset)
 
@@ -97,6 +112,17 @@ def main():
         train_dataset = torch.load(savefile+".train.torch")
         val_dataset   = torch.load(savefile+".val.torch")
         test_dataset  = torch.load(savefile+".test.torch")
+
+        if reference :
+            # Open the JSON file and load the data
+            with open("reference.json") as f:
+                reference = json.load(f)
+            dipole = torch.tensor(reference['dipole'])
+            pos    = torch.tensor(reference['pos'])
+        else :
+            dipole = None
+            pos = None
+
         SAVE = False
             
     if SAVE :
@@ -104,6 +130,12 @@ def main():
         torch.save(train_dataset,savefile+".train.torch")
         torch.save(val_dataset,  savefile+".val.torch")
         torch.save(test_dataset, savefile+".test.torch")
+
+        if reference :
+            # Write the dictionary to the JSON file
+            with open("reference.json", "w") as json_file:
+                # The 'indent' parameter is optional for pretty formatting
+                json.dump({"dipole":dipole.tolist(),"pos":pos.tolist()}, json_file, indent=4)  
 
     print("train:",len(train_dataset))
     print("  val:",len(val_dataset))
@@ -115,18 +147,18 @@ def main():
     print("dipole mean :",mu)
     print("dipole sigma:",sigma)
 
-    metadata = {
-        "mean": list(mu),
-        "std": list(sigma),
-        "cutoff":max_radius,
-    }
+    # metadata = {
+    #     "mean": list(mu),
+    #     "std": list(sigma),
+    #     "cutoff":max_radius,
+    # }
 
-    # Specify the file path
-    file_path = "metadata.json"
+    # # Specify the file path
+    # file_path = "metadata.json"
 
-    # Write the dictionary to the JSON file
-    with open(file_path, "w") as json_file:
-        json.dump(metadata, json_file, indent=4)  # The 'indent' parameter is optional for pretty formatting
+    # # Write the dictionary to the JSON file
+    # with open(file_path, "w") as json_file:
+    #     json.dump(metadata, json_file, indent=4)  # The 'indent' parameter is optional for pretty formatting
 
 
     print("nomalizing the 'dipole' variable of all the dataset")
@@ -158,7 +190,11 @@ def main():
 
     ##########################################
 
-    irreps_in = "{:d}x0e".format(len(data.all_types()))
+    if reference :
+        irreps_in = "{:d}x0e+1x1o".format(len(data.all_types()))
+    else :
+        irreps_in = "{:d}x0e".format(len(data.all_types()))
+
     if OUTPUT in ["E","EF"]:
         irreps_out = "1x0e"
     elif OUTPUT in ["ED","EDF"]:
@@ -171,19 +207,48 @@ def main():
     mul = 3
     layers = 3
     lmax = 2
+    
+    ##########################################
+
+    metadata_kwargs = {
+        "output":OUTPUT,
+        "reference" : reference,
+        "dipole" : dipole.tolist(),
+        "pos" : pos.tolist(),
+        "mean": list(mu),
+        "std": list(sigma),
+    }
+
+    # Write the dictionary to the JSON file
+    with open("metadata_kwargs.json", "w") as json_file:
+        # The 'indent' parameter is optional for pretty formatting
+        json.dump(metadata_kwargs, json_file, indent=4)  
+
+    ##########################################
+
     model_kwargs = {
         "irreps_in":irreps_in,      # One hot scalars (L=0 and even parity) on each atom to represent atom type
         "irreps_out":irreps_out,    # vector (L=1 and odd parity) to output the polarization
-        "max_radius":max_radius, # Cutoff radius for convolution
+        "max_radius":max_radius,    # Cutoff radius for convolution
         "num_neighbors":2,          # scaling factor based on the typical number of neighbors
         "pool_nodes":True,          # We pool nodes to predict total energy
         "num_nodes":2,
         "mul":mul,
         "layers":layers,
         "lmax":lmax,
-        "default_dtype" : default_dtype,
+        #"default_dtype" : str(default_dtype),
     }
-    net = SabiaNetworkManager(output=OUTPUT,**model_kwargs)
+    # Write
+    #  the dictionary to the JSON file
+    with open("metadata_kwargs.json", "w") as json_file:
+        # The 'indent' parameter is optional for pretty formatting
+        json.dump(model_kwargs, json_file, indent=4)
+
+    ##########################################
+
+    kwargs = {**metadata_kwargs, **model_kwargs}
+
+    net = SabiaNetworkManager(**kwargs)
     print(net)
     N = 0 
     for i in net.parameters():
@@ -200,6 +265,12 @@ def main():
     df = pd.DataFrame(columns=["bs","lr","file"],index=np.arange(len(all_bs)*len(all_lr)))
 
     init_model = copy(net) 
+
+    # choose the loss function
+    if OUTPUT in ["D","E"] :
+        loss = net.loss()
+    elif OUTPUT == "EF" :
+        loss = net.loss(lE=0.1,lF=0.9)
 
     n = 0
     info = "all good"
@@ -223,12 +294,16 @@ def main():
                 'n_epochs'  : 100,
                 'optimizer' : "Adam",
                 'lr'        : lr,
-                'loss'      : net.loss(lE=0.1,lF=0.9) #if OUTPUT == 'P' lE and lF will be ignored
+                'loss'      : loss 
             }
 
             print("\n\ttraining network...\n")
             count_try = 0
             while (info == "try again" and count_try < max_try) or count_try == 0 :
+
+                if info == "try again":
+                    print("\nLet's try again\n")
+
                 model, arrays, corr, info = \
                     train(  model=net,
                             train_dataset=train_dataset,
@@ -236,10 +311,9 @@ def main():
                             hyperparameters=hyperparameters,
                             get_pred=net.get_pred,
                             get_real=lambda X: net.get_real(X=X,output=net.output),
-                            #correlation=SabiaNetworkManager.correlation,
                             output=output_folder,
                             name=df.at[n,"file"],
-                            opts={"plot":{"N":1},"dataloader":{"shuffle":True}})
+                            opts={"plot":{"N":1},"dataloader":{"shuffle":True},"disable":False})
                 count_try += 1
 
             if info == "try again":
@@ -250,7 +324,7 @@ def main():
 
             df[:n].to_csv("temp-info.csv",index=False)
 
-    # writo information to file 'info.csv'
+    # write information to file 'info.csv'
     try : 
         df.to_csv("info.csv",index=False)
 
