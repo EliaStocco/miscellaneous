@@ -70,7 +70,11 @@ def train(model,\
     # information about the status of the training
     info = "all good"
 
-    default = {"plot":{},"dataloader":{"shuffle":False},"thr":{"exit":100},"disable":False}
+    default = { "plot":{},\
+                "dataloader":{"shuffle":False},\
+                "thr":{"exit":100},\
+                "disable":False,\
+                "Natoms":1}
     opts = add_default(opts,default)
 
     # set default values
@@ -265,7 +269,7 @@ def train(model,\
                 loss = loss_fn(y_pred,y_real)
 
                 # store the loss function in an array
-                train_loss_one_epoch[step] = float(loss)
+                train_loss_one_epoch[step] = float(loss)/opts["Natoms"]
 
                 # backward pass
                 optimizer.zero_grad()
@@ -304,11 +308,11 @@ def train(model,\
                 # compute the loss function
                 # predict the value for the validation dataset
                 yval_pred = get_pred(model,all_dataloader_val)
-                val_loss[epoch] = float(loss_fn(yval_pred,yval_real))
+                val_loss[epoch] = float(loss_fn(yval_pred,yval_real))/opts["Natoms"]
 
                 # set arrays
-                ytrain_pred = get_pred(model=model,X=all_dataloader_train) # model(all_dataloader_train)
-                train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real)) #np.mean(train_loss_one_epoch)
+                ytrain_pred = get_pred(model=model,X=all_dataloader_train)
+                train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real))/opts["Natoms"]
 
                 if train_loss[epoch] > opts["thr"]["exit"]:
                     info = "try again"
