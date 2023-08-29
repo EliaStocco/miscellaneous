@@ -133,7 +133,7 @@ def make_dataset(data:MicroState,
                         symbols=crystal.get_chemical_symbols(),
                         max_radius=max_radius,
                         default_dtype=default_dtype,
-                        requires_grad={"pos":False,"lattice":False})
+                        requires_grad={"pos":True,"lattice":True})
 
         
         # pos     = torch.tensor(crystal.get_positions())

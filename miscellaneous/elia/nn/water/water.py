@@ -35,7 +35,7 @@ def main():
     ##########################################
     # some parameters
 
-    OUTPUT = "D"
+    OUTPUT = "EF"
     max_radius = 6.0
     output_folder = "results"
 
@@ -223,7 +223,7 @@ def main():
                 'n_epochs'  : 100,
                 'optimizer' : "Adam",
                 'lr'        : lr,
-                'loss'      : net.loss()#net.loss(lE=1,lF=10) #if OUTPUT == 'P' lE and lF will be ignored
+                'loss'      : net.loss(lE=0.1,lF=0.9) #if OUTPUT == 'P' lE and lF will be ignored
             }
 
             print("\n\ttraining network...\n")
@@ -263,8 +263,6 @@ def main():
             print(f"Error deleting file '{e}'")
     except OSError as e:
         print(f"Error writing file '{e}'")
-
-    os.remove("temp-info.csv")
 
     print("\nJob done :)")
 

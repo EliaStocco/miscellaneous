@@ -64,7 +64,7 @@ def main():
 
     ########################################## 
 
-    RESTART = True 
+    RESTART = False 
     READ = True
     SAVE = True
     savefile = "data/dataset-delta"
@@ -274,6 +274,10 @@ def main():
             print("\n\ttraining network...\n")
             count_try = 0
             while (info == "try again" and count_try < max_try) or count_try == 0 :
+
+                if info == "try again":
+                    print("\nLet's try again\n")
+
                 model, arrays, corr, info = \
                     train(  model=net,
                             train_dataset=train_dataset,
@@ -281,10 +285,9 @@ def main():
                             hyperparameters=hyperparameters,
                             get_pred=net.get_pred,
                             get_real=lambda X: net.get_real(X=X,output=net.output),
-                            #correlation=SabiaNetworkManager.correlation,
                             output=output_folder,
                             name=df.at[n,"file"],
-                            opts={"plot":{"N":1},"dataloader":{"shuffle":True}})
+                            opts={"plot":{"N":1},"dataloader":{"shuffle":True},"disable":True})
                 count_try += 1
 
             if info == "try again":
@@ -295,7 +298,7 @@ def main():
 
             df[:n].to_csv("temp-info.csv",index=False)
 
-    # writo information to file 'info.csv'
+    # write information to file 'info.csv'
     try : 
         df.to_csv("info.csv",index=False)
 
@@ -308,8 +311,6 @@ def main():
             print(f"Error deleting file '{e}'")
     except OSError as e:
         print(f"Error writing file '{e}'")
-
-    os.remove("temp-info.csv")
 
     print("\nJob done :)")
 

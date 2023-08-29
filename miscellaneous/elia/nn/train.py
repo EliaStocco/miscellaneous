@@ -1,4 +1,4 @@
-from copy import copy
+# from copy import copy
 import torch
 from torch.nn import MSELoss
 from torch.optim import Adam
@@ -11,12 +11,11 @@ from .make_dataloader import _make_dataloader
 from ..functions import add_default
 from .plot import plot_learning_curves
 
-#__all__ = ["train"]
+__all__ = ["train"]
 
 def train(model,\
           train_dataset,\
           val_dataset,\
-          #out_shape=None,\
           hyperparameters:dict=None,\
           get_pred:callable=None,\
           get_real:callable=None,\
@@ -68,12 +67,11 @@ def train(model,\
     
     print("\nTraining...")
 
-    # output
+    # information about the status of the training
     info = "all good"
 
-    default = {"plot":{},"dataloader":{"shuffle":False},"thr":{"exit":100}}
+    default = {"plot":{},"dataloader":{"shuffle":False},"thr":{"exit":100},"disable":False}
     opts = add_default(opts,default)
-
 
     # set default values
     if get_pred is None :
@@ -91,23 +89,29 @@ def train(model,\
     
     # output folder
     if output is None :
-        warnings.warn("'output' is None: specify a folder name to print some information to file")
+        warnings.warn("'output' is None: specify a folder name to print some information to file.\n\
+                      'results' will be set as default")
+        output = 'results'
 
-    else :
-        if name is None :
-            warnings.warn("'name' is None: specify a filename to distinguish the results from other hyperparameters")
-            name = "untitled"
+    # the name of the output files
+    if name is None :
+        warnings.warn("'name' is None: specify a filename to distinguish the results from other hyperparameters")
+        name = "untitled"
 
-        folders = {"networks"     :"{:s}/networks".format(output),\
-                   "networks-temp":"{:s}/networks-temp".format(output),\
-                   "dataframes"   :"{:s}/dataframes".format(output),\
-                   "images"       :"{:s}/images".format(output),\
-                   "correlations" :"{:s}/correlations".format(output)}
-        
-        for folder in [output,*folders.values()]:
-            if not os.path.exists(folder):
-                print("creating folder '{:s}'".format(folder))
-                os.mkdir(folder)
+    # output folders
+    folders = { "networks"        :"{:s}/networks".format(output),\
+                "networks-temp"   :"{:s}/networks-temp".format(output),\
+                "parameters"      :"{:s}/parameters".format(output),\
+                "parameters-temp" :"{:s}/parameters-temp".format(output),\
+                "dataframes"      :"{:s}/dataframes".format(output),\
+                "images"          :"{:s}/images".format(output),\
+                "correlations"    :"{:s}/correlations".format(output)}
+    
+    # create the output folders
+    for folder in [output,*folders.values()]:
+        if not os.path.exists(folder):
+            print("creating folder '{:s}'".format(folder))
+            os.mkdir(folder)
 
     # hyperparameters    
     if "batch_size" not in hyperparameters:
@@ -154,6 +158,7 @@ def train(model,\
     if type(loss_fn) == str and loss_fn.lower() == "mse":
         loss_fn = MSELoss()
 
+    # a useful function
     def get_all_dataloader(dataset):
         """
         Get a data loader for the entire dataset without shuffling.
@@ -174,6 +179,7 @@ def train(model,\
                                         batch_size=len(dataset),
                                         shuffle=False)))
 
+    # another useful function
     def get_all(dataset):
         """
         Get the real values of the entire dataset.
@@ -210,9 +216,8 @@ def train(model,\
     train_loss = np.full(n_epochs,np.nan)
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
 
-    # dataframne
+    # dataframe
     arrays = pd.DataFrame({ "train":train_loss,\
-                            #"train_std":train_std})#,\
                             "val":val_loss})
 
     # compute the real values of the validation dataset only once
@@ -223,7 +228,10 @@ def train(model,\
     print("\nCompute training dataset output (this will save time in the future)")
     ytrain_real = get_all(train_dataset)
     all_dataloader_train = get_all_dataloader(train_dataset)
-    
+
+    savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
+    print("\nSaving 'model' with dummy parameters to file '{:s}'".format(savefile))
+    torch.save(model, savefile)    
 
     # correlation
     corr = None
@@ -239,7 +247,8 @@ def train(model,\
         
         with tqdm(enumerate(dataloader_train),\
                   total=batches_per_epoch,\
-                  bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}') as bar:
+                  bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',\
+                  disable=opts["disable"]) as bar:
 
             for step,X in bar:
 
@@ -284,9 +293,13 @@ def train(model,\
             #model.eval()
             with torch.no_grad():
                 
-                if output is not None :
-                    savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
-                    torch.save(model, savefile)
+                # saving model to temporary file
+                savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
+                torch.save(model, savefile)
+
+                # saving parameters to temporary file
+                savefile = "{:s}/{:s}.torch".format(folders["parameters-temp"],name)
+                torch.save(model.state_dict(), savefile)
 
                 # compute the loss function
                 # predict the value for the validation dataset
@@ -294,7 +307,7 @@ def train(model,\
                 val_loss[epoch] = float(loss_fn(yval_pred,yval_real))
 
                 # set arrays
-                ytrain_pred = model(all_dataloader_train)
+                ytrain_pred = get_pred(model=model,X=all_dataloader_train) # model(all_dataloader_train)
                 train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real)) #np.mean(train_loss_one_epoch)
                 #train_std [epoch] = np.std(train_loss_one_epoch)
 
@@ -338,18 +351,28 @@ def train(model,\
                                     corr_train=corr["train"][epoch],
                                     val=val_loss[epoch],
                                     corr_val=corr["val"][epoch])
-            
-    # arrays = pd.DataFrame({ "train_loss":train_loss,\
-    #           "train_std":train_std,\
-    #           "val_loss":val_loss})
-            
-    # deepcopy the trained model into the output variable
-    #out_model = copy(model)
+    
+    # Finished training 
 
-    # restore the original value of 'model'
-    #model = in_model
-
+    # Saving some quantities to file
     if info == "all good":
+        
+        # saving model to file
+        savefile = "{:s}/{:s}.torch".format(folders["networks"],name)
+        print("\nSaving 'model' to file '{:s}'".format(savefile))
+        torch.save(model, savefile)
+
+        # saving parameters to file
+        savefile = "{:s}/{:s}.torch".format(folders["parameters"],name)
+        print("\nSaving parameters to file '{:s}'".format(savefile))
+        torch.save(model.state_dict(), savefile)
+
+        # removing initial model 
+        savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
+        if os.path.exists(savefile):
+            print("\nDeleting 'model' with dummy parameters: removing file '{:s}'".format(savefile))
+            os.remove(savefile)
+    
         # Important message
         print("\n\nThe following quantities have been saved to these folders:")
         for k in folders:
@@ -357,7 +380,9 @@ def train(model,\
         
         print("\nTraining done!\n")
 
+    # Something wrong happened during the training
+    # We will let the user know about that through the variable 'info'
     elif info == "try again":
-        print("\nTraining stopped: let's try again\n")
+        print("\nTraining stopped: we could try again\n")
     
     return model, arrays, corr, info

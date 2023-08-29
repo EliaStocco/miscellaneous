@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             //"program": "/home/elia/Google-Drive/google-personal/miscellaneous/miscellaneous/elia/classes.py",
-            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water/water-delta.py",
+            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water/water.py",
             //"program":"/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/tests/autograd.py",
             "cwd": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water/",
             //"cwd":"/home/elia/Google-Drive/google-personal/works/anharmonic-couplings/",
