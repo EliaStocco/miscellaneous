@@ -82,9 +82,9 @@ def main():
         # train, test, validation
         #p_test = 20/100 # percentage of data in test dataset
         #p_val  = 20/100 # percentage of data in validation dataset
-        n = 1000
-        i = 500#int(p_test*len(dataset))
-        j = 500#int(p_val*len(dataset))
+        n = 100
+        i = 10#int(p_test*len(dataset))
+        j = 10#int(p_val*len(dataset))
 
         train_dataset = dataset[:n]
         val_dataset   = dataset[n:n+j]
@@ -190,7 +190,7 @@ def main():
         N += len(i)
     print("tot. number of parameters: ",N)
 
-    all_bs = [50]#[10,30,60,90]
+    all_bs = [10]#[10,30,60,90]
     all_lr = [1e-3]#[2e-4,1e-3,5e-3]
     Ntot = len(all_bs)*len(all_lr)
     print("\n")

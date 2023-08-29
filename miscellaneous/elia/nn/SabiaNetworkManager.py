@@ -1,17 +1,17 @@
 from torch_geometric.data import Data
 import torch
-from torch import vmap
+# from torch import vmap
 from torch.func import jacrev
 #from copy import copy
 import numpy as np
 from scipy.stats import spearmanr
 from torch.nn import MSELoss
 import time
-#import jax
-#import jax.numpy as jnp
+# import jax
+# import jax.numpy as jnp
 from .SabiaNetwork import SabiaNetwork
-from miscellaneous.elia.nn.water.make_dataset import make_datapoint
-from miscellaneous.elia.nn.water.make_dataset_delta import make_datapoint_delta
+# from miscellaneous.elia.nn.water.make_dataset import make_datapoint
+# from miscellaneous.elia.nn.water.make_dataset_delta import make_datapoint_delta
 from typing import TypeVar
 T = TypeVar('T', bound='SabiaNetworkManager')
 # See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
@@ -38,7 +38,6 @@ class SabiaNetworkManager(SabiaNetwork):
                  pos:torch.tensor=None,
                  mean:torch.tensor=torch.zeros(0),
                  std:torch.tensor=torch.zeros(0),
-                 #_make_datapoint:callable=make_datapoint,
                  **kwargs) -> None:
         
         super(SabiaNetworkManager, self).__init__(**kwargs)
@@ -55,7 +54,7 @@ class SabiaNetworkManager(SabiaNetwork):
 
         self._forces = None
         self._bec = None
-        self._X = Data()
+        self._X = None
 
         if self.reference :
 
@@ -93,14 +92,16 @@ class SabiaNetworkManager(SabiaNetwork):
     def batch(X):
         return len(torch.unique(X.batch))
 
-    def make_datapoint(self,**argv)->Data:
+    # def make_datapoint(self,**argv)->Data:
 
-        if self.reference:
-            return make_datapoint_delta(self.ref_dipole,self.ref_pos,**argv)
-        else :
-            return make_datapoint(**argv)
+    #     if self.reference:
+    #         return make_datapoint_delta(self.ref_dipole,self.ref_pos,**argv)
+    #     else :
+    #         return make_datapoint(**argv)
 
     def get(self,X,requires_grad=True)-> torch.tensor:
+        """Get the correct value of the output restoring the original 'mean' and 'std' values.
+        This should be used only during MD simulation."""
         return self(X)*self.std._requires_grad(requires_grad) + self.mean._requires_grad(requires_grad)
 
     # def train(self: T, mode: bool) -> T:
@@ -108,102 +109,51 @@ class SabiaNetworkManager(SabiaNetwork):
     #         del self.grad     # delete the gradient
     #         self.grad = None  # build an empty gradient
     #     return super(SabiaNetworkManager, self).train(mode)
-    
-    def pol(self: T, R) -> torch.tensor:
-        self._X.pos = R.reshape((-1,3))
-        y = self(self._X)
-        if self.output == "D":
-            return y
-        elif self.output in ["ED","EDF"]:
-            return y[:,1:4]
+
+    # def _prepare(self: T, X: Data, n:int,rotate=None,replace=None,**argv)->(Data,torch.tensor):
+    #     """prepare data """
+
+    #     if n >= 0 :
+    #         index = X.batch == n
+    #         lattice = X.lattice[n]
+    #         symbols = X.symbols[n]
+    #         max_radius = float( X.max_radius[n] if hasattr(X, "max_radius") else self.max_radius)
+    #         R = X.pos[index]
+
+    #         # replace values
+    #         if replace is not None:
+    #             if "lattice" in replace :
+    #                 lattice = replace["lattice"]
+    #             if "symbols" in replace :
+    #                 symbols = replace["symbols"]
+    #             if "max_radius" in replace :
+    #                 max_radius = replace["max_radius"]
+    #             if "R" in replace :
+    #                 R = replace["R"]
+
+    #         # rotate, useful for 'check_equivariance'
+    #         if rotate is not None :          
+    #             R        = torch.einsum("ij,zj->zi",rotate,R.reshape((1,-1))).reshape((-1,3))
+    #             lattice  = torch.einsum("ij,zj->zi",rotate,lattice.reshape((1,-1))).reshape((-1,3))
+
+    #     else :
+    #         batch_size = self.batch(X)
+    #         lattice = X.lattice
+    #         symbols = X.symbols
+    #         max_radius = [self.max_radius]*batch_size
+    #         R = X.pos.reshape((batch_size,-1,3)).shape # X.pos
+
+    #     # create the Data object
+    #     X0 = self.make_datapoint(lattice=lattice,
+    #                     max_radius=max_radius,
+    #                     symbols=symbols,
+    #                     positions=R,
+    #                     default_dtype=self.default_dtype,
+    #                     **argv)
         
-    def dipole(self: T, X: Data,requires_grad:bool=True) -> torch.tensor:
-        """Electric dipole
-        Input:
-            - R: (N,3) tensor of positions
-        Output:
-            - dipole
-        """
+    #     return X0, R
 
-        if self.output not in ["D","ED","EDF"]:
-            raise ValueError("'dipole' not present in the output of this torch.nn.Module")
-        
-        batch_size = self.batch(X)
-        y = torch.zeros((batch_size,3), requires_grad=requires_grad)
-
-        for n in range(batch_size):
-
-            # prepare data
-            x,R = self._prepare(X,n)
-        
-            tmp = self(self._X)
-
-            if self.output == "D":
-                y.data[n,:] = tmp
-            elif self.output in ["ED","EDF"]:
-                y.data[n,:] = tmp[:,1:4]
-
-        return y
-
-    def _prepare(self: T, X: Data, n:int,rotate=None,replace=None,**argv)->(Data,torch.tensor):
-        """prepare data """
-
-        if n >= 0 :
-            index = X.batch == n
-            lattice = X.lattice[n]
-            symbols = X.symbols[n]
-            max_radius = float( X.max_radius[n] if hasattr(X, "max_radius") else self.max_radius)
-            R = X.pos[index]
-
-            # replace values
-            if replace is not None:
-                if "lattice" in replace :
-                    lattice = replace["lattice"]
-                if "symbols" in replace :
-                    symbols = replace["symbols"]
-                if "max_radius" in replace :
-                    max_radius = replace["max_radius"]
-                if "R" in replace :
-                    R = replace["R"]
-
-            # rotate, useful for 'check_equivariance'
-            if rotate is not None :          
-                R        = torch.einsum("ij,zj->zi",rotate,R.reshape((1,-1))).reshape((-1,3))
-                lattice  = torch.einsum("ij,zj->zi",rotate,lattice.reshape((1,-1))).reshape((-1,3))
-
-        else :
-            batch_size = self.batch(X)
-            lattice = X.lattice
-            symbols = X.symbols
-            max_radius = [self.max_radius]*batch_size
-            R = X.pos.reshape((batch_size,-1,3)).shape # X.pos
-
-        # create the Data object
-        X0 = self.make_datapoint(lattice=lattice,
-                        max_radius=max_radius,
-                        symbols=symbols,
-                        positions=R,
-                        default_dtype=self.default_dtype,
-                        **argv)
-        
-        return X0, R
-    
-    def energy(self: T, X: Data,requires_grad:bool=True) -> torch.tensor:
-        batch_size = self.batch(X)
-        y = torch.zeros(batch_size, requires_grad=requires_grad)
-
-        for n in range(batch_size):
-
-            # prepare data
-            x,R = self._prepare(X,n)
-            
-            tmp = self.PES(R)
-            y.data[n] = tmp
-
-        return y
-
-
-    def PES(self: T, R) -> torch.tensor:
+    def _dummy_output_R(self: T, R:torch.tensor) -> torch.tensor:
         """Potential Energy Surface
         Input:
             - R: (N,3) tensor of positions
@@ -220,11 +170,34 @@ class SabiaNetworkManager(SabiaNetwork):
         # to the input 'R', so we simply recompute them.
 
         if hasattr(self._X,"edge_vec"):
-            #if not self._X.edge_vec.requires_grad or not R.requires_grad:
             del self._X.edge_vec
 
         # Compute the output
         y = self(self._X)
+
+        return y
+    
+    def energy(self: T, X) -> torch.tensor:
+
+        if self.output not in ["E","ED","EDF"]:
+            raise ValueError("'energy' not present in the output of this 'torch.nn.Module'")
+        
+        # Compute the output
+        y = self(X)
+        
+        # Extract the energy in case we are evaluating also the dipole
+        y = y if self.output == "E" else y[:,0]
+
+        return y
+
+    def _pes(self: T, R:torch.tensor) -> torch.tensor:
+        """Return the potential energy for a given set of nuclear coordinates."""
+
+        if self.output not in ["E","ED","EDF","EF"]:
+            raise ValueError("'energy' not present in the output of this 'torch.nn.Module'")
+
+        # Compute the output
+        y = self._dummy_output_R(R)
         
         # Extract the energy in case we are evaluating also the dipole
         y = y if self.output == "E" else y[:,0]
@@ -236,10 +209,10 @@ class SabiaNetworkManager(SabiaNetwork):
 
         # Compute the jacobian of the energy
         if ( not hasattr(self,"_forces") or self._forces is None) or recompute:
-            self._forces = jacrev(self.PES)
+            self._forces = jacrev(self._pes)
 
         # Save the information into a global variable
-        # that will be used inside 'self.PES'
+        # that will be used inside 'self._pes'
         self._X = X
 
         # Reshape the positions according to the batches
@@ -250,7 +223,7 @@ class SabiaNetworkManager(SabiaNetwork):
         #R.requires_grad_(True)
 
         # Evaluate the jacobian.
-        # The positions are reshaped inside 'self.PES', but in this way
+        # The positions are reshaped inside 'self._pes', but in this way
         # we get 'y' with the batches in a separate dimension/axis.
         y = self._forces(R)
 
@@ -277,23 +250,104 @@ class SabiaNetworkManager(SabiaNetwork):
 
         return y
 
-    def BEC(self: T, X: Data,requires_grad=False,*argc,**argv) -> torch.tensor:
+    # def volume(self:T,X) -> torch.tensor:
 
-        batch_size = len(np.unique(X.batch))
-        # y = torch.zeros((batch_size, 3,X.pos.shape[0]*X.pos.shape[1]/batch_size), requires_grad=requires_grad)
-        y = torch.zeros((3,X.pos.shape[0]*X.pos.shape[1]), requires_grad=requires_grad)
-        y = y.reshape((batch_size,3,-1))
+    #     return 1.0
+        
+    def dipole(self: T, X) -> torch.tensor:
+        """Return the dipole of the system"""
 
-        for n in range(batch_size):
+        if self.output not in ["D","ED","EDF"]:
+            raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
+        
+        # Compute the output
+        y = self(X)
+        
+        # Extract the dipole in case we are evaluating also the energy (and the forces)
+        if self.output in ["ED","EDF"]:
+            y = y[:,1:4]
 
-            # prepare data
-            x,R = self._prepare(X,n)
-                   
-            
-            tmp = torch.autograd.functional.jacobian(self.pol, self.R.flatten(),*argc,**argv)
-            #self.bec = torch.func.grad(self.pol)
-            #tmp = self.bec(self.R)
-            y.data[n, :] = tmp
+        return y
+        
+        # batch_size = self.batch(X)
+        # y = torch.zeros((batch_size,3), requires_grad=requires_grad)
+
+        # for n in range(batch_size):
+
+        #     # prepare data
+        #     x,R = self._prepare(X,n)
+        
+        #     tmp = self(self._X)
+
+        #     if self.output == "D":
+        #         y.data[n,:] = tmp
+        #     elif self.output in ["ED","EDF"]:
+        #         y.data[n,:] = tmp[:,1:4]
+
+        # return y
+
+    # def polarization(self: T, X) -> torch.tensor:
+    #     """Return the polarization of the system"""
+
+    #     if self.output not in ["D","ED","EDF"]:
+    #         raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
+
+    #     # Compute the dipole
+    #     d = self.dipole(X)
+
+    #     # Compute the volume
+    #     v = self.volume(X)
+
+    #     return d/v
+
+    def BEC(self: T, X, recompute=False) -> torch.tensor:
+        """Compute the Born Effective Charges tensors by automatic differentiating the polarization"""
+
+        # Compute the jacobian of the dipole: 
+        # Z^i_j = \frac{\Omega}{q_e} \frac{\partial P^i}{\partial R_j}
+        #       = \frac{1}{q_e} \frac{\partial d^i}{\partial R_j}
+        # We assume that the dipole and the coordinates are given in atomic units
+        # then q_e = 1 and we can compute Z as directly the jacobian of the dipole.
+        #
+        if ( not hasattr(self,"_bec") or self._bec is None) or recompute:
+            self._bec = jacrev(self.dipole)
+
+        # Save the information into a global variable
+        # that will be used inside 'self._pes'
+        self._X = X
+
+        # Reshape the positions according to the batches
+        batch_size = self.batch(X)
+        R = X.pos.reshape((batch_size,-1,3))
+
+        # I do not know if I actually need this line
+        #R.requires_grad_(True)
+
+        # Evaluate the jacobian.
+        # The positions are reshaped inside 'self._pes', but in this way
+        # we get 'y' with the batches in a separate dimension/axis.
+        y = self._bec(R)
+
+        # Since 'jacrev' can not distinguish between batches and positions
+        # the first dimension/axis of 'y' is spurious:
+        # R.shape = [batch,Na,3]  -->  y = self._forces(R).shape = [batch,batch,Na,3]
+        # with y[i,i] = ['non zero'] but y[i,j] = [0,...0]
+        #  
+        # It's easier to get this bigger tensor and extract its diagonal (y --> y[i,i])
+        # than make a 'for' loop since we should modify also all the attributes of 'self._X'!
+
+        # We need to take the diagonal of 'y' since one dimension is spurious as we said
+        y = torch.diagonal(y,offset=0,dim1=0,dim2=1)
+        
+        # The 'diagonalized' dimension is put at the end of the tensor 
+        # according to 'torch.diagonal' documentation.
+        # Then we simply permute the tensor dimensions/axis .
+        y = y.permute(3,0,1,2)
+
+        # Reshape the forces so we have only two axis: 
+        # - the first for the batches
+        # - the second with all the coordinates
+        y = y.reshape((batch_size,-1))
 
         return y
 

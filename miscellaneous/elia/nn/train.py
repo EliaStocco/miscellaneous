@@ -290,7 +290,7 @@ def train(model,\
             # with torch.no_grad():
             # I am not using 'with torch.no_grad()' anymore because 
             # maybe it inferferes with the calculation of the forces
-            #model.eval()
+            # model.eval()
             with torch.no_grad():
                 
                 # saving model to temporary file
@@ -309,7 +309,6 @@ def train(model,\
                 # set arrays
                 ytrain_pred = get_pred(model=model,X=all_dataloader_train) # model(all_dataloader_train)
                 train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real)) #np.mean(train_loss_one_epoch)
-                #train_std [epoch] = np.std(train_loss_one_epoch)
 
                 if train_loss[epoch] > opts["thr"]["exit"]:
                     info = "try again"
