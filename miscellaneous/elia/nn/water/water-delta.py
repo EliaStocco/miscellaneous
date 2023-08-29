@@ -22,6 +22,7 @@ import pandas as pd
 import numpy as np
 import random
 from miscellaneous.elia.nn.water.make_dataset_delta import make_dataset_delta
+from miscellaneous.elia.nn.water.make_dataset import make_dataset
 from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
 
 # Documentation
@@ -35,6 +36,7 @@ def main():
     ##########################################
     # some parameters
 
+    reference = True
     OUTPUT = "D"
     max_radius = 6.0
     output_folder = "results"
@@ -67,28 +69,37 @@ def main():
     RESTART = False 
     READ = True
     SAVE = True
-    savefile = "data/dataset-delta"
+    savefile = "data/dataset-delta" if reference else "data/dataset"
 
     if not READ or not os.path.exists(savefile+".train.torch") or RESTART :
         print("building dataset")
 
         if os.path.exists(savefile+".torch") and not RESTART:
             dataset = torch.load(savefile+".torch")
-            dipole  = dataset[ref_index].dipole
-            pos     = dataset[ref_index].pos
+            if reference:
+                dipole  = dataset[ref_index].dipole
+                pos     = dataset[ref_index].pos
+            else :
+                dipole = None
+                pos = None
         else :
-            dataset, dipole, pos = make_dataset_delta(  ref_index = ref_index,
-                                                        data = data,
-                                                        max_radius = max_radius)
+            if reference :
+                dataset, dipole, pos = make_dataset_delta(  ref_index = ref_index,
+                                                            data = data,
+                                                            max_radius = max_radius)
+            else :
+                dataset = make_dataset( data=data,max_radius=max_radius)
+                dipole = None
+                pos = None
         # shuffle
         random.shuffle(dataset)
 
         # train, test, validation
         #p_test = 20/100 # percentage of data in test dataset
         #p_val  = 20/100 # percentage of data in validation dataset
-        n = 1000
-        i = 500#int(p_test*len(dataset))
-        j = 500#int(p_val*len(dataset))
+        n = 100
+        i = 10#int(p_test*len(dataset))
+        j = 10#int(p_val*len(dataset))
 
         train_dataset = dataset[:n]
         val_dataset   = dataset[n:n+j]
@@ -102,11 +113,15 @@ def main():
         val_dataset   = torch.load(savefile+".val.torch")
         test_dataset  = torch.load(savefile+".test.torch")
 
-        # Open the JSON file and load the data
-        with open("reference.json") as f:
-            reference = json.load(f)
-        dipole = torch.tensor(reference['dipole'])
-        pos    = torch.tensor(reference['pos'])
+        if reference :
+            # Open the JSON file and load the data
+            with open("reference.json") as f:
+                reference = json.load(f)
+            dipole = torch.tensor(reference['dipole'])
+            pos    = torch.tensor(reference['pos'])
+        else :
+            dipole = None
+            pos = None
 
         SAVE = False
             
@@ -116,10 +131,11 @@ def main():
         torch.save(val_dataset,  savefile+".val.torch")
         torch.save(test_dataset, savefile+".test.torch")
 
-        # Write the dictionary to the JSON file
-        with open("reference.json", "w") as json_file:
-            # The 'indent' parameter is optional for pretty formatting
-            json.dump({"dipole":dipole.tolist(),"pos":pos.tolist()}, json_file, indent=4)  
+        if reference :
+            # Write the dictionary to the JSON file
+            with open("reference.json", "w") as json_file:
+                # The 'indent' parameter is optional for pretty formatting
+                json.dump({"dipole":dipole.tolist(),"pos":pos.tolist()}, json_file, indent=4)  
 
     print("train:",len(train_dataset))
     print("  val:",len(val_dataset))
@@ -174,7 +190,11 @@ def main():
 
     ##########################################
 
-    irreps_in = "{:d}x0e+1x1o".format(len(data.all_types()))#,len(pos))
+    if reference :
+        irreps_in = "{:d}x0e+1x1o".format(len(data.all_types()))
+    else :
+        irreps_in = "{:d}x0e".format(len(data.all_types()))
+
     if OUTPUT in ["E","EF"]:
         irreps_out = "1x0e"
     elif OUTPUT in ["ED","EDF"]:
@@ -192,7 +212,7 @@ def main():
 
     metadata_kwargs = {
         "output":OUTPUT,
-        "reference" : True,
+        "reference" : reference,
         "dipole" : dipole.tolist(),
         "pos" : pos.tolist(),
         "mean": list(mu),
@@ -235,7 +255,7 @@ def main():
         N += len(i)
     print("tot. number of parameters: ",N)
 
-    all_bs = [50]#[10,30,60,90]
+    all_bs = [10]#[10,30,60,90]
     all_lr = [1e-3]#[2e-4,1e-3,5e-3]
     Ntot = len(all_bs)*len(all_lr)
     print("\n")
@@ -245,6 +265,12 @@ def main():
     df = pd.DataFrame(columns=["bs","lr","file"],index=np.arange(len(all_bs)*len(all_lr)))
 
     init_model = copy(net) 
+
+    # choose the loss function
+    if OUTPUT in ["D","E"] :
+        loss = net.loss()
+    elif OUTPUT == "EF" :
+        loss = net.loss(lE=0.1,lF=0.9)
 
     n = 0
     info = "all good"
@@ -268,7 +294,7 @@ def main():
                 'n_epochs'  : 100,
                 'optimizer' : "Adam",
                 'lr'        : lr,
-                'loss'      : net.loss()#net.loss(lE=1,lF=10) #if OUTPUT == 'P' lE and lF will be ignored
+                'loss'      : loss 
             }
 
             print("\n\ttraining network...\n")
@@ -287,7 +313,7 @@ def main():
                             get_real=lambda X: net.get_real(X=X,output=net.output),
                             output=output_folder,
                             name=df.at[n,"file"],
-                            opts={"plot":{"N":1},"dataloader":{"shuffle":True},"disable":True})
+                            opts={"plot":{"N":1},"dataloader":{"shuffle":True},"disable":False})
                 count_try += 1
 
             if info == "try again":
