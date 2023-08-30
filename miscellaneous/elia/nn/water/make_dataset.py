@@ -105,7 +105,8 @@ def preprocess(lattice, positions, symbols, max_radius, default_dtype,requires_g
 
 def make_dataset(data:MicroState,
                  max_radius:float,
-                 default_dtype=torch.float64):
+                 default_dtype=torch.float64,\
+                 requires_grad:bool=True):
     
     # species = data.all_types()
     # type_onehot, type_encoding = get_type_onehot_encoding(species)    
@@ -133,7 +134,7 @@ def make_dataset(data:MicroState,
                         symbols=crystal.get_chemical_symbols(),
                         max_radius=max_radius,
                         default_dtype=default_dtype,
-                        requires_grad={"pos":True,"lattice":True})
+                        requires_grad={"pos":requires_grad,"lattice":requires_grad})
 
         
         # pos     = torch.tensor(crystal.get_positions())

@@ -16,8 +16,8 @@ def plot_learning_curves(train_loss,val_loss,file,title=None,opts=None):
             fig,ax = plt.subplots(figsize=(10,4))
             x = np.arange(len(train_loss))+1
 
-            ax.plot(x,train_loss,color="red", label="train",marker=".",linewidth=0.7,markersize=2)
-            ax.plot(x,val_loss,  color="navy",label="val",  marker="x",linewidth=0.7,markersize=2)
+            ax.plot(x,val_loss,  color="red" ,label="val",  marker="x",linewidth=0.7,markersize=2)
+            ax.plot(x,train_loss,color="navy",label="train",marker=".",linewidth=0.7,markersize=2)
 
             plt.ylabel("loss")
             plt.xlabel("epoch")

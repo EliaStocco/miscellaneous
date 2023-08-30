@@ -20,6 +20,7 @@ from miscellaneous.elia.nn.hyper_train import hyper_train_at_fixed_model#, _make
 from copy import copy
 import pandas as pd
 import numpy as np
+import random
 
 from miscellaneous.elia.nn.water.prepare_dataset import prepare_dataset
 from miscellaneous.elia.nn.water.normalize_datasets import normalize_datasets
@@ -34,23 +35,45 @@ from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
 def main():
 
     ##########################################
+    # Set the seeds of the random numbers generators.
+    # This is important for reproducitbility:
+    # https://pytorch.org/docs/stable/notes/randomness.html
+    torch.manual_seed(0)
+    random.seed(0)
+    np.random.seed(0)
+
+    ##########################################
     # some parameters
 
     reference = True
-    OUTPUT = "D"
+    OUTPUT = "EF"
     max_radius = 6.0
-    output_folder = "results"
+    folder = "LiNbO3"
+    output_folder = "{:s}/results".format(folder)
     ref_index = 0 
-    Natoms = 3 # 3 atoms in the water molecule
+    Natoms = 30 # 3 atoms in the water molecule
 
     ##########################################
     # preparing dataset
-    datasets, data, dipole, pos = prepare_dataset(ref_index,max_radius,reference)
+    opts = {"prepare":{"restart":False},"build":{"restart":False}}
+    datasets, data, dipole, pos = prepare_dataset(ref_index,\
+                                                  max_radius,\
+                                                  reference,\
+                                                  folder=folder,\
+                                                  opts=opts)#,\
+                                                  #requires_grad=False)#OUTPUT=="EF")
+    
+    # There is a bug:
+    # if requires_grad=True and I build the dataset then at the second epoch the code crash with the following message:
+    # Trying to backward through the graph a second time (or directly access saved tensors after 
+    # they have already been freed). Saved intermediate values of the graph are freed when 
+    # you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward 
+    # through the graph a second time or if you need to access saved tensors after calling backward.
 
     
     ##########################################
     # normalizing dataset
-    mu, sigma, datasets = normalize_datasets(datasets)
+    normalization_factors, datasets = normalize_datasets(datasets)
 
     ##########################################
     # test
@@ -60,13 +83,24 @@ def main():
     # # If this does not happen ... there is a bug somewhere
     # # You can also read this post: 
     # # https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn
-    
-    # train_dataset = train_dataset[0:1] 
-    # val_dataset   = val_dataset  [0:1] 
 
-    # print("train:",len(train_dataset))
-    # print("  val:",len(val_dataset))
-    # print(" test:",len(test_dataset))
+    if False :
+        print("\n\tModifying datasets for debugging")
+        train_dataset = datasets["train"]
+        val_dataset   = datasets["val"]
+        test_dataset  = datasets["test"]
+        
+        train_dataset = train_dataset[0:10] 
+        val_dataset   = val_dataset  [0:10] 
+
+        print("\n\tDatasets summary:")
+        print("\t\ttrain:",len(train_dataset))
+        print("\t\t  val:",len(val_dataset))
+        print("\t\t test:",len(test_dataset))
+
+        datasets = {"train":train_dataset,\
+                    "val"  :val_dataset,\
+                    "test" :test_dataset }
 
     ##########################################
     # construct the model
@@ -85,9 +119,9 @@ def main():
 
     # for layers in [1,2,3,4,5,6]:
     #     for mul in [1,2,3,4,5,6]:
-    mul = 3
-    layers = 3
-    lmax = 2
+    mul = 1
+    layers = 6
+    lmax = 1
     
     #####################
 
@@ -96,8 +130,7 @@ def main():
         "reference" : reference,
         "dipole" : dipole.tolist(),
         "pos" : pos.tolist(),
-        "mean": list(mu),
-        "std": list(sigma),
+        "normalization" : normalization_factors
     }
 
     # Write the dictionary to the JSON file
@@ -134,7 +167,7 @@ def main():
     N = 0 
     for i in net.parameters():
         N += len(i)
-    print("tot. number of parameters: ",N)
+    print("Tot. number of parameters: ",N)
 
     ##########################################
     # choose the loss function
@@ -145,9 +178,13 @@ def main():
 
     ##########################################
     # choose the hyper-parameters
-    all_bs = [10]#[10,30,60,90]
+    all_bs = [1]#[10,30,60,90]
     all_lr = [1e-3]#[2e-4,1e-3,5e-3]
     
+    ##########################################
+    # optional settings
+    opts = {"plot":{"N":100},"thr":{"exit":1e6}}
+
     ##########################################
     # hyper-train the model
     hyper_train_at_fixed_model( net,\
@@ -156,7 +193,8 @@ def main():
                                 loss,\
                                 datasets,\
                                 output_folder,\
-                                Natoms=Natoms)
+                                Natoms=Natoms,\
+                                opts=opts)
 
     print("\nJob done :)")
 

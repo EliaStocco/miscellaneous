@@ -396,3 +396,16 @@ def segment(A,B,N,start=0,end=1):
         #t = float(n)/(N+1)
         sequence[n] = A*(1-t) + t*B
     return sequence
+
+import os
+
+def remove_empty_folder(folder_path):
+    if is_folder_empty(folder_path):
+        os.rmdir(folder_path)
+        print(f"Folder '{folder_path}' has been removed.")
+    else:
+        print(f"Folder '{folder_path}' is not empty and cannot be removed.")
+
+def is_folder_empty(folder_path):
+    return len(os.listdir(folder_path)) == 0
+

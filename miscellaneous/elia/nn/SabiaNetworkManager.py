@@ -36,8 +36,7 @@ class SabiaNetworkManager(SabiaNetwork):
                  reference:bool=False,
                  dipole:torch.tensor=None,
                  pos:torch.tensor=None,
-                 mean:torch.tensor=torch.zeros(0),
-                 std:torch.tensor=torch.zeros(0),
+                 normalization:dict=None,
                  **kwargs) -> None:
         
         super(SabiaNetworkManager, self).__init__(**kwargs)
@@ -66,8 +65,11 @@ class SabiaNetworkManager(SabiaNetwork):
                 raise ValueError("'pos' can not be 'None'")
             self.ref_pos = torch.tensor(pos)
 
-            self.mean = torch.tensor(mean)
-            self.std = torch.tensor(std)
+            self.normalization = normalization
+            for k in self.normalization.keys():
+                for j in self.normalization[k].keys():
+                    x = self.normalization[k][j]
+                    self.normalization[k][j] = torch.tensor(x)
 
         pass
 
@@ -99,10 +101,10 @@ class SabiaNetworkManager(SabiaNetwork):
     #     else :
     #         return make_datapoint(**argv)
 
-    def get(self,X,requires_grad=True)-> torch.tensor:
-        """Get the correct value of the output restoring the original 'mean' and 'std' values.
-        This should be used only during MD simulation."""
-        return self(X)*self.std._requires_grad(requires_grad) + self.mean._requires_grad(requires_grad)
+    # def get(self,X,requires_grad=True)-> torch.tensor:
+    #     """Get the correct value of the output restoring the original 'mean' and 'std' values.
+    #     This should be used only during MD simulation."""
+    #     return self(X)*self.std._requires_grad(requires_grad) + self.mean._requires_grad(requires_grad)
 
     # def train(self: T, mode: bool) -> T:
     #     if self.grad is not None:

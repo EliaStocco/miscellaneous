@@ -8,7 +8,7 @@ import pandas as pd
 import warnings
 import os
 from .make_dataloader import _make_dataloader
-from ..functions import add_default
+from ..functions import add_default, remove_empty_folder
 from .plot import plot_learning_curves
 
 __all__ = ["train"]
@@ -65,7 +65,8 @@ def train(model,\
             Each element of these arrays is referred to one epoch. 
     """
     
-    print("\nTraining...")
+    print("\nTraining:")
+    print("\tPreparing training")
 
     # information about the status of the training
     info = "all good"
@@ -74,7 +75,8 @@ def train(model,\
                 "dataloader":{"shuffle":False},\
                 "thr":{"exit":100},\
                 "disable":False,\
-                "Natoms":1}
+                "Natoms":1,\
+                "save":{"parameters":1,"networks-temp":-1}}
     opts = add_default(opts,default)
 
     # set default values
@@ -106,7 +108,7 @@ def train(model,\
     folders = { "networks"        :"{:s}/networks".format(output),\
                 "networks-temp"   :"{:s}/networks-temp".format(output),\
                 "parameters"      :"{:s}/parameters".format(output),\
-                "parameters-temp" :"{:s}/parameters-temp".format(output),\
+                # "parameters-temp" :"{:s}/parameters-temp".format(output),\
                 "dataframes"      :"{:s}/dataframes".format(output),\
                 "images"          :"{:s}/images".format(output),\
                 "correlations"    :"{:s}/correlations".format(output)}
@@ -114,7 +116,7 @@ def train(model,\
     # create the output folders
     for folder in [output,*folders.values()]:
         if not os.path.exists(folder):
-            print("creating folder '{:s}'".format(folder))
+            print("\tCreating folder '{:s}'".format(folder))
             os.mkdir(folder)
 
     # hyperparameters    
@@ -140,11 +142,11 @@ def train(model,\
         except :
             return "some problem, but don't worry :("
         
-    print("\nHyperparameters:")
-    print("\tbatch_size:{:d}".format(tryprint(hyperparameters["batch_size"])))
-    print("\tn_epochs:{:d}".format(tryprint(hyperparameters["n_epochs"])))
-    print("\toptimizer:{:s}".format(tryprint(hyperparameters["optimizer"])))
-    print("\tlr:{:.2e}".format(tryprint(hyperparameters["lr"])))
+    print("\tHyperparameters:")
+    print("\t\tbatch_size:{:d}".format(tryprint(hyperparameters["batch_size"])))
+    print("\t\tn_epochs:{:d}".format(tryprint(hyperparameters["n_epochs"])))
+    print("\t\toptimizer:{:s}".format(tryprint(hyperparameters["optimizer"])))
+    print("\t\tlr:{:.2e}".format(tryprint(hyperparameters["lr"])))
     # I had some problems with the loss
     if type(hyperparameters["loss"]) == str : print("\tloss_fn:{:s}".format(tryprint(hyperparameters["loss"])))
        
@@ -206,11 +208,12 @@ def train(model,\
     batches_per_epoch = len(dataloader_train)
     
     # give a summary of the length of the following for cycles
-    print("\nSummary:")
-    print("      n. of epochs:",n_epochs)
-    print("        batch size:",batch_size)
-    print("  n. of iterations:",batches_per_epoch)
-    print("train dataset size:",len(train_dataset))
+    print("\n\tSummary:")
+    print("\t      n. of epochs:",n_epochs)
+    print("\t        batch size:",batch_size)
+    print("\t  n. of iterations:",batches_per_epoch)
+    print("\ttrain dataset size:",len(train_dataset))
+    print("\n")
     
     # deepcopy the model into a temporary variable
     # in_model = copy(model) 
@@ -225,16 +228,16 @@ def train(model,\
                             "val":val_loss})
 
     # compute the real values of the validation dataset only once
-    print("\nCompute validation dataset output (this will save time in the future)")
+    print("\tCompute validation dataset output (this will save time in the future)")
     yval_real   = get_all(val_dataset)
     all_dataloader_val   = get_all_dataloader(val_dataset)
 
-    print("\nCompute training dataset output (this will save time in the future)")
+    print("\tCompute training dataset output (this will save time in the future)")
     ytrain_real = get_all(train_dataset)
     all_dataloader_train = get_all_dataloader(train_dataset)
 
     savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
-    print("\nSaving 'model' with dummy parameters to file '{:s}'".format(savefile))
+    print("\tSaving 'model' with dummy parameters to file '{:s}'".format(savefile))
     torch.save(model, savefile)    
 
     # correlation
@@ -243,7 +246,7 @@ def train(model,\
         corr = pd.DataFrame(columns=["train","val"],index=np.arange(n_epochs))
     
     # start the training procedure
-    print("\n...and here we go!")
+    print("\n\t...and here we go!")
     for epoch in range(n_epochs):    
 
         if info != "all good":
@@ -298,12 +301,16 @@ def train(model,\
             with torch.no_grad():
                 
                 # saving model to temporary file
-                savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
-                torch.save(model, savefile)
+                N = opts["save"]["networks-temp"]
+                if N != -1 and epoch % N == 0 :
+                    savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
+                    torch.save(model, savefile)
 
                 # saving parameters to temporary file
-                savefile = "{:s}/{:s}.torch".format(folders["parameters-temp"],name)
-                torch.save(model.state_dict(), savefile)
+                N = opts["save"]["parameters"]
+                if N != -1 and epoch % N == 0 :
+                    savefile = "{:s}/{:s}.epoch={:d}.torch".format(folders["parameters"],name,epoch)
+                    torch.save(model.state_dict(), savefile)
 
                 # compute the loss function
                 # predict the value for the validation dataset
@@ -322,20 +329,22 @@ def train(model,\
                 #arrays.at[epoch,"train_std" ] = train_std [epoch]
                 arrays.at[epoch,"val"  ] = val_loss  [epoch]
 
-                if output is not None :
-                    savefile =  "{:s}/{:s}.csv".format(folders["dataframes"],name)
-                    arrays.to_csv(savefile,index=False)
+                # save loss to file
+                savefile =  "{:s}/{:s}.csv".format(folders["dataframes"],name)
+                arrays.to_csv(savefile,index=False)
 
                 if correlation is not None :
+                    # compute correlation
                     ytrain_pred = model(all_dataloader_train)
                     corr["train"][epoch] = correlation(ytrain_pred, ytrain_real)
                     corr["val"][epoch] = correlation(yval_pred, yval_real)
 
-                    if output is not None :
-                        savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
-                        corr.to_csv(savefile,index=False)
+                    # save correlation to file
+                    savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
+                    corr.to_csv(savefile,index=False)
 
-                if output is not None and epoch > 1:
+                # produce learning curve plot
+                if epoch > 1:
                     savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
                     plot_learning_curves(train_loss[:epoch+1],\
                                         val_loss[:epoch+1],\
@@ -356,36 +365,43 @@ def train(model,\
                                     corr_val=corr["val"][epoch])
     
     # Finished training 
+    #print("\n\tTraining done!")
 
     # Saving some quantities to file
     if info == "all good":
         
         # saving model to file
         savefile = "{:s}/{:s}.torch".format(folders["networks"],name)
-        print("\nSaving 'model' to file '{:s}'".format(savefile))
+        print("\tSaving 'model' to file '{:s}'".format(savefile))
         torch.save(model, savefile)
 
-        # saving parameters to file
-        savefile = "{:s}/{:s}.torch".format(folders["parameters"],name)
-        print("\nSaving parameters to file '{:s}'".format(savefile))
-        torch.save(model.state_dict(), savefile)
+        # # saving parameters to file
+        # savefile = "{:s}/{:s}.torch".format(folders["parameters"],name)
+        # print("\tSaving parameters to file '{:s}'".format(savefile))
+        # torch.save(model.state_dict(), savefile)
 
         # removing initial model 
         savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
         if os.path.exists(savefile):
-            print("\nDeleting 'model' with dummy parameters: removing file '{:s}'".format(savefile))
+            print("\tDeleting 'model' with dummy parameters: removing file '{:s}'".format(savefile))
             os.remove(savefile)
+
+        # removing empty folders
+        _folders = folders
+        for k in folders.keys():
+            remove_empty_folder(folders[k])
+            del _folders[k]
     
         # Important message
-        print("\n\nThe following quantities have been saved to these folders:")
-        for k in folders:
+        print("\tThe following quantities have been saved to these folders:")
+        for k in _folders.keys():
             print("\t{:<20s}: {:<20s}".format(k,folders[k]))
         
-        print("\nTraining done!\n")
+        print("\n\tTraining done!\n")
 
     # Something wrong happened during the training
     # We will let the user know about that through the variable 'info'
     elif info == "try again":
-        print("\nTraining stopped: we could try again\n")
+        print("\n\tTraining stopped: we could try again\n")
     
     return model, arrays, corr, info

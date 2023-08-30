@@ -2,24 +2,52 @@ import os
 import json
 import torch
 import random
-from . import make_dataset_delta # miscellaneous.elia.nn.water.make_dataset_delta
-from . import make_dataset # miscellaneous.elia.nn.water.make_dataset
+from .make_dataset_delta import make_dataset_delta # miscellaneous.elia.nn.water.make_dataset_delta
+from .make_dataset import make_dataset # miscellaneous.elia.nn.water.make_dataset
 from miscellaneous.elia.classes import MicroState
+from miscellaneous.elia.functions import add_default
 
-def prepare_dataset(ref_index:int,max_radius:float,reference:bool):
+def prepare_dataset(ref_index:int,\
+                    max_radius:float,\
+                    reference:bool,\
+                    folder:str="data",\
+                    opts:dict=None,\
+                    requires_grad:bool=False):
+    
+    # Attention:
+    # Please keep 'requires_grad' = False
+    
+    if opts is None :
+        opts = {}
+    default = {
+                "prepare":{
+                    "restart": False,
+                    "read":True,
+                    "save":True
+                },
+                "build":{
+                    "restart": False,
+                    "read":True,
+                    "save":True
+                }
+            }
 
-    RESTART = False
-    READ = True
-    SAVE = True
-    savefile = "data/microstate.pickle"
+    opts = add_default(opts,default)
+
+    print("\n\tPreparing datasets:")
+
+    RESTART = opts["prepare"]["restart"]
+    READ = opts["prepare"]["read"]
+    SAVE = opts["prepare"]["save"]
+    savefile = "{:s}/microstate.pickle".format(folder)
 
     if not READ or not os.path.exists(savefile) or RESTART :
-        infile = "data/i-pi.positions_0.xyz"
-        instructions = {"properties" : "data/i-pi.properties.out",\
+        infile = "{:s}/i-pi.positions_0.xyz".format(folder)
+        instructions = {"properties" : "{:s}/i-pi.properties.out".format(folder),\
                 "positions":infile,\
                 "cells":infile,\
                 "types":infile,\
-                "forces":"data/i-pi.forces_0.xyz"}
+                "forces":"{:s}/i-pi.forces_0.xyz".format(folder)}
         data = MicroState(instructions)
     else :
         data = MicroState.load(savefile)
@@ -30,13 +58,13 @@ def prepare_dataset(ref_index:int,max_radius:float,reference:bool):
 
     ########################################## 
 
-    RESTART = False 
-    READ = True
-    SAVE = True
-    savefile = "data/dataset-delta" if reference else "data/dataset"
+    RESTART = opts["build"]["restart"]
+    READ = opts["build"]["read"]
+    SAVE = opts["build"]["save"]
+    savefile = "{:s}/{:s}".format(folder,"dataset-delta" if reference else "dataset")
 
     if not READ or not os.path.exists(savefile+".train.torch") or RESTART :
-        print("building dataset")
+        print("\tBuilding datasets")
 
         if os.path.exists(savefile+".torch") and not RESTART:
             dataset = torch.load(savefile+".torch")
@@ -44,26 +72,27 @@ def prepare_dataset(ref_index:int,max_radius:float,reference:bool):
                 dipole  = dataset[ref_index].dipole
                 pos     = dataset[ref_index].pos
             else :
-                dipole = None
-                pos = None
+                dipole = torch.full((3,),torch.nan)
+                pos = torch.full((3,),torch.nan)
         else :
             if reference :
                 dataset, dipole, pos = make_dataset_delta(  ref_index = ref_index,
                                                             data = data,
-                                                            max_radius = max_radius)
+                                                            max_radius = max_radius,\
+                                                            requires_grad = requires_grad)
             else :
-                dataset = make_dataset( data=data,max_radius=max_radius)
-                dipole = None
-                pos = None
+                dataset = make_dataset( data=data,max_radius=max_radius,requires_grad=requires_grad)
+                dipole = torch.full((3,),torch.nan)
+                pos = torch.full((3,),torch.nan)
         # shuffle
         random.shuffle(dataset)
 
         # train, test, validation
         #p_test = 20/100 # percentage of data in test dataset
         #p_val  = 20/100 # percentage of data in validation dataset
-        n = 100
-        i = 10#int(p_test*len(dataset))
-        j = 10#int(p_val*len(dataset))
+        n = 1000
+        i = 100#int(p_test*len(dataset))
+        j = 100#int(p_val*len(dataset))
 
         train_dataset = dataset[:n]
         val_dataset   = dataset[n:n+j]
@@ -72,7 +101,7 @@ def prepare_dataset(ref_index:int,max_radius:float,reference:bool):
         del dataset
 
     else :
-        print("reading datasets from file {:s}".format(savefile))
+        print("\tReading datasets from file {:s}".format(savefile))
         train_dataset = torch.load(savefile+".train.torch")
         val_dataset   = torch.load(savefile+".val.torch")
         test_dataset  = torch.load(savefile+".test.torch")
@@ -84,13 +113,13 @@ def prepare_dataset(ref_index:int,max_radius:float,reference:bool):
             dipole = torch.tensor(reference['dipole'])
             pos    = torch.tensor(reference['pos'])
         else :
-            dipole = None
-            pos = None
+            dipole = torch.full((3,),torch.nan)
+            pos = torch.full((3,),torch.nan)
 
         SAVE = False
             
     if SAVE :
-        print("saving dataset to file {:s}".format(savefile))
+        print("\tSaving dataset to file {:s}".format(savefile))
         torch.save(train_dataset,savefile+".train.torch")
         torch.save(val_dataset,  savefile+".val.torch")
         torch.save(test_dataset, savefile+".test.torch")
@@ -101,9 +130,10 @@ def prepare_dataset(ref_index:int,max_radius:float,reference:bool):
                 # The 'indent' parameter is optional for pretty formatting
                 json.dump({"dipole":dipole.tolist(),"pos":pos.tolist()}, json_file, indent=4)  
 
-    print("train:",len(train_dataset))
-    print("  val:",len(val_dataset))
-    print(" test:",len(test_dataset))
+    print("\n\tDatasets summary:")
+    print("\t\ttrain:",len(train_dataset))
+    print("\t\t  val:",len(val_dataset))
+    print("\t\t test:",len(test_dataset))
 
     datasets = {"train":train_dataset,\
                 "val"  :val_dataset,\

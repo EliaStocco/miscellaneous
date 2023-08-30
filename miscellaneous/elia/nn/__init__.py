@@ -10,6 +10,7 @@ from .get_type_onehot_encoding import symbols2x
 from .make_dataloader import _make_dataloader
 from .plot import plot_learning_curves
 from .normalize import *
+from .make_dataloader import _make_dataloader
 #from .utils import *
 
 print("imported 'miscellaneous.elia.nn'")

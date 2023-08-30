@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 from copy import copy
 import torch
-
+import os
 from miscellaneous.elia.nn import train
+from ..functions import add_default
 
 def hyper_train_at_fixed_model( net:torch.nn.Module,\
                                 all_bs:list,\
@@ -11,7 +12,16 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                                 loss:callable,\
                                 datasets:dict,\
                                 output_folder:str,
-                                Natoms:int=1):
+                                Natoms:int=1,\
+                                opts:dict=None):
+    
+    ##########################################
+    # set optional settings
+    default = { "plot":{"N":10},\
+                "dataloader":{"shuffle":True},\
+                "disable":False,\
+                "Natoms":Natoms}
+    opts = add_default(opts,default)
     
     ##########################################
     # extract datasets
@@ -40,10 +50,10 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
             df.at[n,"lr"] = lr
             df.at[n,"file"] = "bs={:d}.lr={:.1e}".format(batch_size,lr)
             
-            print("\n#########################\n")
-            print("\tbatch_size={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(batch_size,lr,n+1,Ntot))
+            print("#########################\n")
+            print("batch_size={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(batch_size,lr,n+1,Ntot))
 
-            print("\n\trebuilding network...\n")
+            #print("\n\trebuilding network...\n")
             net = copy(init_model)
             
             hyperparameters = {
@@ -54,7 +64,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                 'loss'      : loss 
             }
 
-            print("\n\ttraining network...\n")
+            #print("\n\ttraining network...\n")
             count_try = 0
             while (info == "try again" and count_try < max_try) or count_try == 0 :
 
@@ -70,10 +80,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                             get_real=lambda X: net.get_real(X=X,output=net.output),
                             output=output_folder,
                             name=df.at[n,"file"],
-                            opts={"plot":{"N":1},\
-                                  "dataloader":{"shuffle":True},\
-                                  "disable":False,\
-                                  "Natoms":Natoms})
+                            opts=opts)
                 count_try += 1
 
             if info == "try again":

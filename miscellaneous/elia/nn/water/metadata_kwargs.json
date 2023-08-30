@@ -1,11 +1,11 @@
 {
-    "irreps_in": "2x0e+1x1o",
-    "irreps_out": "1x1o",
+    "irreps_in": "3x0e+1x1o",
+    "irreps_out": "1x0e",
     "max_radius": 6.0,
     "num_neighbors": 2,
     "pool_nodes": true,
     "num_nodes": 2,
-    "mul": 3,
-    "layers": 3,
-    "lmax": 2
+    "mul": 1,
+    "layers": 6,
+    "lmax": 1
 }
