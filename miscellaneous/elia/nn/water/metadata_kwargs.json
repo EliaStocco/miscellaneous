@@ -1,6 +1,6 @@
 {
     "irreps_in": "3x0e+1x1o",
-    "irreps_out": "1x0e",
+    "irreps_out": "1x1o",
     "max_radius": 6.0,
     "num_neighbors": 2,
     "pool_nodes": true,

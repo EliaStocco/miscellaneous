@@ -10,13 +10,13 @@ from miscellaneous.elia.functions import add_default
 def prepare_dataset(ref_index:int,\
                     max_radius:float,\
                     reference:bool,\
+                    variables:list,\
                     folder:str="data",\
                     opts:dict=None,\
                     requires_grad:bool=False):
     
     # Attention:
     # Please keep 'requires_grad' = False
-    
     if opts is None :
         opts = {}
     default = {
@@ -29,7 +29,13 @@ def prepare_dataset(ref_index:int,\
                     "restart": False,
                     "read":True,
                     "save":True
-                }
+                },
+                "size":
+                {
+                    "train":1000,
+                    "val":100,
+                    "test":100,
+                },
             }
 
     opts = add_default(opts,default)
@@ -55,6 +61,19 @@ def prepare_dataset(ref_index:int,\
 
     if SAVE :
         MicroState.save(data,savefile)
+
+    ##########################################
+    # show time-series
+    f = "{:s}/time-series".format(folder)
+    if not os.path.exists(f):
+        os.mkdir(f)
+    for var in variables:
+        filename = "{:s}/{:s}.pdf".format(f,var)
+
+        if var == "electric-dipole":
+            _ = data.get_dipole(same_lattice=False)
+
+        data.plot_time_series(what=var,file=filename)
 
     ########################################## 
 
@@ -90,9 +109,9 @@ def prepare_dataset(ref_index:int,\
         # train, test, validation
         #p_test = 20/100 # percentage of data in test dataset
         #p_val  = 20/100 # percentage of data in validation dataset
-        n = 1000
-        i = 100#int(p_test*len(dataset))
-        j = 100#int(p_val*len(dataset))
+        n = opts["size"]["train"]
+        i = opts["size"]["val"] #int(p_test*len(dataset))
+        j = opts["size"]["test"]#int(p_val*len(dataset))
 
         train_dataset = dataset[:n]
         val_dataset   = dataset[n:n+j]

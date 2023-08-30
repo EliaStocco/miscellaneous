@@ -22,6 +22,7 @@ import pandas as pd
 import numpy as np
 import random
 
+from miscellaneous.elia.nn.water.visualize_dataset import visualize_datasets
 from miscellaneous.elia.nn.water.prepare_dataset import prepare_dataset
 from miscellaneous.elia.nn.water.normalize_datasets import normalize_datasets
 from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
@@ -46,19 +47,30 @@ def main():
     # some parameters
 
     reference = True
-    OUTPUT = "EF"
+    OUTPUT = "D"
     max_radius = 6.0
     folder = "LiNbO3"
     output_folder = "{:s}/results".format(folder)
     ref_index = 0 
     Natoms = 30 # 3 atoms in the water molecule
 
+    if OUTPUT in ["E","EF"]:
+        variable = "energy"
+        variables = ["potential"]
+    elif OUTPUT == "D":
+        variable = "dipole"
+        variables = ["electric-dipole"]
+    else :
+        variable = None
+        variables = ["potential","electric-dipole"]
+    
     ##########################################
     # preparing dataset
     opts = {"prepare":{"restart":False},"build":{"restart":False}}
     datasets, data, dipole, pos = prepare_dataset(ref_index,\
                                                   max_radius,\
                                                   reference,\
+                                                  variables=variables,\
                                                   folder=folder,\
                                                   opts=opts)#,\
                                                   #requires_grad=False)#OUTPUT=="EF")
@@ -70,10 +82,18 @@ def main():
     # you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward 
     # through the graph a second time or if you need to access saved tensors after calling backward.
 
+    ##########################################
+    # visualize dataset
+    visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images".format(folder))
+
     
     ##########################################
     # normalizing dataset
     normalization_factors, datasets = normalize_datasets(datasets)
+
+    ##########################################
+    # visualize dataset
+    visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images-normalized".format(folder))
 
     ##########################################
     # test
@@ -84,13 +104,13 @@ def main():
     # # You can also read this post: 
     # # https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn
 
-    if False :
+    if True :
         print("\n\tModifying datasets for debugging")
         train_dataset = datasets["train"]
         val_dataset   = datasets["val"]
         test_dataset  = datasets["test"]
         
-        train_dataset = train_dataset[0:10] 
+        train_dataset = train_dataset[0:100] 
         val_dataset   = val_dataset  [0:10] 
 
         print("\n\tDatasets summary:")
@@ -128,9 +148,9 @@ def main():
     metadata_kwargs = {
         "output":OUTPUT,
         "reference" : reference,
+        "normalization" : normalization_factors,
         "dipole" : dipole.tolist(),
-        "pos" : pos.tolist(),
-        "normalization" : normalization_factors
+        "pos" : pos.tolist(),        
     }
 
     # Write the dictionary to the JSON file
@@ -178,12 +198,12 @@ def main():
 
     ##########################################
     # choose the hyper-parameters
-    all_bs = [1]#[10,30,60,90]
+    all_bs = [10]#[10,30,60,90]
     all_lr = [1e-3]#[2e-4,1e-3,5e-3]
     
     ##########################################
     # optional settings
-    opts = {"plot":{"N":100},"thr":{"exit":1e6}}
+    opts = {"plot":{"N":100},"thr":{"exit":1e2}}
 
     ##########################################
     # hyper-train the model

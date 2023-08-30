@@ -7,6 +7,7 @@ from tqdm import tqdm
 import pandas as pd
 import warnings
 import os
+from copy import copy
 from .make_dataloader import _make_dataloader
 from ..functions import add_default, remove_empty_folder
 from .plot import plot_learning_curves
@@ -387,7 +388,7 @@ def train(model,\
             os.remove(savefile)
 
         # removing empty folders
-        _folders = folders
+        _folders = copy(folders)
         for k in folders.keys():
             remove_empty_folder(folders[k])
             del _folders[k]

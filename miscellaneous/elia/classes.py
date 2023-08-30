@@ -803,6 +803,41 @@ class MicroState:
 
         pass
 
+    def plot_time_series(self,what:str,file:str=None):
+
+        time = self.convert_property(what="time",family="time",unit="picosecond")
+        quantity = self.properties[what]
+        dim = quantity.shape[1]
+        if dim == 3:
+            labels = ["x","y","z"]
+            colors = ["red","green","blue"]
+        else :
+            labels = None
+            colors = None
+
+        fig, ax = plt.subplots(figsize=(15,5))
+        for n in range(dim):
+            arr = quantity[:,n]
+            arr -= arr.mean()
+            l = labels[n] if labels is not None else None
+            c = colors[n] if colors is not None else None
+            ax.plot(time,arr,label=l,c=c)
+        
+        plt.grid()
+        plt.legend()
+        plt.xlabel("time [ps]")
+        unit = self.units[what] if what in self.units else "unknown"
+        plt.ylabel("{:s} [{:s}]".format(what,unit))
+        plt.title("{:s}".format(what))
+        plt.tight_layout()
+        if file is not None :
+            plt.savefig(file)
+        else :
+            plt.show()
+
+        pass
+
+
     def plot(self,instructions):
 
         if type(instructions) == dict:
@@ -1394,7 +1429,10 @@ class MicroState:
         
         return phases
     
-    def get_dipole(self,same_lattice=True,inplace=True):
+    def get_dipole(self,same_lattice=True,inplace=True,recompute=False):
+
+        if "electric-dipole" in self.properties and not recompute:
+            return self.properties["electric-dipole"]
 
         volume = self.get_volume(same_lattice=same_lattice,only_first=False)
         polarization = self.properties["totalpol"]
