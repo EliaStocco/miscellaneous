@@ -1075,7 +1075,7 @@ class MicroState:
         return df
     
     families = {    "energy"        :["conserved","kinetic_md","potential"],
-                    "polarization"  :["totalpol"],
+                    "polarization"  :["polarization"],
                     "dipole"        :["electric-dipole"],
                     "time"          :["time"]
                 }
@@ -1406,7 +1406,7 @@ class MicroState:
 
         # convert the polarization from cartesian di lattice coordinates
         if array is None:
-            polarization = self.cart2lattice(what="totalpol",\
+            polarization = self.cart2lattice(what="polarization",\
                                             family="polarization",\
                                             same_lattice=same_lattice,\
                                             reshape=None)
@@ -1435,7 +1435,7 @@ class MicroState:
             return self.properties["electric-dipole"]
 
         volume = self.get_volume(same_lattice=same_lattice,only_first=False)
-        polarization = self.properties["totalpol"]
+        polarization = self.properties["polarization"]
 
         dipole = (polarization.T * volume).T
         if inplace :
@@ -1454,7 +1454,7 @@ class MicroState:
             quantum[:] = length[:]/volume          
             quantum = self.lattice2cart(array=quantum.reshape((1,3)),\
                                             family="polarization",\
-                                            unit=self.units["totalpol"],\
+                                            unit=self.units["polarization"],\
                                             same_lattice=True,\
                                             reshape=None).flatten()
             
@@ -1469,7 +1469,7 @@ class MicroState:
 
             quantum = self.lattice2cart(array=quantum,\
                                             family="polarization",\
-                                            unit=self.units["totalpol"],\
+                                            unit=self.units["polarization"],\
                                             same_lattice=same_lattice,\
                                             reshape=None)
 
@@ -1488,9 +1488,9 @@ class MicroState:
                     so you can not to worry about its measure unit
         """
         if array is None:
-            array = self.properties["totalpol"]
+            array = self.properties["polarization"]
             if unit is None :
-                unit = self.units["totalpol"]
+                unit = self.units["polarization"]
 
         phases = self.get_phases(array=array,unit=unit,same_lattice=same_lattice)
 
@@ -1518,7 +1518,7 @@ class MicroState:
                                          reshape=None)
 
         if inplace :
-            self.properties["totalpol"] = polarization
+            self.properties["polarization"] = polarization
 
         return polarization
     

@@ -72,7 +72,7 @@ def train(model,\
     # information about the status of the training
     info = "all good"
 
-    default = { "plot":{},\
+    default = { "plot":{"N":10},\
                 "dataloader":{"shuffle":False},\
                 "thr":{"exit":100},\
                 "disable":False,\
@@ -390,8 +390,8 @@ def train(model,\
         # removing empty folders
         _folders = copy(folders)
         for k in folders.keys():
-            remove_empty_folder(folders[k])
-            del _folders[k]
+            if remove_empty_folder(folders[k],show=False):
+                del _folders[k]
     
         # Important message
         print("\tThe following quantities have been saved to these folders:")

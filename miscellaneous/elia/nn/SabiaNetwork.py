@@ -4,7 +4,9 @@ from e3nn import o3
 import torch
 import torch_geometric
 from torch_geometric.nn import radius_graph
+from torch_geometric.data import Data
 from .MessagePassing import MessagePassing
+import warnings
 from typing import Dict, Union
 from typing import TypeVar
 T = TypeVar('T', bound='SabiaNetwork')
@@ -41,9 +43,10 @@ class SabiaNetwork(torch.nn.Module):
         p=["o","e"],
         debug=False,
         pool_nodes=True,
-        default_dtype=torch.float64) -> None:
+        default_dtype=torch.float64,
+        **argv) -> None:
         
-        super().__init__()
+        super().__init__(**argv)
 
         self.default_dtype = default_dtype
         torch.set_default_dtype(self.default_dtype)
@@ -84,17 +87,21 @@ class SabiaNetwork(torch.nn.Module):
         self.irreps_out = self.mp.irreps_node_output
     
     # Overwriting preprocess method of SimpleNetwork to adapt for periodic boundary data
-    def preprocess(self, data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
+    def preprocess(self, data: Union[Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
+
+        msg = "The author does no longer trust 'SabiaNetwork.preprocess' method. Use 'make_dataset.preprocess' instead."
         
         if 'batch' in data:
             batch = data['batch']
         else:
+            # warnings.warn("'batch' is missing. " + msg )
             batch = data['pos'].new_zeros(data['pos'].shape[0], dtype=torch.long)
 
         if "edge_index" in data:
             edge_src = data['edge_index'][0]  # Edge source
             edge_dst = data['edge_index'][1]  # Edge destination
         else :
+            warnings.warn("'edge_index' is missing. " + msg )
             edge_index = radius_graph(data["pos"], self.max_radius, batch)
             edge_src = edge_index[0]
             edge_dst = edge_index[1]
@@ -103,6 +110,8 @@ class SabiaNetwork(torch.nn.Module):
             edge_vec = data['edge_vec']
         
         else :
+            # warnings.warn("'edge_vec' is missing. " + msg )
+            
             # We need to compute this in the computation graph to backprop to positions
             # We are computing the relative distances + unit cell shifts from periodic boundaries
             edge_batch = batch[edge_src]

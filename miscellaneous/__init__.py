@@ -1,3 +1,10 @@
 # __all__ = [ "elia" ] 
+# miscellaneous/__init__.py
 
-# from .elia import *
+
+
+
+
+print("importing 'miscellaneous'")
+from .elia import *
+print("imported 'miscellaneous'")

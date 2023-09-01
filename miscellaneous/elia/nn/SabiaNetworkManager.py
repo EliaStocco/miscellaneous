@@ -6,10 +6,11 @@ from torch.func import jacrev
 import numpy as np
 from scipy.stats import spearmanr
 from torch.nn import MSELoss
-import time
+# import time
 # import jax
 # import jax.numpy as jnp
 from .SabiaNetwork import SabiaNetwork
+from .iPIinterface import iPIinterface
 # from miscellaneous.elia.nn.water.make_dataset import make_datapoint
 # from miscellaneous.elia.nn.water.make_dataset_delta import make_datapoint_delta
 from typing import TypeVar
@@ -20,7 +21,7 @@ T = TypeVar('T', bound='SabiaNetworkManager')
 
 __all__ = ["SabiaNetworkManager"]
 
-class SabiaNetworkManager(SabiaNetwork):
+class SabiaNetworkManager(iPIinterface,SabiaNetwork):
 
     # output:str
     # lattice: torch.Tensor
@@ -36,10 +37,12 @@ class SabiaNetworkManager(SabiaNetwork):
                  reference:bool=False,
                  dipole:torch.tensor=None,
                  pos:torch.tensor=None,
-                 normalization:dict=None,
                  **kwargs) -> None:
         
-        super(SabiaNetworkManager, self).__init__(**kwargs)
+        # iPIinterface.__init__(self,**kwargs)
+        # SabiaNetwork.__init__(self,**kwargs)
+        
+        super().__init__(**kwargs)
 
         self.output = output
         if self.output not in ["E", "D", "ED", "EF", "EDF"]:
@@ -64,12 +67,6 @@ class SabiaNetworkManager(SabiaNetwork):
             if pos is None :
                 raise ValueError("'pos' can not be 'None'")
             self.ref_pos = torch.tensor(pos)
-
-            self.normalization = normalization
-            for k in self.normalization.keys():
-                for j in self.normalization[k].keys():
-                    x = self.normalization[k][j]
-                    self.normalization[k][j] = torch.tensor(x)
 
         pass
 
@@ -100,11 +97,6 @@ class SabiaNetworkManager(SabiaNetwork):
     #         return make_datapoint_delta(self.ref_dipole,self.ref_pos,**argv)
     #     else :
     #         return make_datapoint(**argv)
-
-    # def get(self,X,requires_grad=True)-> torch.tensor:
-    #     """Get the correct value of the output restoring the original 'mean' and 'std' values.
-    #     This should be used only during MD simulation."""
-    #     return self(X)*self.std._requires_grad(requires_grad) + self.mean._requires_grad(requires_grad)
 
     # def train(self: T, mode: bool) -> T:
     #     if self.grad is not None:
@@ -302,6 +294,20 @@ class SabiaNetworkManager(SabiaNetwork):
 
     #     return d/v
 
+    def _dipole(self: T, R:torch.tensor) -> torch.tensor:
+        """Return the dipole of the system for a given set of nuclear coordinates."""
+
+        if self.output not in ["D","ED","EDF"]:
+            raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
+
+        # Compute the output
+        y = self._dummy_output_R(R)
+        
+        # Extract the dipole in case we are evaluating also the energy (and the forces)
+        if self.output in ["ED","EDF"]:
+            y = y[:,1:4]
+        return y
+
     def BEC(self: T, X, recompute=False) -> torch.tensor:
         """Compute the Born Effective Charges tensors by automatic differentiating the polarization"""
 
@@ -312,7 +318,7 @@ class SabiaNetworkManager(SabiaNetwork):
         # then q_e = 1 and we can compute Z as directly the jacobian of the dipole.
         #
         if ( not hasattr(self,"_bec") or self._bec is None) or recompute:
-            self._bec = jacrev(self.dipole)
+            self._bec = jacrev(self._dipole)
 
         # Save the information into a global variable
         # that will be used inside 'self._pes'
@@ -338,18 +344,21 @@ class SabiaNetworkManager(SabiaNetwork):
         # It's easier to get this bigger tensor and extract its diagonal (y --> y[i,i])
         # than make a 'for' loop since we should modify also all the attributes of 'self._X'!
 
+        # put all the coordinates in the last axis
+        y = y.reshape((batch_size,3,batch_size,-1))
+
         # We need to take the diagonal of 'y' since one dimension is spurious as we said
-        y = torch.diagonal(y,offset=0,dim1=0,dim2=1)
+        y = torch.diagonal(y,offset=0,dim1=0,dim2=2)
         
         # The 'diagonalized' dimension is put at the end of the tensor 
         # according to 'torch.diagonal' documentation.
         # Then we simply permute the tensor dimensions/axis .
-        y = y.permute(3,0,1,2)
+        y = y.permute(2,0,1)
 
         # Reshape the forces so we have only two axis: 
         # - the first for the batches
         # - the second with all the coordinates
-        y = y.reshape((batch_size,-1))
+        # y = y.reshape((batch_size,3,-1))
 
         return y
 
@@ -510,11 +519,85 @@ class SabiaNetworkManager(SabiaNetwork):
         
         return y
 
+    def _get(self,X,what:str,**argv)-> torch.tensor:
+        """Get the correct value of the output restoring the original 'mean' and 'std' values.
+        This should be used only during MD simulation."""
+
+        # lower case
+        what = what.lower()
+
+        # compute output of the model
+        # try :
+        if what == "energy" :
+            y = self.energy(X,**argv)
+        
+        elif what == "forces":
+            y = self.forces(X,**argv)
+        
+        elif what == "dipole":
+            y = self.dipole(X,**argv)
+        
+        elif what == "bec":
+            y = self.BEC(X,**argv)
+        else :
+            raise ValueError("quantity '{:s}' is not supported as output of this model".format(what))
+        
+        y = y.detach()
+        # except:
+        #     raise ValueError("Error evaluating output of the model (i.e. quantity '{:s}')".format(what))
+        
+        # get normalization factors
+        # try :
+        mean = None
+        std = None
+        if what == "energy" :
+            mean, std = self.normalization["energy"]["mean"], self.normalization["energy"]["std"]
+        
+        elif what == "forces":
+            std = self.normalization["energy"]["std"]
+        
+        elif what == "dipole":
+            mean, std = self.normalization["dipole"]["mean"], self.normalization["dipole"]["std"]
+        
+        elif what == "bec":
+            std = self.normalization["dipole"]["std"]
+
+        # resize
+        batch_size = y.shape[0]
+        newdim = [1]*(len(y.shape)-2) # I remove the batch_size axis and the 'actual' value of the output
+        mean = mean.view(batch_size,3,*newdim) if mean is not None else mean
+        std  =  std.view(batch_size,3,*newdim) if  std is not None else std
+
+        # except:
+        #     raise ValueError("Error getting normalization factors for '{:s}'".format(what))
+        
+        # de-normalize output
+        # # try :
+        # for b in range(y.shape[0]): # batch_size
+        #     for r in range(y.shape[2]): # nuclear coordinates
+                 
+        #         if what in ["energy","dipole"] :
+        #             y[b,:,r] = y[b,:,r] * std + mean # this will be wrong for sure
+                
+        #         elif what in ["forces","bec"]:
+        #             y[b,:,r] = y[b,:,r] * std
+
+        if what in ["energy","dipole"] :
+            return y * std + mean # this will be wrong for sure
+        
+        elif what in ["forces","bec"]:
+            return y * std
+        
+        # return y 
+
+        # except:
+        #     raise ValueError("Error de-normalizating '{:s}'".format(what))
+        
 def main():
 
     import os
     from miscellaneous.elia.classes import MicroState
-    from miscellaneous.elia.nn.water.make_dataset import make_dataset
+    from miscellaneous.elia.nn.make_dataset import make_dataset
     from miscellaneous.elia.nn import _make_dataloader
 
     default_dtype = torch.float64

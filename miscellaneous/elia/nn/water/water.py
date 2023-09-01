@@ -22,10 +22,10 @@ import pandas as pd
 import numpy as np
 import random
 
-from miscellaneous.elia.nn.water.visualize_dataset import visualize_datasets
-from miscellaneous.elia.nn.water.prepare_dataset import prepare_dataset
-from miscellaneous.elia.nn.water.normalize_datasets import normalize_datasets
-from miscellaneous.elia.nn.SabiaNetworkManager import SabiaNetworkManager
+from miscellaneous.elia.nn.visualize_dataset import visualize_datasets
+from miscellaneous.elia.nn.prepare_dataset import prepare_dataset
+from miscellaneous.elia.nn.normalize_datasets import normalize_datasets
+from miscellaneous.elia.nn import SabiaNetworkManager
 
 # Documentation
 # - https://pytorch.org/docs/stable/autograd.html
@@ -66,7 +66,7 @@ def main():
     
     ##########################################
     # preparing dataset
-    opts = {"prepare":{"restart":False},"build":{"restart":False}}
+    opts = {"prepare":{"restart":False},"build":{"restart":True}}
     datasets, data, dipole, pos = prepare_dataset(ref_index,\
                                                   max_radius,\
                                                   reference,\
@@ -84,16 +84,17 @@ def main():
 
     ##########################################
     # visualize dataset
-    visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images".format(folder))
+    if False :
+        visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images".format(folder))
 
-    
     ##########################################
     # normalizing dataset
     normalization_factors, datasets = normalize_datasets(datasets)
 
     ##########################################
     # visualize dataset
-    visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images-normalized".format(folder))
+    if False :
+        visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images-normalized".format(folder))
 
     ##########################################
     # test
@@ -104,7 +105,7 @@ def main():
     # # You can also read this post: 
     # # https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn
 
-    if True :
+    if False :
         print("\n\tModifying datasets for debugging")
         train_dataset = datasets["train"]
         val_dataset   = datasets["val"]
@@ -139,7 +140,7 @@ def main():
 
     # for layers in [1,2,3,4,5,6]:
     #     for mul in [1,2,3,4,5,6]:
-    mul = 1
+    mul = 2
     layers = 6
     lmax = 1
     
@@ -153,10 +154,10 @@ def main():
         "pos" : pos.tolist(),        
     }
 
-    # Write the dictionary to the JSON file
-    with open("metadata_kwargs.json", "w") as json_file:
-        # The 'indent' parameter is optional for pretty formatting
-        json.dump(metadata_kwargs, json_file, indent=4)  
+    # # Write the dictionary to the JSON file
+    # with open("metadata_kwargs.json", "w") as json_file:
+    #     # The 'indent' parameter is optional for pretty formatting
+    #     json.dump(metadata_kwargs, json_file, indent=4)  
 
     #####################
 
@@ -172,15 +173,25 @@ def main():
         "lmax":lmax,
         #"default_dtype" : str(default_dtype),
     }
-    # Write
-    #  the dictionary to the JSON file
-    with open("metadata_kwargs.json", "w") as json_file:
-        # The 'indent' parameter is optional for pretty formatting
-        json.dump(model_kwargs, json_file, indent=4)
+    # # Write
+    # #  the dictionary to the JSON file
+    # with open("model_kwargs.json", "w") as json_file:
+    #     # The 'indent' parameter is optional for pretty formatting
+    #     json.dump(model_kwargs, json_file, indent=4)
 
     #####################
 
     kwargs = {**metadata_kwargs, **model_kwargs}
+
+    instructions = {
+            "kwargs":kwargs,\
+            "class":"SabiaNetworkManager",\
+            "module":"miscellaneous.elia.nn"
+        }
+    
+    with open("instructions.json", "w") as json_file:
+        # The 'indent' parameter is optional for pretty formatting
+        json.dump(instructions, json_file, indent=4)
 
     net = SabiaNetworkManager(**kwargs)
     print(net)
@@ -198,22 +209,37 @@ def main():
 
     ##########################################
     # choose the hyper-parameters
-    all_bs = [10]#[10,30,60,90]
+    all_bs = [1]#[10,30,60,90]
     all_lr = [1e-3]#[2e-4,1e-3,5e-3]
+    epochs = 10
     
     ##########################################
     # optional settings
-    opts = {"plot":{"N":100},"thr":{"exit":1e2}}
+    opts = {
+            "plot":{
+                "N":100
+            },
+            "thr":{
+                "exit":1e2
+            },
+            "Natoms" : Natoms,
+            "output_folder" : output_folder,
+            "save":{
+                "parameters":1,
+                "networks-temp":1
+            }
+        }
 
     ##########################################
     # hyper-train the model
     hyper_train_at_fixed_model( net,\
                                 all_bs,\
                                 all_lr,\
+                                epochs,\
                                 loss,\
                                 datasets,\
-                                output_folder,\
-                                Natoms=Natoms,\
+                                #output_folder,\
+                                #Natoms=Natoms,\
                                 opts=opts)
 
     print("\nJob done :)")

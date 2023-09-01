@@ -9,19 +9,33 @@ from ..functions import add_default
 def hyper_train_at_fixed_model( net:torch.nn.Module,\
                                 all_bs:list,\
                                 all_lr:list,\
+                                epochs,\
                                 loss:callable,\
                                 datasets:dict,\
-                                output_folder:str,
-                                Natoms:int=1,\
+                                # output_folder:str,
+                                # Natoms:int=1,\
                                 opts:dict=None):
     
     ##########################################
     # set optional settings
-    default = { "plot":{"N":10},\
-                "dataloader":{"shuffle":True},\
-                "disable":False,\
-                "Natoms":Natoms}
+    default = { #"dataloader":{"shuffle":True},\
+                #"disable":False,\
+                #"Natoms":1,
+                "output_folder":"results"}
     opts = add_default(opts,default)
+
+    ##########################################
+    # epochs
+    if type(epochs) == int:
+        rows = len(all_bs)
+        cols = len(all_lr)
+        data = np.full((rows, cols), epochs)
+        epochs = pd.DataFrame(data, index=all_bs, columns=all_lr)
+
+    elif type(epochs) == pd.DataFrame:
+        pass
+    else :
+        raise ValueError("'epochs' type not supported")
     
     ##########################################
     # extract datasets
@@ -58,7 +72,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
             
             hyperparameters = {
                 'batch_size': batch_size,
-                'n_epochs'  : 100,
+                'n_epochs'  : epochs.at[batch_size,lr],
                 'optimizer' : "Adam",
                 'lr'        : lr,
                 'loss'      : loss 
@@ -78,7 +92,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                             hyperparameters=hyperparameters,
                             get_pred=net.get_pred,
                             get_real=lambda X: net.get_real(X=X,output=net.output),
-                            output=output_folder,
+                            output=opts["output_folder"],
                             name=df.at[n,"file"],
                             opts=opts)
                 count_try += 1

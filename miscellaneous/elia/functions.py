@@ -399,12 +399,14 @@ def segment(A,B,N,start=0,end=1):
 
 import os
 
-def remove_empty_folder(folder_path):
+def remove_empty_folder(folder_path,show=True):
     if is_folder_empty(folder_path):
         os.rmdir(folder_path)
-        print(f"Folder '{folder_path}' has been removed.")
+        if show: print(f"Folder '{folder_path}' has been removed.")
+        return True
     else:
-        print(f"Folder '{folder_path}' is not empty and cannot be removed.")
+        if show:  print(f"Folder '{folder_path}' is not empty and cannot be removed.")
+        return False
 
 def is_folder_empty(folder_path):
     return len(os.listdir(folder_path)) == 0
