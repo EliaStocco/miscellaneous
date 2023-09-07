@@ -19,19 +19,19 @@ def import_submodules(package_name):
 
 
 
-print("\t 'miscellaneous.elia'")
+#print("\t 'miscellaneous.elia'")
 
-print("importing 'miscellaneous.elia.functions' ... ",end="")
+#print("importing 'miscellaneous.elia.functions' ... ",end="")
 from .functions import *
-print("done")
+#print("done")
 
-print("importing 'miscellaneous.elia.classes' ... ",end="")
+#print("importing 'miscellaneous.elia.classes' ... ",end="")
 from .classes import *
-print("done")
+#print("done")
 
 #print("\t\timporting 'miscellaneous.elia.functions'")
 from .nn import *
 #print("\t\timported 'miscellaneous.elia.functions'")
 
-print("imported 'miscellaneous.elia'")
+#print("imported 'miscellaneous.elia'")
 

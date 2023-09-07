@@ -12,6 +12,8 @@ import os
 import itertools
 import numpy as np
 import re
+import contextlib
+import sys
 #from ipi.engine.properties import Properties
 from ipi.utils.units import unit_to_internal, unit_to_user
 
@@ -411,3 +413,16 @@ def remove_empty_folder(folder_path,show=True):
 def is_folder_empty(folder_path):
     return len(os.listdir(folder_path)) == 0
 
+
+@contextlib.contextmanager
+def suppress_output(suppress=True):
+    if suppress:
+        with open(os.devnull, 'w') as fnull:
+            sys.stdout.flush()  # Flush the current stdout
+            sys.stdout = fnull
+            try:
+                yield
+            finally:
+                sys.stdout = sys.__stdout__  # Restore the original stdout
+    else:
+        yield

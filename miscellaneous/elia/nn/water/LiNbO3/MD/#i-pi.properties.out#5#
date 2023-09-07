@@ -1,8 +1,0 @@
-# column   1     --> step : The current simulation time step.
-# column   2     --> time : The elapsed simulation time.
-# column   3     --> conserved : The value of the conserved energy quantity per bead.
-# cols.    4-6   --> polarization : The (ensemble averaged) total polarization (cartesian axes).
-# column   7     --> kinetic_md : The kinetic energy of the (extended) classical system.
-# column   8     --> potential : The physical system potential energy.
-# column   9     --> volume : The volume of the cell box.
-    0.00000000e+00     0.00000000e+00     2.83733583e-01                nan              nan              nan   2.76412693e-01     0.00000000e+00     2.06191113e+03   

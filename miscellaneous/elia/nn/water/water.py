@@ -66,7 +66,7 @@ def main():
     
     ##########################################
     # preparing dataset
-    opts = {"prepare":{"restart":False},"build":{"restart":True}}
+    opts = {"prepare":{"restart":False},"build":{"restart":False}}
     datasets, data, dipole, pos = prepare_dataset(ref_index,\
                                                   max_radius,\
                                                   reference,\
@@ -142,7 +142,7 @@ def main():
     #     for mul in [1,2,3,4,5,6]:
     mul = 2
     layers = 6
-    lmax = 1
+    lmax = 2
     
     #####################
 

@@ -3,7 +3,7 @@
 # from .. import import_submodules
 # import_submodules(__name__)
 
-print("\t\timporting 'miscellaneous.elia.nn'")
+# print("\t\timporting 'miscellaneous.elia.nn'")
 
 
 from .Convolution import Convolution
@@ -11,9 +11,9 @@ from .SabiaNetwork import SabiaNetwork
 from .SabiaNetworkManager import SabiaNetworkManager
 from .MessagePassing import MessagePassing
 
-print("\t\t\timporting 'miscellaneous.elia.nn.iPIinterface' ... ",end="")
+# print("\t\t\timporting 'miscellaneous.elia.nn.iPIinterface' ... ",end="")
 from .iPIinterface import iPIinterface
-print(" done")
+# print(" done")
 
 from .train import train
 from .hyper_train import hyper_train_at_fixed_model
@@ -27,4 +27,4 @@ from .normalize_datasets import normalize_datasets
 from .normalize import normalize, compute_normalization_factors
 from .prepare_dataset import prepare_dataset
 
-print("\t\timported 'miscellaneous.elia.nn'")
+# print("\t\timported 'miscellaneous.elia.nn'")

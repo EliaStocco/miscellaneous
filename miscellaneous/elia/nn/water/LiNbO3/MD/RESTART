@@ -135,6 +135,8 @@
       <trajectory filename='forces'>forces</trajectory>
       <trajectory filename='velocities'>velocities</trajectory>
       <trajectory filename='positions'>positions</trajectory>
+      <trajectory filename='bec' format='txt'>bec</trajectory>
+      <trajectory filename='extra' format='text'>extra</trajectory>
       <properties shape='(7)' filename='properties.out'>
        [ step, time, conserved, polarization, kinetic_md, 
          potential, volume ]

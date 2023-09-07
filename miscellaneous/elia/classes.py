@@ -805,7 +805,12 @@ class MicroState:
 
     def plot_time_series(self,what:str,file:str=None):
 
-        time = self.convert_property(what="time",family="time",unit="picosecond")
+        if "time" in self.properties :
+            time = self.convert_property(what="time",family="time",unit="picosecond")
+        else :
+            print("Warning: 'time' not present in 'properties'")
+            time = None
+
         quantity = self.properties[what]
         dim = quantity.shape[1]
         if dim == 3:
@@ -821,7 +826,9 @@ class MicroState:
             arr -= arr.mean()
             l = labels[n] if labels is not None else None
             c = colors[n] if colors is not None else None
-            ax.plot(time,arr,label=l,c=c)
+            if time is None :
+                time = np.arange(len(arr))
+            ax.plot(time,arr,label=l,c=c,marker="o")
         
         plt.grid()
         plt.legend()
@@ -1250,12 +1257,20 @@ class MicroState:
         # speed-up if I have many coordinates but the same lattice
         if matrixT is None:
             # I have to divide normalize the lattice parameters
-            length = np.linalg.norm(lattice,axis=1)
+            length = np.linalg.norm(lattice,axis=0)
             matrixT = deepcopy(lattice)
             # normalize the columns
             for i in range(3):
                 matrixT[:,i] /= length[i]
             matrixT = np.linalg.inv( matrixT ).T
+
+        # # Let's do a simple test using 'ase'
+        # from ase import Atoms
+        # test = Atoms(positions=[array],cell=lattice.T)
+        # test.cell.cellpar() # the first 3 components should be equal to 'lenghts'
+        # p = test.get_scaled_positions()
+        # out / p # should be equal to 'lenghts'
+
 
         # I should do 
         #   return ( inv @ array.T ).T
@@ -1307,20 +1322,20 @@ class MicroState:
 
         return array @ matrixT
     
-    def cart2lattice(self,*argc,**argv):
-        return self.trasform_basis(func=MicroState._cart2lattice,*argc,**argv)
+    def cart2lattice(self,**argv):
+        return self.trasform_basis(func=MicroState._cart2lattice,**argv)
     
-    def lattice2cart(self,*argc,**argv):
-        return self.trasform_basis(func=MicroState._lattice2cart,*argc,**argv)
+    def lattice2cart(self,**argv):
+        return self.trasform_basis(func=MicroState._lattice2cart,**argv)
     
     def trasform_basis(self,func,what=None,array=None,unit=None,family=None,same_lattice=True,reshape=None):
 
         if same_lattice:
 
-            from .functions import print_cell
+            # from .functions import print_cell
             
             lattice = deepcopy(self.cell[0])
-            print_cell(lattice)
+            # print(print_cell(lattice))
 
             if array is None :
                 array = self.properties[what]
@@ -1401,7 +1416,7 @@ class MicroState:
 
         return length
 
-    def get_phases(self,array=None,unit="atomic_unit",same_lattice=True):
+    def get_phases(self,array=None,unit="atomic_unit",same_lattice=True,inplace=True,discont=None):
         """Compute the phases of the polarization vectors"""
 
         # convert the polarization from cartesian di lattice coordinates
@@ -1425,21 +1440,25 @@ class MicroState:
         phases = np.zeros(polarization.shape)
         for xyz in range(3):
             phases[:,xyz] = polarization[:,xyz]*volume[:]/(length[:,xyz]) # e == 1 in a.u
-            phases[:,xyz] = np.unwrap(phases[:,xyz],discont=0.0,period=1.0)
+            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,discont=discont)
+
+
+        if inplace :
+            self.properties["phases"] = phases
         
         return phases
     
     def get_dipole(self,same_lattice=True,inplace=True,recompute=False):
 
-        if "electric-dipole" in self.properties and not recompute:
-            return self.properties["electric-dipole"]
+        if "dipole" in self.properties and not recompute:
+            return self.properties["dipole"]
 
         volume = self.get_volume(same_lattice=same_lattice,only_first=False)
         polarization = self.properties["polarization"]
 
         dipole = (polarization.T * volume).T
         if inplace :
-            self.properties["electric-dipole"] = dipole
+            self.properties["dipole"] = dipole
 
         return dipole
 
