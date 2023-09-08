@@ -803,7 +803,10 @@ class MicroState:
 
         pass
 
-    def plot_time_series(self,what:str,file:str=None):
+    def plot_time_series(self,what:str,file:str=None,opts=None):
+
+        if opts is None :
+            opts = {"mean":False}
 
         if "time" in self.properties :
             time = self.convert_property(what="time",family="time",unit="picosecond")
@@ -823,7 +826,7 @@ class MicroState:
         fig, ax = plt.subplots(figsize=(15,5))
         for n in range(dim):
             arr = quantity[:,n]
-            arr -= arr.mean()
+            if opts["mean"] : arr -= arr.mean()
             l = labels[n] if labels is not None else None
             c = colors[n] if colors is not None else None
             if time is None :
@@ -1282,7 +1285,7 @@ class MicroState:
             return out
     
     @staticmethod
-    def _lattice2cart(array,lattice,matrixT=None): #,*argc,**argv):
+    def _lattice2cart(array,lattice,matrixT=None,get_matrix=False): #,*argc,**argv):
         """ Lattice to Cartesian coordinates
         
         Input:
@@ -1313,14 +1316,20 @@ class MicroState:
         # but it is equal to
 
         if matrixT is None:
-            length = np.linalg.norm(lattice,axis=1)
+            length = np.linalg.norm(lattice,axis=0)
             matrixT = deepcopy(lattice)
             # normalize the columns
             for i in range(3):
                 matrixT[:,i] /= length[i]
             matrixT = matrixT.T
 
-        return array @ matrixT
+        out = array @ matrixT
+        if get_matrix:
+            return out, matrixT
+        else :
+            return out
+        
+        # return array @ matrixT
     
     def cart2lattice(self,**argv):
         return self.trasform_basis(func=MicroState._cart2lattice,**argv)
@@ -1416,7 +1425,7 @@ class MicroState:
 
         return length
 
-    def get_phases(self,array=None,unit="atomic_unit",same_lattice=True,inplace=True,discont=None):
+    def get_phases(self,array=None,unit="atomic_unit",same_lattice=True,inplace=True,fix=True,**argv):
         """Compute the phases of the polarization vectors"""
 
         # convert the polarization from cartesian di lattice coordinates
@@ -1440,8 +1449,10 @@ class MicroState:
         phases = np.zeros(polarization.shape)
         for xyz in range(3):
             phases[:,xyz] = polarization[:,xyz]*volume[:]/(length[:,xyz]) # e == 1 in a.u
-            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,discont=discont)
+            # phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,discont=discont)
 
+        if fix :
+            phases = self.fix_phases(phases,inplace=False,**argv)
 
         if inplace :
             self.properties["phases"] = phases
@@ -1493,12 +1504,26 @@ class MicroState:
                                             reshape=None)
 
         return quantum
+    
+    def fix_phases(self,phases=None,inplace=False,**argv):
+        if phases is None:
+            phases = self.properties["phases"]
 
-    def fix_polarization(self,\
-                         array=None,\
-                         unit=None,\
+        for xyz in range(3):
+            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,**argv)
+
+        if inplace :
+            self.properties["phases"] = phases
+        
+        return phases
+        
+
+    def fix_polarization(self,
+                         array=None,
+                         unit=None,
                          same_lattice=True,
-                         inplace=False):
+                         inplace=False,
+                         recompute=False):
         """ Fix polarization jumps
         
             Attention:
@@ -1511,7 +1536,10 @@ class MicroState:
             if unit is None :
                 unit = self.units["polarization"]
 
-        phases = self.get_phases(array=array,unit=unit,same_lattice=same_lattice)
+        if "phases" not in self.properties or recompute:
+            phases = self.get_phases(array=array,unit=unit,same_lattice=same_lattice,fix=True)
+        else :
+            phases = self.fix_phases()
 
         #
         # the phases are now fixed in 'get_phases'

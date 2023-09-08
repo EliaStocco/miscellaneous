@@ -106,7 +106,7 @@ class SabiaNetwork(torch.nn.Module):
             edge_src = edge_index[0]
             edge_dst = edge_index[1]
 
-        if "edge_vec" in data:
+        if "edge_vec" in data and ( data["pos"].requires_grad and data["edge_vec"].requires_grad ):
             edge_vec = data['edge_vec']
         
         else :

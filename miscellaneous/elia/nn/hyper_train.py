@@ -21,6 +21,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
     default = { #"dataloader":{"shuffle":True},\
                 #"disable":False,\
                 #"Natoms":1,
+                "name":"untitled",
                 "output_folder":"results"}
     opts = add_default(opts,default)
 
@@ -62,7 +63,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
 
             df.at[n,"bs"] = batch_size
             df.at[n,"lr"] = lr
-            df.at[n,"file"] = "bs={:d}.lr={:.1e}".format(batch_size,lr)
+            df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}".format(opts["name"],batch_size,lr)
             
             print("#########################\n")
             print("batch_size={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(batch_size,lr,n+1,Ntot))

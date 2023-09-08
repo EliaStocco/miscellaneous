@@ -6,6 +6,7 @@ from .make_dataset_delta import make_dataset_delta # miscellaneous.elia.nn.water
 from .make_dataset import make_dataset # miscellaneous.elia.nn.water.make_dataset
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import add_default
+from ase import Atoms
 
 def prepare_dataset(ref_index:int,\
                     max_radius:float,\
@@ -71,7 +72,7 @@ def prepare_dataset(ref_index:int,\
         for var in variables:
             filename = "{:s}/{:s}.pdf".format(f,var)
 
-            if var == "electric-dipole":
+            if var == "dipole":
                 _ = data.get_dipole(same_lattice=False)
 
             data.plot_time_series(what=var,file=filename)
@@ -158,5 +159,11 @@ def prepare_dataset(ref_index:int,\
     datasets = {"train":train_dataset,\
                 "val"  :val_dataset,\
                 "test" :test_dataset }
+    
+    pos  = train_dataset[0].pos.numpy()
+    cell = train_dataset[0].lattice[0].numpy()
+    symbols = data.types[0]
 
-    return datasets, data, dipole, pos
+    example = Atoms(positions=pos,cell=cell,symbols=symbols)
+
+    return datasets, data, dipole, pos, example

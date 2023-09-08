@@ -519,7 +519,7 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork):
         
         return y
 
-    def _get(self,X,what:str,**argv)-> torch.tensor:
+    def _get(self,X,what:str,detach=True,**argv)-> torch.tensor:
         """Get the correct value of the output restoring the original 'mean' and 'std' values.
         This should be used only during MD simulation."""
 
@@ -542,7 +542,8 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork):
         else :
             raise ValueError("quantity '{:s}' is not supported as output of this model".format(what))
         
-        y = y.detach()
+        if detach :
+            y = y.detach()
         # except:
         #     raise ValueError("Error evaluating output of the model (i.e. quantity '{:s}')".format(what))
         

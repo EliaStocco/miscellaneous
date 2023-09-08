@@ -381,6 +381,9 @@ def train(model,\
         # print("\tSaving parameters to file '{:s}'".format(savefile))
         # torch.save(model.state_dict(), savefile)
 
+        savefile = "{:s}/{:s}.final.torch".format(folders["parameters"],name)
+        torch.save(model.state_dict(), savefile)
+
         # removing initial model 
         savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
         if os.path.exists(savefile):

@@ -94,7 +94,7 @@ class iPIinterface(ABC):
 
     #     raise ValueError("This method has to be overwritten by the child class.")
         
-    def get(self,cell,pos,what:str):
+    def get(self,cell,pos,what:str,**argv):
 
         #cell = torch.from_numpy(cell.T).to(torch.float64)
 
@@ -106,7 +106,7 @@ class iPIinterface(ABC):
 
         X = self.make_datapoint(lattice=cell.T,positions=pos,requires_grad=requires_grad)
 
-        return self._get(what=what,X=X) # .detach()
+        return self._get(what=what,X=X,**argv) # .detach()
         
     # def get(self,cell, pos,what:str):
     #     """Mask to '_get' for i-PI.

@@ -21,7 +21,7 @@ __all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations'
             'str2bool','get_one_file_in_folder','get_property_header','getproperty',
             'vector_type', 'output_folder', 'save2xyz', 'print_cell', 'convert',
             'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
-            'recursive_copy', 'add_default']
+            'recursive_copy', 'add_default', 'args_to_dict']
 
 def recursive_copy(source_dict:dict, target_dict:dict)->dict:
     """
@@ -330,6 +330,10 @@ class Dict2Obj(object):
         """Constructor"""
         for key in dictionary:
             setattr(self, key, dictionary[key])
+
+def args_to_dict(args):
+    arg_dict = vars(args)
+    return arg_dict
 
 def get_attributes(obj):
     return [i for i in obj.__dict__.keys() if i[:1] != '_']
