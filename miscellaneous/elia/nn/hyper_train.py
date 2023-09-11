@@ -12,8 +12,6 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                                 epochs,\
                                 loss:callable,\
                                 datasets:dict,\
-                                # output_folder:str,
-                                # Natoms:int=1,\
                                 opts:dict=None):
     
     ##########################################
@@ -43,7 +41,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
     train_dataset = datasets["train"]
     val_dataset   = datasets["val"]
     del datasets
-    #test_dataset  = datasets["test"]
+    # test_dataset  = datasets["test"]
 
     Ntot = len(all_bs)*len(all_lr)
     print("\n")
@@ -94,6 +92,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                             get_pred=net.get_pred,
                             get_real=lambda X: net.get_real(X=X,output=net.output),
                             output=opts["output_folder"],
+                            # correlation = net.correlation,
                             name=df.at[n,"file"],
                             opts=opts)
                 count_try += 1
@@ -119,3 +118,5 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
             print(f"Error deleting file '{e}'")
     except OSError as e:
         print(f"Error writing file '{e}'")
+
+    pass

@@ -11,7 +11,7 @@ from miscellaneous.elia.nn.visualize_dataset import visualize_datasets
 from miscellaneous.elia.nn.prepare_dataset import prepare_dataset
 from miscellaneous.elia.nn.normalize_datasets import normalize_datasets
 from miscellaneous.elia.nn import SabiaNetworkManager
-from miscellaneous.elia.functions import add_default, args_to_dict
+from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
 
 # Documentation
 # - https://pytorch.org/docs/stable/autograd.html
@@ -19,37 +19,138 @@ from miscellaneous.elia.functions import add_default, args_to_dict
 
 #----------------------------------------------------------------#
 
+description = "train a 'e3nn' model"
+
+default_values = {
+        "mul"           : 2,
+        "layers"        : 6,
+        "lmax"          : 2,
+        "name"          : "untitled",
+        "reference"     : True,
+        "output"        : "D",
+        "max_radius"    : 6.0,
+        "folder"        : "LiNbO3",
+        "output_folder" : "LiNbO3/results",
+        "ref_index"     : 0 ,
+        "Natoms"        : 30,
+        "random"        : False,
+        "epochs"        : 10000,
+        "bs"            : [1],
+        "lr"            : [1e-3],
+    }
+
+def get_args():
+    """Prepare parser of user input arguments."""
+
+    parser = argparse.ArgumentParser(description=description)
+
+    # Argument for "input"
+    parser.add_argument(
+        "-i", "--input", action="store", type=int, metavar="\bjson_file",
+        help="input json file", default=None
+    )
+
+    # Argument for "mul"
+    parser.add_argument(
+        "-m", "--mul", action="store", type=int, metavar="\bmultiplicity",
+        help="multiplicity for each node (default: 2)", default=default_values["mul"]
+    )
+
+    # Argument for "layers"
+    parser.add_argument(
+        "-l", "--layers", action="store", type=int, metavar="\bn_layers",
+        help="number of layers (default: 6)", default=default_values["layers"]
+    )
+
+    # Argument for "lmax"
+    parser.add_argument(
+        "--lmax", action="store", type=int, metavar="\blmax",
+        help="some description here (default: 2)", default=default_values["lmax"]
+    )
+
+    # Argument for "name"
+    parser.add_argument(
+        "--name", action="store", type=str, metavar="\bname",
+        help="some description here (default: 'untitled')", default=default_values["name"]
+    )
+
+    # Argument for "reference"
+    parser.add_argument(
+        "--reference", action="store",type=str2bool, metavar="\buse_ref",
+        help="some description here (default: True)",
+        default=default_values["reference"]
+    )
+
+    # Argument for "output"
+    parser.add_argument(
+        "--output", action="store", type=str, metavar="\boutput_folder",
+        help="some description here (default: 'D')", default=default_values["output"]
+    )
+
+    # Argument for "max_radius"
+    parser.add_argument(
+        "--max-radius", action="store", type=float, metavar="\bmax_radius",
+        help="some description here (default: 6.0)", default=default_values["max_radius"]
+    )
+
+    # Argument for "folder"
+    parser.add_argument(
+        "--folder", action="store", type=str, metavar="\bdata_folder",
+        help="some description here (default: 'LiNbO3')", default=default_values["folder"]
+    )
+
+    # Argument for "output_folder"
+    parser.add_argument(
+        "--output-folder", action="store", type=str, metavar="\boutput_folder",
+        help="some description here (default: 'LiNbO3/results')", default=default_values["output_folder"]
+    )
+
+    # Argument for "ref_index"
+    parser.add_argument(
+        "--ref-index", action="store", type=int, metavar="\bref_index",
+        help="some description here (default: 0)", default=default_values["ref_index"]
+    )
+
+    # Argument for "Natoms"
+    parser.add_argument(
+        "--Natoms", action="store", type=int, metavar="\bNatoms",
+        help="some description here (default: 30)", default=default_values["Natoms"]
+    )
+
+    # Argument for "random"
+    parser.add_argument(
+        "--random", action="store",type=str2bool, metavar="\brandom",
+        help="some description here (default: True)",
+        default=default_values["random"]
+    )
+
+    # Argument for "epochs"
+    parser.add_argument(
+        "--epochs", action="store", type=int, metavar="\bepochs",
+        help="some description here (default: 10000)", default=default_values["epochs"]
+    )
+
+    # Argument for "bs"
+    parser.add_argument(
+        "--bs", action="store", type=int, nargs="+", metavar="\bbatch_sizes",
+        help="some description here (default: [1])", default=default_values["bs"]
+    )
+
+    # Argument for "lr"
+    parser.add_argument(
+        "--all-lr", action="store", type=float, nargs="+", metavar="\blr",
+        help="some description here (default: [1e-3])", default=default_values["lr"]
+    )
+
+    return parser.parse_args()
+
+
 def main():
 
     ##########################################
-    # some parameters
+    # get user parameters
 
-    default = {
-                "mul"           : 2,
-                "layers"        : 6,
-                "lmax"          : 2,
-                "name"          : "untitled",
-                "reference"     : True,
-                "output"        : "D",
-                "max_radius"    : 6.0,
-                "folder"        : "LiNbO3",
-                "output_folder" : "LiNbO3/results",
-                "ref_index"     : 0 ,
-                "Natoms"        : 30,
-                "random"        : False
-            }
-    
-    # Create an argparse parser
-    parser = argparse.ArgumentParser(description="Your script description")
-
-    # Add arguments for each parameter
-    for param_name, param_value in default.items():
-        parser.add_argument(f"--{param_name}", type=type(param_value), default=param_value, 
-                            help=f"no description")
-    parser.add_argument("--input", type=str, default=None, help="json input file")
-
-    # Parse the command-line arguments
-    args = parser.parse_args()
+    args = get_args()
 
     if args.input is not None :
         # read parameters from file
@@ -58,7 +159,7 @@ def main():
         except :
             raise ValueError("error reading input file")
         # it should not be needed ...
-        parameters = add_default(parameters,default)
+        parameters = add_default(parameters,default_values)
     else :
         parameters = args_to_dict(args)
 
@@ -167,11 +268,6 @@ def main():
         "pos" : pos.tolist(),  
     }
 
-    # # Write the dictionary to the JSON file
-    # with open("metadata_kwargs.json", "w") as json_file:
-    #     # The 'indent' parameter is optional for pretty formatting
-    #     json.dump(metadata_kwargs, json_file, indent=4)  
-
     #####################
 
     model_kwargs = {
@@ -185,11 +281,6 @@ def main():
         "layers":parameters["layers"],
         "lmax":parameters["lmax"],
     }
-    # # Write
-    # #  the dictionary to the JSON file
-    # with open("model_kwargs.json", "w") as json_file:
-    #     # The 'indent' parameter is optional for pretty formatting
-    #     json.dump(model_kwargs, json_file, indent=4)
 
     #####################
 
@@ -219,19 +310,14 @@ def main():
         loss = net.loss()
     elif parameters["output"] == "EF" :
         loss = net.loss(lE=0.1,lF=0.9)
-
-    ##########################################
-    # choose the hyper-parameters
-    all_bs = [1]#[10,30,60,90]
-    all_lr = [1e-3]#[2e-4,1e-3,5e-3]
-    epochs = 10
     
     ##########################################
     # optional settings
     opts = {
             "name" : parameters["name"],
             "plot":{
-                "N":100
+                "learning-curve" : {"N":10},
+                "correlation" : {"N":10}
             },
             "thr":{
                 "exit":1e2
@@ -240,21 +326,18 @@ def main():
             "output_folder" : parameters["output_folder"],
             "save":{
                 "parameters":1,
-                "networks-temp":1
             }
         }
 
     ##########################################
     # hyper-train the model
-    hyper_train_at_fixed_model( net,\
-                                all_bs,\
-                                all_lr,\
-                                epochs,\
-                                loss,\
-                                datasets,\
-                                #output_folder,\
-                                #Natoms=Natoms,\
-                                opts=opts)
+    hyper_train_at_fixed_model( net      = net,\
+                                all_bs   = parameters["bs"],\
+                                all_lr   = parameters["lr"],\
+                                epochs   = parameters["epochs"],\
+                                loss     = loss,\
+                                datasets = datasets,\
+                                opts     = opts )
 
     print("\nJob done :)")
 

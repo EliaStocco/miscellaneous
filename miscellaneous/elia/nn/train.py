@@ -14,9 +14,9 @@ from .plot import plot_learning_curves
 
 __all__ = ["train"]
 
-def train(model,\
-          train_dataset,\
-          val_dataset,\
+def train(model:torch.nn.Module,\
+          train_dataset:list,\
+          val_dataset:list,\
           hyperparameters:dict=None,\
           get_pred:callable=None,\
           get_real:callable=None,\
@@ -72,12 +72,12 @@ def train(model,\
     # information about the status of the training
     info = "all good"
 
-    default = { "plot":{"N":10},\
+    default = { "plot":{"learning-curve":{"N":10}},\
                 "dataloader":{"shuffle":False},\
                 "thr":{"exit":100},\
                 "disable":False,\
                 "Natoms":1,\
-                "save":{"parameters":1,"networks-temp":-1}}
+                "save":{"parameters":1}} # ,"networks-temp":-1
     opts = add_default(opts,default)
 
     # set default values
@@ -107,7 +107,7 @@ def train(model,\
 
     # output folders
     folders = { "networks"        :"{:s}/networks".format(output),\
-                "networks-temp"   :"{:s}/networks-temp".format(output),\
+                # "networks-temp"   :"{:s}/networks-temp".format(output),\
                 "parameters"      :"{:s}/parameters".format(output),\
                 # "parameters-temp" :"{:s}/parameters-temp".format(output),\
                 "dataframes"      :"{:s}/dataframes".format(output),\
@@ -302,10 +302,10 @@ def train(model,\
             with torch.no_grad():
                 
                 # saving model to temporary file
-                N = opts["save"]["networks-temp"]
-                if N != -1 and epoch % N == 0 :
-                    savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
-                    torch.save(model, savefile)
+                # N = opts["save"]["networks-temp"]
+                # if N != -1 and epoch % N == 0 :
+                #     savefile = "{:s}/{:s}.torch".format(folders["networks-temp"],name)
+                #     torch.save(model, savefile)
 
                 # saving parameters to temporary file
                 N = opts["save"]["parameters"]
@@ -351,7 +351,7 @@ def train(model,\
                                         val_loss[:epoch+1],\
                                         file=savefile,\
                                         title=name if name != "untitled" else None,\
-                                        opts=opts["plot"])
+                                        opts=opts["plot"]["learning-curve"])
 
                 # print progress
                 if True: #correlation is None :
