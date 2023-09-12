@@ -1,18 +1,10 @@
 from torch_geometric.data import Data
 import torch
-# from torch import vmap
 from torch.func import jacrev
-#from copy import copy
 import numpy as np
-from scipy.stats import spearmanr
-from torch.nn import MSELoss
-# import time
-# import jax
-# import jax.numpy as jnp
 from .SabiaNetwork import SabiaNetwork
 from .iPIinterface import iPIinterface
-# from miscellaneous.elia.nn.water.make_dataset import make_datapoint
-# from miscellaneous.elia.nn.water.make_dataset_delta import make_datapoint_delta
+from .Methods4Training import EDFMethods4Training
 from typing import TypeVar
 T = TypeVar('T', bound='SabiaNetworkManager')
 # See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
@@ -21,7 +13,7 @@ T = TypeVar('T', bound='SabiaNetworkManager')
 
 __all__ = ["SabiaNetworkManager"]
 
-class SabiaNetworkManager(iPIinterface,SabiaNetwork):
+class SabiaNetworkManager(iPIinterface,SabiaNetwork,EDFMethods4Training):
 
     # output:str
     # lattice: torch.Tensor
@@ -90,62 +82,6 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork):
     @staticmethod
     def batch(X):
         return len(torch.unique(X.batch))
-
-    # def make_datapoint(self,**argv)->Data:
-
-    #     if self.reference:
-    #         return make_datapoint_delta(self.ref_dipole,self.ref_pos,**argv)
-    #     else :
-    #         return make_datapoint(**argv)
-
-    # def train(self: T, mode: bool) -> T:
-    #     if self.grad is not None:
-    #         del self.grad     # delete the gradient
-    #         self.grad = None  # build an empty gradient
-    #     return super(SabiaNetworkManager, self).train(mode)
-
-    # def _prepare(self: T, X: Data, n:int,rotate=None,replace=None,**argv)->(Data,torch.tensor):
-    #     """prepare data """
-
-    #     if n >= 0 :
-    #         index = X.batch == n
-    #         lattice = X.lattice[n]
-    #         symbols = X.symbols[n]
-    #         max_radius = float( X.max_radius[n] if hasattr(X, "max_radius") else self.max_radius)
-    #         R = X.pos[index]
-
-    #         # replace values
-    #         if replace is not None:
-    #             if "lattice" in replace :
-    #                 lattice = replace["lattice"]
-    #             if "symbols" in replace :
-    #                 symbols = replace["symbols"]
-    #             if "max_radius" in replace :
-    #                 max_radius = replace["max_radius"]
-    #             if "R" in replace :
-    #                 R = replace["R"]
-
-    #         # rotate, useful for 'check_equivariance'
-    #         if rotate is not None :          
-    #             R        = torch.einsum("ij,zj->zi",rotate,R.reshape((1,-1))).reshape((-1,3))
-    #             lattice  = torch.einsum("ij,zj->zi",rotate,lattice.reshape((1,-1))).reshape((-1,3))
-
-    #     else :
-    #         batch_size = self.batch(X)
-    #         lattice = X.lattice
-    #         symbols = X.symbols
-    #         max_radius = [self.max_radius]*batch_size
-    #         R = X.pos.reshape((batch_size,-1,3)).shape # X.pos
-
-    #     # create the Data object
-    #     X0 = self.make_datapoint(lattice=lattice,
-    #                     max_radius=max_radius,
-    #                     symbols=symbols,
-    #                     positions=R,
-    #                     default_dtype=self.default_dtype,
-    #                     **argv)
-        
-    #     return X0, R
 
     def _dummy_output_R(self: T, R:torch.tensor) -> torch.tensor:
         """Potential Energy Surface
@@ -243,10 +179,6 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork):
         y = y.reshape((batch_size,-1))
 
         return y
-
-    # def volume(self:T,X) -> torch.tensor:
-
-    #     return 1.0
         
     def dipole(self: T, X) -> torch.tensor:
         """Return the dipole of the system"""
@@ -279,20 +211,6 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork):
         #         y.data[n,:] = tmp[:,1:4]
 
         # return y
-
-    # def polarization(self: T, X) -> torch.tensor:
-    #     """Return the polarization of the system"""
-
-    #     if self.output not in ["D","ED","EDF"]:
-    #         raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
-
-    #     # Compute the dipole
-    #     d = self.dipole(X)
-
-    #     # Compute the volume
-    #     v = self.volume(X)
-
-    #     return d/v
 
     def _dipole(self: T, R:torch.tensor) -> torch.tensor:
         """Return the dipole of the system for a given set of nuclear coordinates."""
@@ -362,110 +280,110 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork):
 
         return y
 
-    @staticmethod
-    def get_pred(model: T, X: Data) -> torch.tensor:
-        """return Energy, Polarization and Forces"""
+    # # @staticmethod
+    # def get_pred(self: T, X: Data) -> torch.tensor:
+    #     """return Energy, Polarization and Forces"""
 
-        N = {"E": 1, "D": 3, "ED": 4, "EF": 1+3*X.Natoms[0], "EDF": 1+3+3*X.Natoms[0]}
-        N = N[model.output]
-        batch_size = len(np.unique(X.batch))
-        y = torch.zeros((batch_size, N))
+    #     N = {"E": 1, "D": 3, "ED": 4, "EF": 1+3*X.Natoms[0], "EDF": 1+3+3*X.Natoms[0]}
+    #     N = N[self.output]
+    #     batch_size = len(np.unique(X.batch))
+    #     y = torch.zeros((batch_size, N))
 
-        if model.output in ["E", "ED","D"]:
-            y = model(X)
+    #     if self.output in ["E", "ED","D"]:
+    #         y = self(X)
 
-        elif model.output == "EDF":
-            EP = model(X)
-            y[:, 0] = EP[:, 0]         # 1st column for the energy
-            y[:, 1:4] = EP[:, 1:4]     # 2nd to 4th columns for the dipole
-            y[:, 4:] = model.forces(X) # other columns for the forces
+    #     elif self.output == "EDF":
+    #         EP = self(X)
+    #         y[:, 0] = EP[:, 0]         # 1st column for the energy
+    #         y[:, 1:4] = EP[:, 1:4]     # 2nd to 4th columns for the dipole
+    #         y[:, 4:] = self.forces(X) # other columns for the forces
 
-        elif model.output == "EF":
-            EP = model(X)
-            y[:, 0]  = EP[:, 0]         # 1st column for the energy
-            y[:, 1:] = model.forces(X)  # other columns for the forces
+    #     elif self.output == "EF":
+    #         EP = self(X)
+    #         y[:, 0]  = EP[:, 0]         # 1st column for the energy
+    #         y[:, 1:] = self.forces(X)  # other columns for the forces
 
-        return y
+    #     return y
 
-    @staticmethod
-    def get_real(X: Data, output: str = "E") -> torch.tensor:
-        """return Energy, Polarization and/or Forces"""
+    # # @staticmethod
+    # def get_real(self:T,X: Data) -> torch.tensor:
+    #     """return Energy, Polarization and/or Forces"""
 
-        # 'EPF' has to be modified in case we have different molecules in the dataset
-        N = {"E": 1, "EF": 1+3*X.Natoms[0], "D": 3, "ED": 4, "EDF": 1+3+3*X.Natoms[0]}
-        N = N[output]
-        batch_size = len(np.unique(X.batch))
+    #     # 'EPF' has to be modified in case we have different molecules in the dataset
+    #     N = {"E": 1, "EF": 1+3*X.Natoms[0], "D": 3, "ED": 4, "EDF": 1+3+3*X.Natoms[0]}
+    #     N = N[self.output]
+    #     batch_size = len(np.unique(X.batch))
 
-        # if batch_size > 1 :
+    #     # if batch_size > 1 :
 
-        y = torch.zeros((batch_size, N))
+    #     y = torch.zeros((batch_size, N))
 
-        if output in ["E", "EF", "ED", "EDF"]:
-            y[:, 0] = X.energy
+    #     if self.output in ["E", "EF", "ED", "EDF"]:
+    #         y[:, 0] = X.energy
 
-            if output in ["ED", "EDF"]:
-                y[:, 1:4] = X.dipole.reshape((batch_size, -1))
+    #         if self.output in ["ED", "EDF"]:
+    #             y[:, 1:4] = X.dipole.reshape((batch_size, -1))
 
-            elif output == "EDF":
-                y[:, 4:] = X.forces.reshape((batch_size, -1))
+    #         elif self.output == "EDF":
+    #             y[:, 4:] = X.forces.reshape((batch_size, -1))
 
-            if output == "EF":
-                y[:, 1:] = X.forces.reshape((batch_size, -1))
+    #         if self.output == "EF":
+    #             y[:, 1:] = X.forces.reshape((batch_size, -1))
 
-        elif output == "D":
-            y[:,0:3] = X.dipole.reshape((batch_size, -1))
+    #     elif self.output == "D":
+    #         y[:,0:3] = X.dipole.reshape((batch_size, -1))
 
-        return y
+    #     return y
 
-    def loss(self:T,lE:float=None,lF:float=None,lP:float=None)->callable:
+    # def loss(self:T,lE:float=None,lF:float=None,lP:float=None)->callable:
 
-        lE = lE if lE is not None else 1.0
-        lF = lF if lF is not None else 1.0
-        lP = lP if lP is not None else 1.0
+    #     lE = lE if lE is not None else 1.0
+    #     lF = lF if lF is not None else 1.0
+    #     lP = lP if lP is not None else 1.0
 
-        if self.output in ["E","D"]:
-            return MSELoss() #MSELoss(reduction='mean') # MSELoss(reduce='sum')
-            #return lambda x,y: MSELoss()(x,y)
+    #     if self.output in ["E","D"]:
+    #         return MSELoss() #MSELoss(reduction='mean') # MSELoss(reduce='sum')
+    #         #return lambda x,y: MSELoss()(x,y)
         
-        elif self.output == "ED":
-            def loss_EP(x,y):
-                E = MSELoss()(x[:,0],y[:,0])
-                P = MSELoss()(x[:,1:4],y[:,1:4])
-                return lE * E + lP * P
-            return loss_EP
+    #     elif self.output == "ED":
+    #         def loss_EP(x,y):
+    #             E = MSELoss()(x[:,0],y[:,0])
+    #             P = MSELoss()(x[:,1:4],y[:,1:4])
+    #             return lE * E + lP * P
+    #         return loss_EP
         
-        elif self.output == "EF":
-            def loss_EF(x,y):
-                E = MSELoss()(x[:,0],y[:,0])
-                F = MSELoss()(x[:,1:],y[:,1:])
-                return lE * E + lF * F
-            return loss_EF
+    #     elif self.output == "EF":
+    #         def loss_EF(x,y):
+    #             E = MSELoss()(x[:,0],y[:,0])
+    #             F = MSELoss()(x[:,1:],y[:,1:])
+    #             return lE * E + lF * F
+    #         return loss_EF
         
-        elif self.output == "EDF":
-            def loss_EPF(x,y):
-                E = MSELoss()(x[:,0],y[:,0])
-                P = MSELoss()(x[:,1:4],y[:,1:4])
-                F = MSELoss()(x[:,4:],y[:,4:])
-                return lE * E + lP * P + lF * F
-            return loss_EPF
+    #     elif self.output == "EDF":
+    #         def loss_EPF(x,y):
+    #             E = MSELoss()(x[:,0],y[:,0])
+    #             P = MSELoss()(x[:,1:4],y[:,1:4])
+    #             F = MSELoss()(x[:,4:],y[:,4:])
+    #             return lE * E + lP * P + lF * F
+    #         return loss_EPF
         
-        else :
-            raise ValueError("error in output mode")
+    #     else :
+    #         raise ValueError("error in output mode")
         
-    @staticmethod
-    def correlation(x:torch.tensor,y:torch.tensor):
+    # @staticmethod
+    # def correlation(x:torch.tensor,y:torch.tensor):
 
-        #N = {"E": 1, "P": 3, "EP": 4, "EPF": 1+3+3*X.Natoms[0]}
+    #     #N = {"E": 1, "P": 3, "EP": 4, "EPF": 1+3+3*X.Natoms[0]}
 
-        x = x.detach().numpy()
-        y = y.detach().numpy()
+    #     x = x.detach().numpy()
+    #     y = y.detach().numpy()
 
-        N = x.shape[1]
-        out = np.zeros(N)
-        for i in range(N):
-            out[i] = spearmanr(x[:,i],y[:,i]).correlation
+    #     N = x.shape[1]
+    #     out = np.zeros(N)
+    #     for i in range(N):
+    #         out[i] = spearmanr(x[:,i],y[:,i]).correlation
 
-        return out
+    #     return out
 
     def check_equivariance(self:T,X: Data,angles=None)->np.ndarray:
 
@@ -519,80 +437,6 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork):
         
         return y
 
-    def _get(self,X,what:str,detach=True,**argv)-> torch.tensor:
-        """Get the correct value of the output restoring the original 'mean' and 'std' values.
-        This should be used only during MD simulation."""
-
-        # lower case
-        what = what.lower()
-
-        # compute output of the model
-        # try :
-        if what == "energy" :
-            y = self.energy(X,**argv)
-        
-        elif what == "forces":
-            y = self.forces(X,**argv)
-        
-        elif what == "dipole":
-            y = self.dipole(X,**argv)
-        
-        elif what == "bec":
-            y = self.BEC(X,**argv)
-        else :
-            raise ValueError("quantity '{:s}' is not supported as output of this model".format(what))
-        
-        if detach :
-            y = y.detach()
-        # except:
-        #     raise ValueError("Error evaluating output of the model (i.e. quantity '{:s}')".format(what))
-        
-        # get normalization factors
-        # try :
-        mean = None
-        std = None
-        if what == "energy" :
-            mean, std = self.normalization["energy"]["mean"], self.normalization["energy"]["std"]
-        
-        elif what == "forces":
-            std = self.normalization["energy"]["std"]
-        
-        elif what == "dipole":
-            mean, std = self.normalization["dipole"]["mean"], self.normalization["dipole"]["std"]
-        
-        elif what == "bec":
-            std = self.normalization["dipole"]["std"]
-
-        # resize
-        batch_size = y.shape[0]
-        newdim = [1]*(len(y.shape)-2) # I remove the batch_size axis and the 'actual' value of the output
-        mean = mean.view(batch_size,3,*newdim) if mean is not None else mean
-        std  =  std.view(batch_size,3,*newdim) if  std is not None else std
-
-        # except:
-        #     raise ValueError("Error getting normalization factors for '{:s}'".format(what))
-        
-        # de-normalize output
-        # # try :
-        # for b in range(y.shape[0]): # batch_size
-        #     for r in range(y.shape[2]): # nuclear coordinates
-                 
-        #         if what in ["energy","dipole"] :
-        #             y[b,:,r] = y[b,:,r] * std + mean # this will be wrong for sure
-                
-        #         elif what in ["forces","bec"]:
-        #             y[b,:,r] = y[b,:,r] * std
-
-        if what in ["energy","dipole"] :
-            return y * std + mean # this will be wrong for sure
-        
-        elif what in ["forces","bec"]:
-            return y * std
-        
-        # return y 
-
-        # except:
-        #     raise ValueError("Error de-normalizating '{:s}'".format(what))
         
 def main():
 

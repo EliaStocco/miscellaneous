@@ -90,7 +90,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                             val_dataset=val_dataset,
                             hyperparameters=hyperparameters,
                             get_pred=net.get_pred,
-                            get_real=lambda X: net.get_real(X=X,output=net.output),
+                            get_real=net.get_real, #lambda X: net.get_real(X=X,output=net.output),
                             output=opts["output_folder"],
                             # correlation = net.correlation,
                             name=df.at[n,"file"],

@@ -10,6 +10,7 @@ from .Convolution import Convolution
 from .SabiaNetwork import SabiaNetwork
 from .SabiaNetworkManager import SabiaNetworkManager
 from .MessagePassing import MessagePassing
+from .Methods4Training import EDFMethods4Training
 
 # print("\t\t\timporting 'miscellaneous.elia.nn.iPIinterface' ... ",end="")
 from .iPIinterface import iPIinterface

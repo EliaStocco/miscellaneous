@@ -264,7 +264,7 @@ def train(model:torch.nn.Module,\
                 model.train(mode=True)
 
                 # predict the value for the input X
-                y_pred = get_pred(model=model,X=X)
+                y_pred = get_pred(X=X) #get_pred(model=model,X=X)
                 
                 # true value for the value X
                 y_real = get_real(X=X)
@@ -315,11 +315,11 @@ def train(model:torch.nn.Module,\
 
                 # compute the loss function
                 # predict the value for the validation dataset
-                yval_pred = get_pred(model,all_dataloader_val)
+                yval_pred = get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
                 val_loss[epoch] = float(loss_fn(yval_pred,yval_real))/opts["Natoms"]
 
                 # set arrays
-                ytrain_pred = get_pred(model=model,X=all_dataloader_train)
+                ytrain_pred = get_pred(X=all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
                 train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real))/opts["Natoms"]
 
                 if train_loss[epoch] > opts["thr"]["exit"]:

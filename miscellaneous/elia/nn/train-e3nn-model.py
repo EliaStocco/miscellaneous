@@ -32,7 +32,7 @@ default_values = {
         "folder"        : "LiNbO3",
         "output_folder" : "LiNbO3/results",
         "ref_index"     : 0 ,
-        "Natoms"        : 30,
+        "Natoms"        : None,
         "random"        : False,
         "epochs"        : 10000,
         "bs"            : [1],
@@ -89,7 +89,7 @@ def get_args():
 
     # Argument for "max_radius"
     parser.add_argument(
-        "--max-radius", action="store", type=float, metavar="\bmax_radius",
+        "--max_radius", action="store", type=float, metavar="\bmax_radius",
         help="some description here (default: 6.0)", default=default_values["max_radius"]
     )
 
@@ -101,13 +101,13 @@ def get_args():
 
     # Argument for "output_folder"
     parser.add_argument(
-        "--output-folder", action="store", type=str, metavar="\boutput_folder",
+        "--output_folder", action="store", type=str, metavar="\boutput_folder",
         help="some description here (default: 'LiNbO3/results')", default=default_values["output_folder"]
     )
 
     # Argument for "ref_index"
     parser.add_argument(
-        "--ref-index", action="store", type=int, metavar="\bref_index",
+        "--ref_index", action="store", type=int, metavar="\bref_index",
         help="some description here (default: 0)", default=default_values["ref_index"]
     )
 
@@ -138,7 +138,7 @@ def get_args():
 
     # Argument for "lr"
     parser.add_argument(
-        "--all-lr", action="store", type=float, nargs="+", metavar="\blr",
+        "--lr", action="store", type=float, nargs="+", metavar="\blr",
         help="some description here (default: [1e-3])", default=default_values["lr"]
     )
 
@@ -313,6 +313,10 @@ def main():
     
     ##########################################
     # optional settings
+
+    if parameters["Natoms"] is None :
+        parameters["Natoms"] = example.get_number_of_atoms()
+
     opts = {
             "name" : parameters["name"],
             "plot":{

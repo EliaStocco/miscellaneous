@@ -6,22 +6,21 @@ from miscellaneous.elia.nn.make_dataset_delta import make_datapoint_delta
 from miscellaneous.elia.nn.make_dataset import make_datapoint
 # from torch_geometric.loader import DataLoader
 # from torch_geometric.data import Data
-from abc import ABC, abstractproperty, abstractmethod
+from abc import ABC, abstractproperty
 
 class iPIinterface(ABC):
 
-    # @abstractproperty
-    # def ref_dipole(self): pass
+    @abstractproperty
+    def ref_dipole(self): 
+        pass
 
-    # @abstractproperty
-    # def ref_pos(self): pass
+    @abstractproperty
+    def ref_pos(self): 
+        pass
 
-    # @abstractproperty
-    # def reference(self): pass
-
-    # @abstractmethod
-    # def _get(self,**argv): pass
-
+    @abstractproperty
+    def reference(self): 
+        pass
 
     def __init__(self,max_radius:float,normalization:dict=None,**kwargs):
 
@@ -30,8 +29,8 @@ class iPIinterface(ABC):
         if normalization is None :
             normalization = {
                 "energy":{
-                    "mean" : 0,
-                    "std"  : 1,
+                    "mean" : 0.,
+                    "std"  : 1.,
                 },
                 "dipole":{
                     "mean" : torch.tensor([0.,0.,0.]),
@@ -45,7 +44,6 @@ class iPIinterface(ABC):
                 x = self.normalization[k][j]
                 self.normalization[k][j] = torch.tensor(x)
 
-        #self._X = None
         self._max_radius = max_radius
         self._symbols = None
 
@@ -66,37 +64,64 @@ class iPIinterface(ABC):
         else :
             y = make_datapoint(**other,**argv)
 
-        # y.batch = torch.full((len(positions),),0)
-
         return y 
         
     def store_chemical_species(self,file,**argv):
 
         atoms = read(file,**argv)
         self._symbols = atoms.get_chemical_symbols()
-        #self._symbols = symbols2x(symbols)
-
-        # self._X = Data(
-        #     x=x,                                   # fixed
-        #     pos     = torch.full((),torch.nan),    # updated in 'get'
-        #     lattice = torch.full((),torch.nan),    # updated in 'get'              
-        #     max_radius = self.max_radius,          # fixed
-        #     symbols    = symbols,                  # fixed
-        #     edge_index = torch.full((),torch.nan), # computed in 'get'
-        #     edge_vec   = torch.full((),torch.nan), # computed in 'get'
-        #     edge_shift = torch.full((),torch.nan), # computed in 'get'
-        # )
 
         pass
+    
+    def _get(self,X,what:str,**argv)-> torch.tensor:
+        """Get the correct value of the output restoring the original 'mean' and 'std' values.
+        This should be used only during MD simulation."""
 
-    # def _get(self,X,what:str,**argv)-> torch.tensor:
-    #     """To be overwritten"""
+        # lower case
+        what = what.lower()
 
-    #     raise ValueError("This method has to be overwritten by the child class.")
+        # compute output of the model
+        if what == "energy" :
+            y = self.energy(X,**argv)
         
-    def get(self,cell,pos,what:str,**argv):
+        elif what == "forces":
+            y = self.forces(X,**argv)
+        
+        elif what == "dipole":
+            y = self.dipole(X,**argv)
+        
+        elif what == "bec":
+            y = self.BEC(X,**argv)
+        else :
+            raise ValueError("quantity '{:s}' is not supported as output of this model".format(what))
 
-        #cell = torch.from_numpy(cell.T).to(torch.float64)
+        mean = None
+        std = None
+        if what == "energy" :
+            mean, std = self.normalization["energy"]["mean"], self.normalization["energy"]["std"]
+        
+        elif what == "forces":
+            std = self.normalization["energy"]["std"]
+        
+        elif what == "dipole":
+            mean, std = self.normalization["dipole"]["mean"], self.normalization["dipole"]["std"]
+        
+        elif what == "bec":
+            std = self.normalization["dipole"]["std"]
+
+        # resize
+        batch_size = y.shape[0]
+        newdim = [1]*(len(y.shape)-2) # I remove the batch_size axis and the 'actual' value of the output
+        mean = mean.view(batch_size,3,*newdim) if mean is not None else mean
+        std  =  std.view(batch_size,3,*newdim) if  std is not None else std
+
+        if what in ["energy","dipole"] :
+            return y * std + mean # this will be wrong for sure
+        
+        elif what in ["forces","bec"]:
+            return y * std
+        
+    def get(self,cell,pos,what:str,detach=True,**argv):
 
         requires_grad = {   "pos"        : True,\
                             "lattice"    : True,\
@@ -106,46 +131,9 @@ class iPIinterface(ABC):
 
         X = self.make_datapoint(lattice=cell.T,positions=pos,requires_grad=requires_grad)
 
-        return self._get(what=what,X=X,**argv) # .detach()
-        
-    # def get(self,cell, pos,what:str):
-    #     """Mask to '_get' for i-PI.
-    #     You need to have called (once) 'store_chemical_species' before calling this method"""
+        y = self._get(what=what,X=X,**argv)
 
-    #     if self._X is None :
-    #         raise ValueError("Chemical species unknown: you need to call store_chemical_species' before calling 'get'")
-        
-    #     # I should check that the format of 'cell' is the same in i-PI and e3nn
-    #     # e3nn uses ase.Atoms.cell.array
-    #     lattice = torch.from_numpy(cell.T).to(torch.float64)
-    #     pos = torch.from_numpy(pos).to(torch.long)
+        if detach :
+            y = y.detach()
 
-    #     edge_src, edge_dst, edge_shift = my_neighbor_list(lattice,pos,self.max_radius)
-    #     edge_shift = torch.from_numpy(edge_shift).to(torch.float64)
-
-    #     lattice = lattice.unsqueeze(0)
-
-    #     batch = pos.new_zeros(pos.shape[0], dtype=torch.long)
-    #     edge_batch = batch[edge_src]
-    #     edge_vec = (pos[edge_dst]
-    #                 - pos[edge_src]
-    #                 + torch.einsum('ni,nij->nj',
-    #                             edge_shift,
-    #                             lattice[edge_batch]))
-        
-    #     edge_index = torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim=0)
-
-    #     self._X.pos     = pos
-    #     self._X.lattice = lattice
-    #     self._X.edge_index = edge_index
-    #     self._X.edge_vec   = edge_vec
-    #     self._X.edge_shift = edge_shift
-
-    #     X = DataLoader([self._X],batch_size=1,shuffle=False,drop_last=False)
-
-    #     X = next(iter(X))
-
-    #     y = self._get(what=what,X=X)
-
-    #     return y
-
+        return  y

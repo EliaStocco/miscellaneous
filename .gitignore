@@ -1,7 +1,6 @@
 # Ignore files starting with '#'
 \#*
-
+**/__pycache__/
 *.pyc
 
-/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water
 
