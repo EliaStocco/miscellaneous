@@ -310,7 +310,7 @@ def train(model:torch.nn.Module,\
                 # saving parameters to temporary file
                 N = opts["save"]["parameters"]
                 if N != -1 and epoch % N == 0 :
-                    savefile = "{:s}/{:s}.epoch={:d}.torch".format(folders["parameters"],name,epoch)
+                    savefile = "{:s}/{:s}.epoch={:d}.pth".format(folders["parameters"],name,epoch)
                     torch.save(model.state_dict(), savefile)
 
                 # compute the loss function
@@ -379,9 +379,9 @@ def train(model:torch.nn.Module,\
         # # saving parameters to file
         # savefile = "{:s}/{:s}.torch".format(folders["parameters"],name)
         # print("\tSaving parameters to file '{:s}'".format(savefile))
-        # torch.save(model.state_dict(), savefile)
+        # torch.save(model.(), savefile)
 
-        savefile = "{:s}/{:s}.final.torch".format(folders["parameters"],name)
+        savefile = "{:s}/{:s}.final.pth".format(folders["parameters"],name)
         torch.save(model.state_dict(), savefile)
 
         # removing initial model 

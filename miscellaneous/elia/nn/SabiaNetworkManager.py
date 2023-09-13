@@ -5,6 +5,8 @@ import numpy as np
 from .SabiaNetwork import SabiaNetwork
 from .iPIinterface import iPIinterface
 from .Methods4Training import EDFMethods4Training
+from .Methods4AngularOutput import Methods4AngularOutput
+from miscellaneous.elia.good_coding import froze
 from typing import TypeVar
 T = TypeVar('T', bound='SabiaNetworkManager')
 # See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
@@ -13,7 +15,10 @@ T = TypeVar('T', bound='SabiaNetworkManager')
 
 __all__ = ["SabiaNetworkManager"]
 
-class SabiaNetworkManager(iPIinterface,SabiaNetwork,EDFMethods4Training):
+# @froze
+class SabiaNetworkManager(EDFMethods4Training,iPIinterface,SabiaNetwork):
+
+    # __slots__ = ("output","reference","_forces","_bec","_X","ref_dipole","ref_pos")
 
     # output:str
     # lattice: torch.Tensor
@@ -29,10 +34,14 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork,EDFMethods4Training):
                  reference:bool=False,
                  dipole:torch.tensor=None,
                  pos:torch.tensor=None,
+                 phases:bool=False,
                  **kwargs) -> None:
         
         # iPIinterface.__init__(self,**kwargs)
         # SabiaNetwork.__init__(self,**kwargs)
+
+        # if debug is None :
+        #     debug = list()
         
         super().__init__(**kwargs)
 
@@ -45,6 +54,16 @@ class SabiaNetworkManager(iPIinterface,SabiaNetwork,EDFMethods4Training):
         #self.R = torch.Tensor()
 
         self.reference = reference
+
+        self.phases = phases
+        if self.output != "D" and self.phases :
+            raise ValueError("You can use 'phases'=true only with 'output'='D'")
+        
+        # overwrite loss
+        if self.phases :
+            self.loss = self.angular_loss
+
+        # self.debug = debug
 
         self._forces = None
         self._bec = None
@@ -442,7 +461,7 @@ def main():
 
     import os
     from miscellaneous.elia.classes import MicroState
-    from miscellaneous.elia.nn.make_dataset import make_dataset
+    from miscellaneous.elia.nn.dataset import make_dataset
     from miscellaneous.elia.nn import _make_dataloader
 
     default_dtype = torch.float64

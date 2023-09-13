@@ -2,19 +2,23 @@ import os
 import json
 import torch
 import random
-from .make_dataset_delta import make_dataset_delta # miscellaneous.elia.nn.water.make_dataset_delta
-from .make_dataset import make_dataset # miscellaneous.elia.nn.water.make_dataset
+from miscellaneous.elia.nn.dataset import make_dataset, make_dataset_delta, make_dataset_phases
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import add_default
 from ase import Atoms
 
+# ELIA: modify 'same_lattice' to false
+same_lattice = True
+
 def prepare_dataset(ref_index:int,\
                     max_radius:float,\
+                    output:str,\
                     reference:bool,\
                     variables:list,\
                     folder:str="data",\
                     opts:dict=None,\
-                    requires_grad:bool=False):
+                    requires_grad:bool=False,\
+                    phases:bool=False):
     
     # Attention:
     # Please keep 'requires_grad' = False
@@ -64,6 +68,11 @@ def prepare_dataset(ref_index:int,\
         MicroState.save(data,savefile)
 
     ##########################################
+    # fix polarization
+    if "D" in output :
+        data.fix_polarization(same_lattice=same_lattice,inplace=True)
+
+    ##########################################
     # show time-series
     if False :
         f = "{:s}/time-series".format(folder)
@@ -73,16 +82,22 @@ def prepare_dataset(ref_index:int,\
             filename = "{:s}/{:s}.pdf".format(f,var)
 
             if var == "dipole":
-                _ = data.get_dipole(same_lattice=False)
+                _ = data.get_dipole(same_lattice=same_lattice)
 
-            data.plot_time_series(what=var,file=filename)
+            data.plot_time_series(what=var,file=filename,opts={"mean":True})
 
     ########################################## 
 
     RESTART = opts["build"]["restart"]
     READ = opts["build"]["read"]
     SAVE = opts["build"]["save"]
-    savefile = "{:s}/{:s}".format(folder,"dataset-delta" if reference else "dataset")
+    if reference :
+        name = "dataset-delta"
+    elif phases :
+        name = "dataset-phases"
+    else :
+        name = "dataset"
+    savefile = "{:s}/{:s}".format(folder,name)
 
     if not READ or not os.path.exists(savefile+".train.torch") or RESTART :
         print("\tBuilding datasets")
@@ -100,9 +115,20 @@ def prepare_dataset(ref_index:int,\
                 dataset, dipole, pos = make_dataset_delta(  ref_index = ref_index,
                                                             data = data,
                                                             max_radius = max_radius,\
+                                                            output=output,\
                                                             requires_grad = requires_grad)
+            elif phases :
+                dataset = make_dataset_phases(  data = data,
+                                                max_radius = max_radius,\
+                                                output=output,\
+                                                requires_grad = requires_grad)
+                dipole = torch.full((3,),torch.nan)
+                pos = torch.full((3,),torch.nan)
             else :
-                dataset = make_dataset( data=data,max_radius=max_radius,requires_grad=requires_grad)
+                dataset = make_dataset( data=data,\
+                                        max_radius=max_radius,\
+                                        output=output,\
+                                        requires_grad=requires_grad)
                 dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
         # shuffle

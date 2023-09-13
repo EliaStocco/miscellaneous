@@ -42,8 +42,17 @@ def compute_normalization_factors(dataset,variable):
         data[n] = getattr(x,variable)
 
     # Calculate mean and standard deviation along axis 0
-    mu    = np.mean(data,axis=0)
-    sigma = np.std(data,axis=0)
-    
+    # mu    = np.mean(data,axis=0)
+    # sigma = np.std(data,axis=0)
+    if len(data.shape) == 2 :
+        x = np.linalg.norm(data,axis=1)
+    elif len(data.shape) == 1 :
+        x = data
+    else :
+        raise ValueError("not implemented yet")
+
+    mu    = np.mean(x)
+    sigma = np.std(x)
+        
     return mu, sigma
 

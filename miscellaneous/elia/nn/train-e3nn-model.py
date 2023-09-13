@@ -13,13 +13,18 @@ from miscellaneous.elia.nn.normalize_datasets import normalize_datasets
 from miscellaneous.elia.nn import SabiaNetworkManager
 from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
 
+#----------------------------------------------------------------#
 # Documentation
 # - https://pytorch.org/docs/stable/autograd.html
 # - https://towardsdatascience.com/introduction-to-functional-pytorch-b5bf739e1e6e
 
 #----------------------------------------------------------------#
 
+#####################
+
 description = "train a 'e3nn' model"
+
+#####################
 
 default_values = {
         "mul"           : 2,
@@ -27,6 +32,7 @@ default_values = {
         "lmax"          : 2,
         "name"          : "untitled",
         "reference"     : True,
+        "phases"        : False,
         "output"        : "D",
         "max_radius"    : 6.0,
         "folder"        : "LiNbO3",
@@ -38,6 +44,8 @@ default_values = {
         "bs"            : [1],
         "lr"            : [1e-3],
     }
+
+#####################
 
 def get_args():
     """Prepare parser of user input arguments."""
@@ -79,6 +87,13 @@ def get_args():
         "--reference", action="store",type=str2bool, metavar="\buse_ref",
         help="some description here (default: True)",
         default=default_values["reference"]
+    )
+
+        # Argument for "reference"
+    parser.add_argument(
+        "--phases", action="store",type=str2bool, metavar="\buse_phases",
+        help="some description here (default: True)",
+        default=default_values["phases"]
     )
 
     # Argument for "output"
@@ -144,6 +159,17 @@ def get_args():
 
     return parser.parse_args()
 
+#####################
+
+def check_parameters(parameters):
+
+    if parameters["reference"] and parameters["phases"]:
+        raise ValueError("You can use 'reference'=true or 'phases'=true, not both.")
+    
+    if parameters["output"] != "D" and parameters["phases"]:
+        raise ValueError("You can use 'phases'=true only with 'output'='D'")
+
+#####################
 
 def main():
 
@@ -162,6 +188,10 @@ def main():
         parameters = add_default(parameters,default_values)
     else :
         parameters = args_to_dict(args)
+
+    ##########################################
+    # check that the arguments are okay
+    check_parameters(parameters)
 
     ##########################################
     if not parameters["random"] :
@@ -187,11 +217,13 @@ def main():
     ##########################################
     # preparing dataset
     opts = {"prepare":{"restart":False},"build":{"restart":False}}
-    datasets, data, dipole, pos, example = prepare_dataset(parameters["ref_index"],\
-                                                  parameters["max_radius"],\
-                                                  parameters["reference"],\
+    datasets, data, dipole, pos, example = prepare_dataset(ref_index=parameters["ref_index"],\
+                                                  max_radius=parameters["max_radius"],\
+                                                  reference=parameters["reference"],\
+                                                  output=parameters["output"],\
                                                   variables=variables,\
                                                   folder=parameters["folder"],\
+                                                  phases=parameters["phases"],\
                                                   opts=opts)#,\
                                                   #requires_grad=False)#parameters["output"]=="EF")
     
@@ -263,6 +295,7 @@ def main():
     metadata_kwargs = {
         "output":parameters["output"],
         "reference" : parameters["reference"],
+        "phases" : parameters["phases"],
         "normalization" : normalization_factors,
         "dipole" : dipole.tolist(),
         "pos" : pos.tolist(),  
@@ -344,6 +377,8 @@ def main():
                                 opts     = opts )
 
     print("\nJob done :)")
+
+#####################
 
 if __name__ == "__main__":
     main()

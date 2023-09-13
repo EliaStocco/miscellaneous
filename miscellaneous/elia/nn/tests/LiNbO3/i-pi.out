@@ -1,0 +1,1152 @@
+
+ ____       ____       ____       ____
+/    \     /    \     /    \     /    \
+|  #################################  |
+\__#_/     \____/     \____/     \_#__/
+   #    _        _______  _____    #
+   #   (_)      |_   __ \|_   _|   #      -*-     v 2.0    -*-
+   #   __  ______ | |__) | | |     #
+   Y  [  ||______||  ___/  | |     #      A Universal Force Engine
+  0 0  | |       _| |_    _| |_    #
+   #  [___]     |_____|  |_____|   #
+ __#_       ____       ____       _#__
+/  # \     /    \     /    \     / #  \
+|  #################################  |
+\____/     \____/     \____/     \____/
+
+    
+ # @simulation: Fetchingffsocket
+ # Initializing system object 
+ # Initializing simulation object 
+ # Binding the forces 
+ # Binding the normal modes 
+ # Binding the ensemble
+ # Binding the motion integrator
+Created unix socket with address hello
+ @ForceField: Starting the polling thread main loop.
+ # i-PI loaded input file:  RESTART
+ --- begin input file content ---
+<simulation verbosity='high'>
+    <prng>
+       <seed>12345</seed>
+       <state shape='(624)'>
+        [ 2706979594, 2849186503, 2711629265, 596146160, 527067943, 
+          3147600475, 1246338276, 3935732949, 766519980, 4089980858, 
+          1345772281, 2950410051, 969967264, 859879134, 1269368809, 
+          4240268653, 2505505939, 33155134, 1147001004, 3762013091, 
+          1627197462, 3583817930, 3390939231, 2952565381, 2765981084, 
+          3525713683, 86054533, 1913572114, 524585030, 2800324409, 
+          3002723706, 4191713145, 2282215370, 142008747, 2420333804, 
+          3573274461, 3779557091, 1104158937, 1159973287, 2400547454, 
+          1665954713, 2765359947, 919298665, 3875271834, 2314247494, 
+          655066554, 1128351842, 4083800367, 3701528523, 140940129, 
+          929876216, 328544971, 3568377133, 1670160715, 2320871066, 
+          1044999896, 3376508314, 2722932893, 2033958291, 96219664, 
+          3037452983, 1156009506, 3282706881, 2562237978, 2852309565, 
+          3217042703, 3402737502, 1008732563, 4247641915, 4213714101, 
+          2617469165, 1513686483, 2185103395, 3258083953, 1524671019, 
+          169250413, 3344198727, 2714345530, 3298005152, 248015775, 
+          3820688843, 3459282424, 1571381719, 2596787477, 947786097, 
+          44680747, 1215147225, 1234617316, 3536954570, 4089959581, 
+          3703891965, 700401324, 1289223380, 1024190850, 503607361, 
+          1429789705, 4029864326, 3098217968, 1206900019, 1775807365, 
+          688277323, 3830765248, 4245586555, 1601144264, 2952749162, 
+          2775970226, 2865657537, 3785997821, 3976051829, 1922830611, 
+          159545881, 2755519648, 994023675, 1289077419, 2348658139, 
+          1759150186, 3734929713, 1926173320, 4013960992, 1859315415, 
+          1512525715, 3076169719, 2505886706, 2310452475, 2317334129, 
+          832550537, 1888072644, 2021080697, 1009693477, 1615130488, 
+          1444907510, 3046158364, 524981658, 1770510112, 2566421963, 
+          1627760544, 3853753414, 3904517493, 3541442808, 1925667040, 
+          3825026432, 1016592421, 921668222, 1604528246, 2543880192, 
+          3903390091, 2000829082, 328360433, 2053628050, 687103003, 
+          2854078101, 3706023482, 1464642601, 88675192, 1478647566, 
+          1328794604, 2596765170, 1822542369, 3754916352, 156318994, 
+          1076250852, 1885891390, 1677425995, 3062614008, 1955684, 
+          3379887122, 2061839875, 3343470071, 1716729635, 2163977826, 
+          805748560, 289054970, 1001965813, 3647858084, 2591759757, 
+          3068330311, 3908569847, 734133519, 1219447177, 3528862414, 
+          3047601551, 891627477, 2259629452, 3974678414, 1208000782, 
+          562426763, 1294038235, 311956649, 1158102352, 494935655, 
+          2050235490, 287273351, 578538730, 1822429377, 858730127, 
+          3878209629, 3618757277, 3761257534, 2954482703, 1328694949, 
+          743124453, 956871264, 2728990629, 3969200781, 1643858790, 
+          4084133205, 1976949329, 2164939688, 914535828, 1224507832, 
+          3876974214, 4282613810, 96043060, 1961712276, 3090962806, 
+          454738412, 2684967074, 1758709562, 291590447, 4241658944, 
+          224200420, 3112346087, 2580692623, 1901227157, 1497035970, 
+          818785429, 1919829237, 381432004, 914781503, 125586310, 
+          2852105012, 3267071632, 3955899087, 3333338, 1915597537, 
+          3183499436, 3167441669, 255747988, 1595316111, 2028918578, 
+          4228570230, 2485562511, 2240967081, 565124812, 3927101118, 
+          1266807386, 1890052853, 4218948082, 3649676476, 3587490132, 
+          744165006, 406642071, 2072051694, 2008829899, 1309308394, 
+          2157047187, 4281416371, 4102942242, 2015866271, 1846526553, 
+          2578756106, 1192005987, 2810468470, 357924084, 3424659818, 
+          3849896363, 732435557, 123493030, 4227609572, 121005819, 
+          3904716878, 2475053418, 3948844588, 2366062622, 2653328905, 
+          2082157102, 2577172946, 3180115454, 1954062781, 1733997886, 
+          2818404345, 1943236510, 3009396979, 1567314625, 2723979464, 
+          1210088075, 9509802, 2805455429, 2235340178, 1935023632, 
+          1791258297, 3940263134, 1954884716, 153951831, 1448132490, 
+          1756926407, 3010401796, 3780194536, 177186575, 3347025636, 
+          6223898, 4260092089, 3318432289, 700108924, 203688553, 
+          3355440501, 3268311677, 721803500, 2483866738, 2041540570, 
+          2457899130, 439475478, 1008357081, 2560803880, 1549299346, 
+          3044129627, 2512625084, 91941331, 1801768110, 2001828286, 
+          812239783, 151271035, 2222859326, 91247384, 1805027021, 
+          3956880019, 3862194148, 4062888997, 3012660999, 2271208376, 
+          1789540239, 1001114350, 2223255538, 2045705184, 2795703304, 
+          2732750233, 3231274760, 762267108, 3934403432, 97700457, 
+          470730487, 2176604460, 2735045388, 2099222453, 2903338617, 
+          1589931642, 2158803913, 490783485, 1724259153, 2072824724, 
+          815906440, 4097412480, 1696820634, 632595215, 3386821998, 
+          863204799, 3694238419, 2037019265, 3469512936, 4159751754, 
+          2230809797, 2898779484, 757973302, 2303448335, 3365270851, 
+          1244598416, 1923687549, 3547294249, 1952350870, 535019046, 
+          1637657682, 1969589722, 1284155879, 1415557312, 1604415396, 
+          226261874, 361199828, 1339096831, 1290212291, 2439350309, 
+          1710017843, 2790980978, 3047520154, 2617707935, 3164822946, 
+          1600012896, 61657821, 838898668, 598174268, 11566265, 
+          2597309448, 3485602608, 2807850491, 3291001272, 1822804497, 
+          1651866720, 1371741549, 3233353825, 3034965896, 767788540, 
+          376699275, 157408633, 3030190132, 2686301747, 3167556558, 
+          2874378222, 369662681, 1282580635, 3764458612, 480481638, 
+          3191035274, 65595593, 4127675064, 2611374342, 47123941, 
+          956632161, 2047066900, 2811660736, 1619565303, 3211912321, 
+          454422831, 3792720256, 2346603430, 640119658, 617436128, 
+          1548395607, 2766036425, 95724688, 530526162, 11966905, 
+          630331187, 3694290550, 1008655508, 3970215663, 4023370948, 
+          3083498083, 497694722, 3349430203, 2995514888, 723453834, 
+          1852005137, 2806357536, 2415975160, 1188515391, 2946827176, 
+          2622897410, 4291028812, 211474040, 1917731561, 2044307699, 
+          3154259073, 2739837787, 3413576367, 1219023561, 249239430, 
+          151304913, 437544955, 3367256805, 3413463197, 3389500360, 
+          970547334, 2977487220, 3350410653, 379056437, 2162210680, 
+          3513132010, 1930820556, 2284643571, 2967245721, 2058893766, 
+          3273554387, 3172837295, 4048342820, 96234488, 2184778414, 
+          1935333519, 1275746177, 3866760361, 109456621, 316270233, 
+          414759162, 3130212006, 648524220, 3087421364, 1077392712, 
+          1837789635, 3624820665, 3308501600, 3920178554, 3339309582, 
+          594076660, 2051152157, 940459479, 4240940841, 267954959, 
+          2449634212, 1112182443, 2691645856, 1977764593, 2469664287, 
+          2970608850, 1142380888, 767857207, 3809708966, 4169133862, 
+          1156632968, 1779290791, 3639171087, 1232670753, 25760544, 
+          3547423397, 453358190, 4234023401, 1563514247, 661686104, 
+          220414067, 561016960, 1786823018, 1545952835, 1832104802, 
+          2980614402, 1590711293, 2836549771, 1706561673, 2471440272, 
+          3498829478, 2733061705, 4221232467, 1851566928, 23514000, 
+          1346504187, 3409052460, 2269906833, 2532317209, 2987212364, 
+          1692741593, 4078755541, 1089697425, 269173074, 545670459, 
+          1653102698, 1191104146, 589572747, 454097614, 2124677452, 
+          2443732584, 2326064616, 742553528, 3249782860, 1051882412, 
+          3287420360, 3845951139, 2164646308, 2039504449, 2788102762, 
+          2243385926, 2606977750, 1246619890, 1339524952, 1495974608, 
+          1479591036, 1134780267, 7320323, 2471975654, 2871405371, 
+          996109957, 62799585, 1000309811, 4291679140, 1067974308, 
+          975082731, 2697514317, 3731940871, 631686317, 3490975139, 
+          3633035065, 3576119064, 2039900659, 1619323639, 2632028612, 
+          4143758450, 1411563278, 1031186318, 3442392490, 3990591167, 
+          1534167979, 3292147758, 1179241643, 3767320085, 1710912953, 
+          551592258, 3294184833, 2743646552, 330467498, 3491786630, 
+          1616798883, 2179678186, 3595260369, 3026613977, 4103566994, 
+          3330935073, 2219703745, 1254422485, 237151941, 4234606787, 
+          162269594, 71778230, 4285542194, 4053808044, 2334071645, 
+          3879185309, 1116343662, 4086980878, 691678677, 1699849887, 
+          1432711954, 1961533643, 1262237329, 3088777691, 1484366622, 
+          519190554, 2931209499, 192169198, 1097826536 ]
+       </state>
+       <set_pos>224</set_pos>
+    </prng>
+    <output>
+       <trajectory filename='momenta'>momenta</trajectory>
+       <trajectory filename='forces'>forces</trajectory>
+       <trajectory filename='velocities'>velocities</trajectory>
+       <trajectory filename='positions'>positions</trajectory>
+       <properties shape='(7)' filename='properties.out'>
+        [ step, time, conserved, totalpol, kinetic_md, 
+          potential, volume ]
+       </properties>
+    </output>
+    <step>3739</step>
+    <total_steps>10000</total_steps>
+    <total_time>  2.80000000e+04</total_time>
+    <ffsocket mode='unix' name='pw' pbc='False'>
+       <address>hello</address>
+    </ffsocket>
+    <system>
+       <forces>
+          <force forcefield='pw'>
+          </force>
+       </forces>
+       <ensemble>
+          <temperature>  0.00000000e+00</temperature>
+          <eens>  6.44046111e-16</eens>
+          <hamiltonian_weights shape='(1)'> [   1.00000000e+00 ] </hamiltonian_weights>
+          <time>  1.54575394e+05</time>
+          <Eamp shape='(3)'> [   0.00000000e+00,   0.00000000e+00,   5.00000000e-03 ] </Eamp>
+          <Efreq>  2.73569364e-03</Efreq>
+          <Epeak>  1.65365492e+04</Epeak>
+          <Esigma>  4.13413730e+03</Esigma>
+          <bec shape='(270)' mode='manual'>
+           [   7.31972000e+00,   1.63113000e+00,  -9.20000000e-04,  -1.63113000e+00,   7.31974000e+00, 
+              -1.05000000e-03,  -1.00000000e-05,   4.00000000e-05,   6.81793000e+00,   7.31934000e+00, 
+              -1.63113000e+00,   7.00000000e-04,   1.63111000e+00,   7.31930000e+00,   1.00000000e-03, 
+              -1.00000000e-05,   0.00000000e+00,   6.80646000e+00,   7.31927000e+00,   1.63108000e+00, 
+              -4.00000000e-05,  -1.63105000e+00,   7.31929000e+00,  -1.00000000e-05,   1.00000000e-05, 
+               1.00000000e-05,   6.80690000e+00,   7.31979000e+00,  -1.63115000e+00,   1.40000000e-04, 
+               1.63120000e+00,   7.31977000e+00,   1.90000000e-04,   1.00000000e-05,   3.00000000e-05, 
+               6.81774000e+00,   7.31952000e+00,   1.63117000e+00,   6.10000000e-04,  -1.63114000e+00, 
+               7.31954000e+00,   3.00000000e-04,  -0.00000000e+00,  -0.00000000e+00,   6.81170000e+00, 
+               7.31945000e+00,  -1.63109000e+00,  -4.70000000e-04,   1.63111000e+00,   7.31952000e+00, 
+              -3.20000000e-04,   4.00000000e-05,   3.00000000e-05,   6.81245000e+00,   1.22468000e+00, 
+               2.78610000e-01,  -2.40000000e-04,  -2.78620000e-01,   1.22465000e+00,  -1.30000000e-04, 
+               0.00000000e+00,  -1.00000000e-05,   1.01638000e+00,   1.22477000e+00,  -2.78680000e-01, 
+               4.00000000e-04,   2.78660000e-01,   1.22478000e+00,   1.30000000e-04,   0.00000000e+00, 
+               1.00000000e-05,   1.01943000e+00,   1.22432000e+00,   2.78660000e-01,   6.20000000e-04, 
+              -2.78670000e-01,   1.22431000e+00,   7.40000000e-04,   1.00000000e-05,  -0.00000000e+00, 
+               1.01391000e+00,   1.22507000e+00,  -2.78630000e-01,  -7.50000000e-04,   2.78600000e-01, 
+               1.22507000e+00,  -8.50000000e-04,   0.00000000e+00,  -1.00000000e-05,   1.02183000e+00, 
+               1.22524000e+00,   2.78650000e-01,  -1.50000000e-04,  -2.78660000e-01,   1.22523000e+00, 
+              -1.20000000e-04,   1.00000000e-05,  -0.00000000e+00,   1.02362000e+00,   1.22437000e+00, 
+              -2.78640000e-01,   1.40000000e-04,   2.78620000e-01,   1.22438000e+00,   2.20000000e-04, 
+              -0.00000000e+00,  -0.00000000e+00,   1.01262000e+00,  -1.65068000e+00,  -2.37100000e-01, 
+              -1.05840000e-01,  -3.12910000e-01,  -4.04583000e+00,  -1.80707000e+00,  -1.64360000e-01, 
+              -1.77997000e+00,  -2.60957000e+00,  -3.68515000e+00,  -8.61900000e-01,   1.61740000e+00, 
+              -9.37660000e-01,  -2.01129000e+00,   8.11850000e-01,   1.62359000e+00,   7.47580000e-01, 
+              -2.60936000e+00,  -3.20885000e+00,   1.21261000e+00,  -1.51225000e+00,   1.13706000e+00, 
+              -2.48767000e+00,   9.94840000e-01,  -1.45929000e+00,   1.03233000e+00,  -2.60951000e+00, 
+              -3.20831000e+00,  -1.21254000e+00,   1.51203000e+00,  -1.13661000e+00,  -2.48720000e+00, 
+               9.94920000e-01,   1.45862000e+00,   1.03256000e+00,  -2.61067000e+00,  -1.65026000e+00, 
+               2.37240000e-01,   1.05940000e-01,   3.12920000e-01,  -4.04544000e+00,  -1.80655000e+00, 
+               1.64920000e-01,  -1.77945000e+00,  -2.61060000e+00,  -3.68480000e+00,   8.61720000e-01, 
+              -1.61717000e+00,   9.37250000e-01,  -2.01066000e+00,   8.11870000e-01,  -1.62353000e+00, 
+               7.46910000e-01,  -2.61067000e+00,  -1.65010000e+00,  -2.37020000e-01,  -1.05350000e-01, 
+              -3.12830000e-01,  -4.04461000e+00,  -1.80602000e+00,  -1.64940000e-01,  -1.78001000e+00, 
+              -2.61249000e+00,  -3.68447000e+00,  -8.61660000e-01,   1.61755000e+00,  -9.37570000e-01, 
+              -2.01076000e+00,   8.12230000e-01,   1.62402000e+00,   7.47160000e-01,  -2.61251000e+00, 
+              -3.20801000e+00,   1.21228000e+00,  -1.51140000e+00,   1.13685000e+00,  -2.48717000e+00, 
+               9.95180000e-01,  -1.45909000e+00,   1.03287000e+00,  -2.61257000e+00,  -3.20927000e+00, 
+              -1.21265000e+00,   1.51184000e+00,  -1.13680000e+00,  -2.48786000e+00,   9.94610000e-01, 
+               1.45885000e+00,   1.03196000e+00,  -2.60765000e+00,  -1.65081000e+00,   2.37010000e-01, 
+               1.05280000e-01,   3.12950000e-01,  -4.04684000e+00,  -1.80763000e+00,   1.64260000e-01, 
+              -1.77938000e+00,  -2.60760000e+00,  -3.68601000e+00,   8.62040000e-01,  -1.61824000e+00, 
+               9.37380000e-01,  -2.01139000e+00,   8.11560000e-01,  -1.62310000e+00,   7.47400000e-01, 
+              -2.60759000e+00,  -1.65071000e+00,  -2.37220000e-01,  -1.05540000e-01,  -3.12970000e-01, 
+              -4.04616000e+00,  -1.80682000e+00,  -1.64560000e-01,  -1.77910000e+00,  -2.60821000e+00, 
+              -3.68576000e+00,  -8.61890000e-01,   1.61791000e+00,  -9.37790000e-01,  -2.01145000e+00, 
+               8.12180000e-01,   1.62300000e+00,   7.47030000e-01,  -2.60819000e+00,  -3.20910000e+00, 
+               1.21267000e+00,  -1.51192000e+00,   1.13716000e+00,  -2.48798000e+00,   9.95230000e-01, 
+              -1.45843000e+00,   1.03204000e+00,  -2.60815000e+00,  -3.20829000e+00,  -1.21237000e+00, 
+               1.51171000e+00,  -1.13659000e+00,  -2.48706000e+00,   9.94660000e-01,   1.45935000e+00, 
+               1.03274000e+00,  -2.61185000e+00,  -1.65026000e+00,   2.37100000e-01,   1.05520000e-01, 
+               3.12850000e-01,  -4.04541000e+00,  -1.80682000e+00,   1.64680000e-01,  -1.78023000e+00, 
+              -2.61190000e+00,  -3.68470000e+00,   8.61720000e-01,  -1.61750000e+00,   9.37270000e-01, 
+              -2.01080000e+00,   8.11710000e-01,  -1.62405000e+00,   7.47470000e-01,  -2.61187000e+00 ]
+          </bec>
+       </ensemble>
+       <motion mode='dynamics'>
+          <dynamics mode='eda-nve'>
+             <timestep>  4.13413730e+01</timestep>
+             <nmts shape='(1)'> [ 1 ] </nmts>
+          </dynamics>
+       </motion>
+       <beads natoms='30' nbeads='1'>
+          <q shape='(1, 90)'>
+           [  -1.00393688e-01,  -2.09657383e-01,   6.67389484e-02,   9.16378551e-02,   1.68552170e-01, 
+               1.28128159e+01,   5.22557951e+00,   2.74168020e+00,   8.72957142e+00,   4.62007859e+00, 
+               2.83580076e+00,   2.17938799e+01,  -7.42382099e-02,   5.54623728e+00,   1.72570996e+01, 
+              -8.51112312e-02,   5.39023877e+00,   4.26893460e+00,   3.69706330e-01,   5.35824561e-01, 
+               5.30450651e+00,  -3.74109956e-01,   1.69006192e-01,   1.98530619e+01,   4.51134267e+00, 
+               2.49161780e+00,   1.40282657e+01,   4.28987749e+00,   2.83115256e+00,   1.43471008e+00, 
+              -3.90450947e-01,   5.40069170e+00,   2.27347630e+01,   4.88198793e-01,   5.26418897e+00, 
+               9.39964185e+00,  -1.28798244e+00,   2.32793232e+00,   2.78637941e+00,   2.71605759e+00, 
+               5.81963608e+00,   2.13600907e+00,  -1.85989699e+00,   7.75662054e+00,   2.19204497e+00, 
+               2.00960010e+00,   8.11472452e+00,   1.58572291e+01,   1.59055548e+00,   2.77034865e+00, 
+               1.55165104e+01,  -3.01151882e+00,   6.10790337e+00,   1.51498719e+01,   3.24071772e+00, 
+               5.68130680e+00,   1.13052146e+01,   3.12307365e+00,   4.62718766e-01,   1.08552074e+01, 
+               7.96905811e+00,   2.86944836e+00,   1.15776979e+01,   1.89224888e+00,   2.71622099e+00, 
+               2.44046456e+01,   6.33551430e+00,   5.24599621e+00,   2.49202695e+01,   6.41609813e+00, 
+              -5.50442845e-02,   2.39781218e+01,  -1.21947504e+00,   8.22406725e+00,   2.00847212e+01, 
+              -1.83033773e+00,   3.18898972e+00,   1.99644886e+01,   2.60095388e+00,   5.21581311e+00, 
+               2.03244765e+01,  -3.02205096e+00,   5.63776092e+00,   6.91034085e+00,   1.11870267e+00, 
+               8.43240644e+00,   6.76363659e+00,   1.78101862e+00,   3.29576067e+00,   7.14605551e+00 ]
+          </q>
+          <p shape='(1, 90)'>
+           [   5.76817948e+00,   9.50727504e+00,   1.33495860e+01,   3.94518368e+00,  -2.25144934e+01, 
+              -1.61137057e+01,  -1.44885027e+01,   1.87395389e+01,  -7.41703409e+00,   1.20874726e+01, 
+               2.81356635e+01,   1.03179027e+01,   3.12937920e+01,   4.53925986e+01,   8.95902500e+00, 
+              -5.02312090e-01,   2.24496704e+01,  -1.34492346e+01,   1.07230061e+01,   4.36934612e+00, 
+              -3.01514387e+00,   8.72366662e-01,   1.04705605e+00,   2.34389378e+00,   5.63998736e+00, 
+              -4.18127095e+00,   4.58787352e+00,   2.24690116e+00,   7.10762179e+00,   2.72684797e+00, 
+               1.88629348e+00,  -1.03307186e+01,  -8.39041839e+00,  -8.38841164e+00,  -1.68863098e+01, 
+              -5.48186786e-01,  -1.17122018e+01,  -4.90526700e+00,  -1.35545583e+01,  -1.75027438e+00, 
+              -3.36534851e+00,   5.39477804e+00,   5.41723811e+00,  -8.18210785e+00,   8.67009974e+00, 
+               5.27284007e+00,  -1.45234011e+01,  -8.62388510e-01,  -3.86010507e+00,  -5.75261438e+00, 
+               7.49402490e-01,  -2.44773344e+01,   3.76811304e+00,   1.92440329e+01,   9.16977352e+00, 
+               1.16418644e+01,  -4.44562809e+00,  -3.28296658e+00,   9.72276473e+00,   1.58372418e+01, 
+              -1.66156268e+01,  -3.95909462e+00,  -3.11362913e+00,  -3.90834253e-01,  -1.60200366e+00, 
+              -9.83143691e-01,   1.46334354e+01,  -2.98465102e+01,   2.12097825e+00,  -3.59806907e+00, 
+               5.84526230e+00,  -8.10190910e+00,  -1.14384781e+01,  -1.11511409e+01,  -1.49406123e+01, 
+              -5.71686562e-01,   3.62154853e+00,   5.71004477e+00,  -4.18622652e+00,  -7.11917706e+00, 
+              -8.22080409e-03,  -2.05596407e+00,  -7.30752320e+00,   1.05194357e+01,  -1.35963679e+01, 
+              -1.70660413e+01,  -3.49615285e+00,   1.19588923e+01,  -2.65530074e+00,  -1.20911765e+01 ]
+          </p>
+          <m shape='(30)'>
+           [   1.69357972e+05,   1.69357972e+05,   1.69357972e+05,   1.69357972e+05,   1.69357972e+05, 
+               1.69357972e+05,   1.26526691e+04,   1.26526691e+04,   1.26526691e+04,   1.26526691e+04, 
+               1.26526691e+04,   1.26526691e+04,   2.91651223e+04,   2.91651223e+04,   2.91651223e+04, 
+               2.91651223e+04,   2.91651223e+04,   2.91651223e+04,   2.91651223e+04,   2.91651223e+04, 
+               2.91651223e+04,   2.91651223e+04,   2.91651223e+04,   2.91651223e+04,   2.91651223e+04, 
+               2.91651223e+04,   2.91651223e+04,   2.91651223e+04,   2.91651223e+04,   2.91651223e+04 ]
+          </m>
+          <names shape='(30)'>
+           [ Nb, Nb, Nb, Nb, Nb, 
+             Nb, Li, Li, Li, Li, 
+             Li, Li, O, O, O, 
+             O, O, O, O, O, 
+             O, O, O, O, O, 
+             O, O, O, O, O ]
+          </names>
+       </beads>
+       <cell shape='(3, 3)'>
+        [   9.58988429e+00,  -4.79494078e+00,   1.10923313e-05,   0.00000000e+00,   8.30507765e+00, 
+           -5.51083628e-06,   0.00000000e+00,   0.00000000e+00,   2.58888571e+01 ]
+       </cell>
+    </system>
+ </simulation>
+  ---  end input file content  ---
+ @SOCKET:   Client asked for connection from . Now hand-shaking.
+ @SOCKET:   Handshaking was successful. Added to the client list.
+ @SOCKET: 23/07/23-12:19:06 Assigning [ none] request id    0 to client with last-id None (  0/  1 : )
+ @SOCKET: 23/07/23-12:21:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3739. t/step: 2.74437e+02
+ @SOCKET: 23/07/23-12:22:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3740. t/step: 7.53872e+01
+ @SOCKET: 23/07/23-12:24:15 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3741. t/step: 6.84198e+01
+ @SOCKET: 23/07/23-12:25:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3742. t/step: 6.80623e+01
+ @SOCKET: 23/07/23-12:26:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3743. t/step: 6.78245e+01
+ @SOCKET: 23/07/23-12:27:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3744. t/step: 6.15587e+01
+ @SOCKET: 23/07/23-12:28:40 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3745. t/step: 6.66750e+01
+ @SOCKET: 23/07/23-12:29:47 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3746. t/step: 6.77586e+01
+ @SOCKET: 23/07/23-12:30:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3747. t/step: 6.89383e+01
+ @SOCKET: 23/07/23-12:32:04 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3748. t/step: 6.95397e+01
+ @SOCKET: 23/07/23-12:33:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3749. t/step: 6.74133e+01
+ @SOCKET: 23/07/23-12:34:21 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3750. t/step: 6.78423e+01
+ @SOCKET: 23/07/23-12:35:29 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3751. t/step: 6.10885e+01
+ @SOCKET: 23/07/23-12:36:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3752. t/step: 6.49094e+01
+ @SOCKET: 23/07/23-12:37:35 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3753. t/step: 6.78191e+01
+ @SOCKET: 23/07/23-12:38:42 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3754. t/step: 6.64782e+01
+ @SOCKET: 23/07/23-12:39:49 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3755. t/step: 6.56974e+01
+ @SOCKET: 23/07/23-12:40:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3756. t/step: 7.12774e+01
+ @SOCKET: 23/07/23-12:42:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3757. t/step: 7.16141e+01
+ @SOCKET: 23/07/23-12:43:18 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3758. t/step: 6.79064e+01
+ @SOCKET: 23/07/23-12:44:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3759. t/step: 6.13798e+01
+ @SOCKET: 23/07/23-12:45:27 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3760. t/step: 6.64176e+01
+ @SOCKET: 23/07/23-12:46:33 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3761. t/step: 6.58492e+01
+ @SOCKET: 23/07/23-12:47:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3762. t/step: 6.87907e+01
+ @SOCKET: 23/07/23-12:48:48 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3763. t/step: 6.57913e+01
+ @SOCKET: 23/07/23-12:49:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3764. t/step: 6.62472e+01
+ @SOCKET: 23/07/23-12:51:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3765. t/step: 6.62480e+01
+ @SOCKET: 23/07/23-12:52:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3766. t/step: 6.66440e+01
+ @SOCKET: 23/07/23-12:53:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3767. t/step: 5.96010e+01
+ @SOCKET: 23/07/23-12:54:12 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3768. t/step: 6.79257e+01
+ @SOCKET: 23/07/23-12:55:20 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3769. t/step: 6.96724e+01
+ @SOCKET: 23/07/23-12:56:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3770. t/step: 6.65362e+01
+ @SOCKET: 23/07/23-12:57:37 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3771. t/step: 6.69362e+01
+ @SOCKET: 23/07/23-12:58:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3772. t/step: 5.97477e+01
+ @SOCKET: 23/07/23-12:59:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3773. t/step: 6.76685e+01
+ @SOCKET: 23/07/23-13:00:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3774. t/step: 6.89845e+01
+ @SOCKET: 23/07/23-13:02:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3775. t/step: 6.65030e+01
+ @SOCKET: 23/07/23-13:03:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3776. t/step: 6.59879e+01
+ @SOCKET: 23/07/23-13:04:12 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3777. t/step: 6.47591e+01
+ @SOCKET: 23/07/23-13:05:17 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3778. t/step: 6.73196e+01
+ @SOCKET: 23/07/23-13:06:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3779. t/step: 6.68198e+01
+ @SOCKET: 23/07/23-13:07:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3780. t/step: 6.73530e+01
+ @SOCKET: 23/07/23-13:08:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3781. t/step: 6.01106e+01
+ @SOCKET: 23/07/23-13:09:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3782. t/step: 6.46055e+01
+ @SOCKET: 23/07/23-13:10:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3783. t/step: 6.80134e+01
+ @SOCKET: 23/07/23-13:11:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3784. t/step: 6.76866e+01
+ @SOCKET: 23/07/23-13:12:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3785. t/step: 7.03907e+01
+ @SOCKET: 23/07/23-13:14:09 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3786. t/step: 6.78348e+01
+ @SOCKET: 23/07/23-13:15:17 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3787. t/step: 6.68100e+01
+ @SOCKET: 23/07/23-13:16:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3788. t/step: 6.86656e+01
+ @SOCKET: 23/07/23-13:17:33 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3789. t/step: 6.95045e+01
+ @SOCKET: 23/07/23-13:18:42 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3790. t/step: 6.76437e+01
+ @SOCKET: 23/07/23-13:19:50 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3791. t/step: 6.18372e+01
+ @SOCKET: 23/07/23-13:20:52 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3792. t/step: 6.80695e+01
+ @SOCKET: 23/07/23-13:22:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3793. t/step: 6.94969e+01
+ @SOCKET: 23/07/23-13:23:09 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3794. t/step: 6.77290e+01
+ @SOCKET: 23/07/23-13:24:17 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3795. t/step: 6.63351e+01
+ @SOCKET: 23/07/23-13:25:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3796. t/step: 6.71962e+01
+ @SOCKET: 23/07/23-13:26:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3797. t/step: 6.81441e+01
+ @SOCKET: 23/07/23-13:27:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3798. t/step: 6.18496e+01
+ @SOCKET: 23/07/23-13:28:41 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3799. t/step: 6.81846e+01
+ @SOCKET: 23/07/23-13:29:49 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3800. t/step: 7.02250e+01
+ @SOCKET: 23/07/23-13:30:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3801. t/step: 7.82925e+01
+ @SOCKET: 23/07/23-13:32:17 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3802. t/step: 6.55433e+01
+ @SOCKET: 23/07/23-13:33:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3803. t/step: 6.86152e+01
+ @SOCKET: 23/07/23-13:34:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3804. t/step: 6.85162e+01
+ @SOCKET: 23/07/23-13:35:40 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3805. t/step: 6.83053e+01
+ @SOCKET: 23/07/23-13:36:48 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3806. t/step: 6.73514e+01
+ @SOCKET: 23/07/23-13:37:56 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3807. t/step: 6.80967e+01
+ @SOCKET: 23/07/23-13:39:04 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3808. t/step: 6.13446e+01
+ @SOCKET: 23/07/23-13:40:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3809. t/step: 6.80187e+01
+ @SOCKET: 23/07/23-13:41:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3810. t/step: 6.90282e+01
+ @SOCKET: 23/07/23-13:42:22 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3811. t/step: 6.86713e+01
+ @SOCKET: 23/07/23-13:43:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3812. t/step: 6.14918e+01
+ @SOCKET: 23/07/23-13:44:32 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3813. t/step: 6.95669e+01
+ @SOCKET: 23/07/23-13:45:42 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3814. t/step: 6.97792e+01
+ @SOCKET: 23/07/23-13:46:52 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3815. t/step: 7.16242e+01
+ @SOCKET: 23/07/23-13:48:03 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3816. t/step: 7.02523e+01
+ @SOCKET: 23/07/23-13:49:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3817. t/step: 7.05015e+01
+ @SOCKET: 23/07/23-13:50:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3818. t/step: 6.22426e+01
+ @SOCKET: 23/07/23-13:51:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3819. t/step: 6.94605e+01
+ @SOCKET: 23/07/23-13:52:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3820. t/step: 6.93991e+01
+ @SOCKET: 23/07/23-13:53:45 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3821. t/step: 6.80207e+01
+ @SOCKET: 23/07/23-13:54:53 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3822. t/step: 6.58814e+01
+ @SOCKET: 23/07/23-13:55:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3823. t/step: 6.61259e+01
+ @SOCKET: 23/07/23-13:57:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3824. t/step: 6.66627e+01
+ @SOCKET: 23/07/23-13:58:12 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3825. t/step: 6.20591e+01
+ @SOCKET: 23/07/23-13:59:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3826. t/step: 7.67153e+01
+ @SOCKET: 23/07/23-14:00:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3827. t/step: 7.08966e+01
+ @SOCKET: 23/07/23-14:01:41 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3828. t/step: 7.09036e+01
+ @SOCKET: 23/07/23-14:02:52 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3829. t/step: 6.65698e+01
+ @SOCKET: 23/07/23-14:03:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3830. t/step: 7.08590e+01
+ @SOCKET: 23/07/23-14:05:10 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3831. t/step: 6.87926e+01
+ @SOCKET: 23/07/23-14:06:19 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3832. t/step: 6.88838e+01
+ @SOCKET: 23/07/23-14:07:27 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3833. t/step: 5.88510e+01
+ @SOCKET: 23/07/23-14:08:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3834. t/step: 6.53521e+01
+ @SOCKET: 23/07/23-14:09:32 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3835. t/step: 6.73590e+01
+ @SOCKET: 23/07/23-14:10:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3836. t/step: 6.63445e+01
+ @SOCKET: 23/07/23-14:11:45 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3837. t/step: 6.80703e+01
+ @SOCKET: 23/07/23-14:12:53 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3838. t/step: 6.69385e+01
+ @SOCKET: 23/07/23-14:14:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3839. t/step: 6.73200e+01
+ @SOCKET: 23/07/23-14:15:08 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3840. t/step: 6.22719e+01
+ @SOCKET: 23/07/23-14:16:10 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3841. t/step: 6.90449e+01
+ @SOCKET: 23/07/23-14:17:19 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3842. t/step: 6.76486e+01
+ @SOCKET: 23/07/23-14:18:27 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3843. t/step: 6.65094e+01
+ @SOCKET: 23/07/23-14:19:33 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3844. t/step: 7.11536e+01
+ @SOCKET: 23/07/23-14:20:44 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3845. t/step: 6.16390e+01
+ @SOCKET: 23/07/23-14:21:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3846. t/step: 6.49735e+01
+ @SOCKET: 23/07/23-14:22:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3847. t/step: 6.59346e+01
+ @SOCKET: 23/07/23-14:23:57 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3848. t/step: 6.71701e+01
+ @SOCKET: 23/07/23-14:25:04 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3849. t/step: 6.97575e+01
+ @SOCKET: 23/07/23-14:26:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3850. t/step: 7.18424e+01
+ @SOCKET: 23/07/23-14:27:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3851. t/step: 7.04520e+01
+ @SOCKET: 23/07/23-14:28:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3852. t/step: 6.66344e+01
+ @SOCKET: 23/07/23-14:29:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3853. t/step: 6.71420e+01
+ @SOCKET: 23/07/23-14:30:50 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3854. t/step: 6.64517e+01
+ @SOCKET: 23/07/23-14:31:56 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3855. t/step: 6.85395e+01
+ @SOCKET: 23/07/23-14:33:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3856. t/step: 6.13578e+01
+ @SOCKET: 23/07/23-14:34:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3857. t/step: 6.59200e+01
+ @SOCKET: 23/07/23-14:35:12 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3858. t/step: 6.72868e+01
+ @SOCKET: 23/07/23-14:36:19 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3859. t/step: 6.53617e+01
+ @SOCKET: 23/07/23-14:37:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3860. t/step: 6.60083e+01
+ @SOCKET: 23/07/23-14:38:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3861. t/step: 5.95858e+01
+ @SOCKET: 23/07/23-14:39:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3862. t/step: 6.53995e+01
+ @SOCKET: 23/07/23-14:40:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3863. t/step: 6.49839e+01
+ @SOCKET: 23/07/23-14:41:41 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3864. t/step: 6.53522e+01
+ @SOCKET: 23/07/23-14:42:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3865. t/step: 6.65700e+01
+ @SOCKET: 23/07/23-14:43:53 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3866. t/step: 6.63264e+01
+ @SOCKET: 23/07/23-14:44:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3867. t/step: 6.68657e+01
+ @SOCKET: 23/07/23-14:46:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3868. t/step: 6.73838e+01
+ @SOCKET: 23/07/23-14:47:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3869. t/step: 6.63408e+01
+ @SOCKET: 23/07/23-14:48:20 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3870. t/step: 6.59886e+01
+ @SOCKET: 23/07/23-14:49:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3871. t/step: 6.03614e+01
+ @SOCKET: 23/07/23-14:50:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3872. t/step: 6.83342e+01
+ @SOCKET: 23/07/23-14:51:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3873. t/step: 6.83745e+01
+ @SOCKET: 23/07/23-14:52:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3874. t/step: 7.04094e+01
+ @SOCKET: 23/07/23-14:53:53 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3875. t/step: 6.71940e+01
+ @SOCKET: 23/07/23-14:55:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3876. t/step: 6.65958e+01
+ @SOCKET: 23/07/23-14:56:07 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3877. t/step: 6.70520e+01
+ @SOCKET: 23/07/23-14:57:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3878. t/step: 6.04127e+01
+ @SOCKET: 23/07/23-14:58:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3879. t/step: 6.62553e+01
+ @SOCKET: 23/07/23-14:59:21 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3880. t/step: 6.74615e+01
+ @SOCKET: 23/07/23-15:00:28 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3881. t/step: 6.71114e+01
+ @SOCKET: 23/07/23-15:01:35 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3882. t/step: 6.80901e+01
+ @SOCKET: 23/07/23-15:02:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3883. t/step: 6.77439e+01
+ @SOCKET: 23/07/23-15:03:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3884. t/step: 6.75375e+01
+ @SOCKET: 23/07/23-15:04:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3885. t/step: 6.08889e+01
+ @SOCKET: 23/07/23-15:05:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3886. t/step: 6.79949e+01
+ @SOCKET: 23/07/23-15:07:07 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3887. t/step: 6.67964e+01
+ @SOCKET: 23/07/23-15:08:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3888. t/step: 6.89067e+01
+ @SOCKET: 23/07/23-15:09:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3889. t/step: 7.10209e+01
+ @SOCKET: 23/07/23-15:10:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3890. t/step: 6.84255e+01
+ @SOCKET: 23/07/23-15:11:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3891. t/step: 7.10590e+01
+ @SOCKET: 23/07/23-15:12:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3892. t/step: 6.66428e+01
+ @SOCKET: 23/07/23-15:14:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3893. t/step: 7.01077e+01
+ @SOCKET: 23/07/23-15:15:10 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3894. t/step: 7.10401e+01
+ @SOCKET: 23/07/23-15:16:21 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3895. t/step: 6.92339e+01
+ @SOCKET: 23/07/23-15:17:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3896. t/step: 6.81623e+01
+ @SOCKET: 23/07/23-15:18:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3897. t/step: 6.79547e+01
+ @SOCKET: 23/07/23-15:19:47 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3898. t/step: 6.86404e+01
+ @SOCKET: 23/07/23-15:20:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3899. t/step: 6.18406e+01
+ @SOCKET: 23/07/23-15:21:57 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3900. t/step: 6.81236e+01
+ @SOCKET: 23/07/23-15:23:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3901. t/step: 6.92893e+01
+ @SOCKET: 23/07/23-15:24:15 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3902. t/step: 6.99790e+01
+ @SOCKET: 23/07/23-15:25:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3903. t/step: 7.03169e+01
+ @SOCKET: 23/07/23-15:26:35 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3904. t/step: 7.14076e+01
+ @SOCKET: 23/07/23-15:27:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3905. t/step: 7.18918e+01
+ @SOCKET: 23/07/23-15:28:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3906. t/step: 6.90927e+01
+ @SOCKET: 23/07/23-15:30:07 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3907. t/step: 6.93311e+01
+ @SOCKET: 23/07/23-15:31:17 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3908. t/step: 6.86909e+01
+ @SOCKET: 23/07/23-15:32:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3909. t/step: 6.87756e+01
+ @SOCKET: 23/07/23-15:33:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3910. t/step: 6.80304e+01
+ @SOCKET: 23/07/23-15:34:42 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3911. t/step: 6.15291e+01
+ @SOCKET: 23/07/23-15:35:44 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3912. t/step: 6.62816e+01
+ @SOCKET: 23/07/23-15:36:50 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3913. t/step: 6.55912e+01
+ @SOCKET: 23/07/23-15:37:56 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3914. t/step: 6.54844e+01
+ @SOCKET: 23/07/23-15:39:01 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3915. t/step: 6.69944e+01
+ @SOCKET: 23/07/23-15:40:08 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3916. t/step: 5.96692e+01
+ @SOCKET: 23/07/23-15:41:08 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3917. t/step: 6.68971e+01
+ @SOCKET: 23/07/23-15:42:15 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3918. t/step: 6.77996e+01
+ @SOCKET: 23/07/23-15:43:22 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3919. t/step: 6.67472e+01
+ @SOCKET: 23/07/23-15:44:29 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3920. t/step: 7.08688e+01
+ @SOCKET: 23/07/23-15:45:40 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3921. t/step: 6.85032e+01
+ @SOCKET: 23/07/23-15:46:49 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3922. t/step: 7.30742e+01
+ @SOCKET: 23/07/23-15:48:02 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3923. t/step: 6.12016e+01
+ @SOCKET: 23/07/23-15:49:03 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3924. t/step: 6.72317e+01
+ @SOCKET: 23/07/23-15:50:10 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3925. t/step: 6.77788e+01
+ @SOCKET: 23/07/23-15:51:18 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3926. t/step: 6.80564e+01
+ @SOCKET: 23/07/23-15:52:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3927. t/step: 7.47977e+01
+ @SOCKET: 23/07/23-15:53:41 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3928. t/step: 6.83212e+01
+ @SOCKET: 23/07/23-15:54:49 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3929. t/step: 6.12049e+01
+ @SOCKET: 23/07/23-15:55:50 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3930. t/step: 6.81724e+01
+ @SOCKET: 23/07/23-15:56:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3931. t/step: 6.58558e+01
+ @SOCKET: 23/07/23-15:58:04 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3932. t/step: 6.70102e+01
+ @SOCKET: 23/07/23-15:59:11 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3933. t/step: 6.88241e+01
+ @SOCKET: 23/07/23-16:00:20 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3934. t/step: 6.80624e+01
+ @SOCKET: 23/07/23-16:01:28 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3935. t/step: 6.70823e+01
+ @SOCKET: 23/07/23-16:02:35 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3936. t/step: 6.92300e+01
+ @SOCKET: 23/07/23-16:03:44 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3937. t/step: 7.20324e+01
+ @SOCKET: 23/07/23-16:04:56 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3938. t/step: 7.98943e+01
+ @SOCKET: 23/07/23-16:06:16 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3939. t/step: 7.33020e+01
+ @SOCKET: 23/07/23-16:07:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3940. t/step: 7.35401e+01
+ @SOCKET: 23/07/23-16:08:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3941. t/step: 7.07301e+01
+ @SOCKET: 23/07/23-16:09:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3942. t/step: 7.07556e+01
+ @SOCKET: 23/07/23-16:11:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3943. t/step: 6.82046e+01
+ @SOCKET: 23/07/23-16:12:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3944. t/step: 6.85089e+01
+ @SOCKET: 23/07/23-16:13:21 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3945. t/step: 6.86164e+01
+ @SOCKET: 23/07/23-16:14:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3946. t/step: 6.67357e+01
+ @SOCKET: 23/07/23-16:15:37 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3947. t/step: 6.83716e+01
+ @SOCKET: 23/07/23-16:16:45 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3948. t/step: 6.89939e+01
+ @SOCKET: 23/07/23-16:17:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3949. t/step: 6.83608e+01
+ @SOCKET: 23/07/23-16:19:02 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3950. t/step: 6.22893e+01
+ @SOCKET: 23/07/23-16:20:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3951. t/step: 6.83372e+01
+ @SOCKET: 23/07/23-16:21:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3952. t/step: 6.79904e+01
+ @SOCKET: 23/07/23-16:22:21 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3953. t/step: 6.84621e+01
+ @SOCKET: 23/07/23-16:23:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3954. t/step: 6.88214e+01
+ @SOCKET: 23/07/23-16:24:38 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3955. t/step: 6.06248e+01
+ @SOCKET: 23/07/23-16:25:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3956. t/step: 7.09545e+01
+ @SOCKET: 23/07/23-16:26:50 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3957. t/step: 6.51398e+01
+ @SOCKET: 23/07/23-16:27:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3958. t/step: 6.74872e+01
+ @SOCKET: 23/07/23-16:29:03 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3959. t/step: 6.73813e+01
+ @SOCKET: 23/07/23-16:30:10 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3960. t/step: 6.74047e+01
+ @SOCKET: 23/07/23-16:31:17 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3961. t/step: 6.65873e+01
+ @SOCKET: 23/07/23-16:32:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3962. t/step: 6.13601e+01
+ @SOCKET: 23/07/23-16:33:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3963. t/step: 6.52155e+01
+ @SOCKET: 23/07/23-16:34:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3964. t/step: 6.52681e+01
+ @SOCKET: 23/07/23-16:35:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3965. t/step: 6.66059e+01
+ @SOCKET: 23/07/23-16:36:42 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3966. t/step: 6.69832e+01
+ @SOCKET: 23/07/23-16:37:49 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3967. t/step: 6.85007e+01
+ @SOCKET: 23/07/23-16:38:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3968. t/step: 6.72559e+01
+ @SOCKET: 23/07/23-16:40:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3969. t/step: 6.66530e+01
+ @SOCKET: 23/07/23-16:41:12 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3970. t/step: 6.63865e+01
+ @SOCKET: 23/07/23-16:42:18 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3971. t/step: 6.57900e+01
+ @SOCKET: 23/07/23-16:43:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3972. t/step: 6.14745e+01
+ @SOCKET: 23/07/23-16:44:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3973. t/step: 6.86192e+01
+ @SOCKET: 23/07/23-16:45:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3974. t/step: 6.60000e+01
+ @SOCKET: 23/07/23-16:46:40 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3975. t/step: 6.79738e+01
+ @SOCKET: 23/07/23-16:47:48 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3976. t/step: 6.63324e+01
+ @SOCKET: 23/07/23-16:48:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3977. t/step: 6.66880e+01
+ @SOCKET: 23/07/23-16:50:01 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3978. t/step: 6.67132e+01
+ @SOCKET: 23/07/23-16:51:08 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3979. t/step: 6.13810e+01
+ @SOCKET: 23/07/23-16:52:09 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3980. t/step: 6.98250e+01
+ @SOCKET: 23/07/23-16:53:19 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3981. t/step: 6.81381e+01
+ @SOCKET: 23/07/23-16:54:27 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3982. t/step: 6.72098e+01
+ @SOCKET: 23/07/23-16:55:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3983. t/step: 6.63485e+01
+ @SOCKET: 23/07/23-16:56:41 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3984. t/step: 6.56412e+01
+ @SOCKET: 23/07/23-16:57:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3985. t/step: 6.78320e+01
+ @SOCKET: 23/07/23-16:58:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3986. t/step: 6.84743e+01
+ @SOCKET: 23/07/23-17:00:03 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3987. t/step: 6.81205e+01
+ @SOCKET: 23/07/23-17:01:11 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3988. t/step: 6.17541e+01
+ @SOCKET: 23/07/23-17:02:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3989. t/step: 6.93561e+01
+ @SOCKET: 23/07/23-17:03:22 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3990. t/step: 7.03982e+01
+ @SOCKET: 23/07/23-17:04:32 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3991. t/step: 7.07475e+01
+ @SOCKET: 23/07/23-17:05:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3992. t/step: 6.80915e+01
+ @SOCKET: 23/07/23-17:06:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3993. t/step: 6.86566e+01
+ @SOCKET: 23/07/23-17:08:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3994. t/step: 6.84792e+01
+ @SOCKET: 23/07/23-17:09:08 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3995. t/step: 6.84316e+01
+ @SOCKET: 23/07/23-17:10:17 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3996. t/step: 6.85685e+01
+ @SOCKET: 23/07/23-17:11:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3997. t/step: 6.91127e+01
+ @SOCKET: 23/07/23-17:12:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3998. t/step: 6.88256e+01
+ @SOCKET: 23/07/23-17:13:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    3999. t/step: 6.78111e+01
+ @SOCKET: 23/07/23-17:14:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4000. t/step: 6.10145e+01
+ @SOCKET: 23/07/23-17:15:52 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4001. t/step: 6.93581e+01
+ @SOCKET: 23/07/23-17:17:01 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4002. t/step: 6.92418e+01
+ @SOCKET: 23/07/23-17:18:11 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4003. t/step: 6.83167e+01
+ @SOCKET: 23/07/23-17:19:19 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4004. t/step: 5.92961e+01
+ @SOCKET: 23/07/23-17:20:18 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4005. t/step: 6.63551e+01
+ @SOCKET: 23/07/23-17:21:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4006. t/step: 6.72626e+01
+ @SOCKET: 23/07/23-17:22:32 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4007. t/step: 6.76132e+01
+ @SOCKET: 23/07/23-17:23:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4008. t/step: 6.84986e+01
+ @SOCKET: 23/07/23-17:24:48 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4009. t/step: 6.66693e+01
+ @SOCKET: 23/07/23-17:25:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4010. t/step: 6.87318e+01
+ @SOCKET: 23/07/23-17:27:03 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4011. t/step: 6.88864e+01
+ @SOCKET: 23/07/23-17:28:12 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4012. t/step: 6.81957e+01
+ @SOCKET: 23/07/23-17:29:20 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4013. t/step: 6.98965e+01
+ @SOCKET: 23/07/23-17:30:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4014. t/step: 6.87681e+01
+ @SOCKET: 23/07/23-17:31:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4015. t/step: 6.83666e+01
+ @SOCKET: 23/07/23-17:32:47 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4016. t/step: 6.90126e+01
+ @SOCKET: 23/07/23-17:33:56 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4017. t/step: 6.97099e+01
+ @SOCKET: 23/07/23-17:35:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4018. t/step: 6.85895e+01
+ @SOCKET: 23/07/23-17:36:15 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4019. t/step: 6.15450e+01
+ @SOCKET: 23/07/23-17:37:16 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4020. t/step: 7.04611e+01
+ @SOCKET: 23/07/23-17:38:27 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4021. t/step: 6.96239e+01
+ @SOCKET: 23/07/23-17:39:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4022. t/step: 6.87637e+01
+ @SOCKET: 23/07/23-17:40:45 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4023. t/step: 6.79296e+01
+ @SOCKET: 23/07/23-17:41:53 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4024. t/step: 6.70071e+01
+ @SOCKET: 23/07/23-17:43:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4025. t/step: 6.70978e+01
+ @SOCKET: 23/07/23-17:44:07 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4026. t/step: 6.78250e+01
+ @SOCKET: 23/07/23-17:45:15 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4027. t/step: 6.05377e+01
+ @SOCKET: 23/07/23-17:46:16 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4028. t/step: 6.55563e+01
+ @SOCKET: 23/07/23-17:47:21 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4029. t/step: 7.56827e+01
+ @SOCKET: 23/07/23-17:48:37 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4030. t/step: 6.71813e+01
+ @SOCKET: 23/07/23-17:49:44 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4031. t/step: 6.79778e+01
+ @SOCKET: 23/07/23-17:50:52 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4032. t/step: 6.73162e+01
+ @SOCKET: 23/07/23-17:51:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4033. t/step: 6.08383e+01
+ @SOCKET: 23/07/23-17:53:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4034. t/step: 6.62648e+01
+ @SOCKET: 23/07/23-17:54:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4035. t/step: 6.74206e+01
+ @SOCKET: 23/07/23-17:55:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4036. t/step: 6.88500e+01
+ @SOCKET: 23/07/23-17:56:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4037. t/step: 6.76708e+01
+ @SOCKET: 23/07/23-17:57:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4038. t/step: 6.81885e+01
+ @SOCKET: 23/07/23-17:58:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4039. t/step: 6.73915e+01
+ @SOCKET: 23/07/23-17:59:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4040. t/step: 6.73692e+01
+ @SOCKET: 23/07/23-18:00:53 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4041. t/step: 6.09219e+01
+ @SOCKET: 23/07/23-18:01:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4042. t/step: 6.72306e+01
+ @SOCKET: 23/07/23-18:03:01 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4043. t/step: 6.74183e+01
+ @SOCKET: 23/07/23-18:04:09 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4044. t/step: 6.73990e+01
+ @SOCKET: 23/07/23-18:05:16 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4045. t/step: 6.74970e+01
+ @SOCKET: 23/07/23-18:06:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4046. t/step: 6.71348e+01
+ @SOCKET: 23/07/23-18:07:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4047. t/step: 6.69560e+01
+ @SOCKET: 23/07/23-18:08:38 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4048. t/step: 6.80004e+01
+ @SOCKET: 23/07/23-18:09:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4049. t/step: 6.08545e+01
+ @SOCKET: 23/07/23-18:10:47 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4050. t/step: 6.84352e+01
+ @SOCKET: 23/07/23-18:11:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4051. t/step: 7.02913e+01
+ @SOCKET: 23/07/23-18:13:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4052. t/step: 6.88858e+01
+ @SOCKET: 23/07/23-18:14:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4053. t/step: 6.84740e+01
+ @SOCKET: 23/07/23-18:15:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4054. t/step: 6.82737e+01
+ @SOCKET: 23/07/23-18:16:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4055. t/step: 6.96810e+01
+ @SOCKET: 23/07/23-18:17:41 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4056. t/step: 6.87588e+01
+ @SOCKET: 23/07/23-18:18:49 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4057. t/step: 6.84446e+01
+ @SOCKET: 23/07/23-18:19:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4058. t/step: 6.91365e+01
+ @SOCKET: 23/07/23-18:21:07 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4059. t/step: 6.74039e+01
+ @SOCKET: 23/07/23-18:22:14 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4060. t/step: 6.81728e+01
+ @SOCKET: 23/07/23-18:23:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4061. t/step: 6.78765e+01
+ @SOCKET: 23/07/23-18:24:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4062. t/step: 6.13055e+01
+ @SOCKET: 23/07/23-18:25:32 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4063. t/step: 6.86687e+01
+ @SOCKET: 23/07/23-18:26:40 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4064. t/step: 6.98317e+01
+ @SOCKET: 23/07/23-18:27:50 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4065. t/step: 6.88756e+01
+ @SOCKET: 23/07/23-18:28:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4066. t/step: 7.01222e+01
+ @SOCKET: 23/07/23-18:30:09 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4067. t/step: 6.87694e+01
+ @SOCKET: 23/07/23-18:31:18 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4068. t/step: 6.82518e+01
+ @SOCKET: 23/07/23-18:32:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4069. t/step: 6.69917e+01
+ @SOCKET: 23/07/23-18:33:33 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4070. t/step: 6.89740e+01
+ @SOCKET: 23/07/23-18:34:42 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4071. t/step: 6.89043e+01
+ @SOCKET: 23/07/23-18:35:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4072. t/step: 6.90199e+01
+ @SOCKET: 23/07/23-18:37:00 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4073. t/step: 6.75922e+01
+ @SOCKET: 23/07/23-18:38:08 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4074. t/step: 6.18930e+01
+ @SOCKET: 23/07/23-18:39:10 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4075. t/step: 6.96610e+01
+ @SOCKET: 23/07/23-18:40:19 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4076. t/step: 7.06388e+01
+ @SOCKET: 23/07/23-18:41:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4077. t/step: 6.86320e+01
+ @SOCKET: 23/07/23-18:42:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4078. t/step: 6.71052e+01
+ @SOCKET: 23/07/23-18:43:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4079. t/step: 7.06602e+01
+ @SOCKET: 23/07/23-18:44:56 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4080. t/step: 6.81616e+01
+ @SOCKET: 23/07/23-18:46:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4081. t/step: 6.89107e+01
+ @SOCKET: 23/07/23-18:47:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4082. t/step: 6.80686e+01
+ @SOCKET: 23/07/23-18:48:22 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4083. t/step: 6.82360e+01
+ @SOCKET: 23/07/23-18:49:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4084. t/step: 6.80371e+01
+ @SOCKET: 23/07/23-18:50:38 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4085. t/step: 6.18801e+01
+ @SOCKET: 23/07/23-18:51:40 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4086. t/step: 6.75336e+01
+ @SOCKET: 23/07/23-18:52:47 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4087. t/step: 6.76637e+01
+ @SOCKET: 23/07/23-18:53:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4088. t/step: 6.61559e+01
+ @SOCKET: 23/07/23-18:55:01 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4089. t/step: 6.69602e+01
+ @SOCKET: 23/07/23-18:56:08 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4090. t/step: 6.74490e+01
+ @SOCKET: 23/07/23-18:57:15 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4091. t/step: 6.75627e+01
+ @SOCKET: 23/07/23-18:58:23 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4092. t/step: 6.66498e+01
+ @SOCKET: 23/07/23-18:59:30 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4093. t/step: 6.84111e+01
+ @SOCKET: 23/07/23-19:00:38 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4094. t/step: 6.06265e+01
+ @SOCKET: 23/07/23-19:01:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4095. t/step: 6.89344e+01
+ @SOCKET: 23/07/23-19:02:48 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4096. t/step: 6.77488e+01
+ @SOCKET: 23/07/23-19:03:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4097. t/step: 6.95490e+01
+ @SOCKET: 23/07/23-19:05:05 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4098. t/step: 6.83680e+01
+ @SOCKET: 23/07/23-19:06:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4099. t/step: 6.68540e+01
+ @SOCKET: 23/07/23-19:07:20 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4100. t/step: 6.86616e+01
+ @SOCKET: 23/07/23-19:08:29 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4101. t/step: 6.20940e+01
+ @SOCKET: 23/07/23-19:09:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4102. t/step: 6.96646e+01
+ @SOCKET: 23/07/23-19:10:41 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4103. t/step: 7.15017e+01
+ @SOCKET: 23/07/23-19:11:52 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4104. t/step: 7.07690e+01
+ @SOCKET: 23/07/23-19:13:03 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4105. t/step: 7.04064e+01
+ @SOCKET: 23/07/23-19:14:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4106. t/step: 7.09226e+01
+ @SOCKET: 23/07/23-19:15:24 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4107. t/step: 6.11331e+01
+ @SOCKET: 23/07/23-19:16:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4108. t/step: 7.10199e+01
+ @SOCKET: 23/07/23-19:17:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4109. t/step: 6.62289e+01
+ @SOCKET: 23/07/23-19:18:43 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4110. t/step: 6.87333e+01
+ @SOCKET: 23/07/23-19:19:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4111. t/step: 6.63436e+01
+ @SOCKET: 23/07/23-19:20:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4112. t/step: 6.92925e+01
+ @SOCKET: 23/07/23-19:22:07 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4113. t/step: 6.93505e+01
+ @SOCKET: 23/07/23-19:23:16 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4114. t/step: 7.05142e+01
+ @SOCKET: 23/07/23-19:24:27 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4115. t/step: 6.89319e+01
+ @SOCKET: 23/07/23-19:25:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4116. t/step: 7.01848e+01
+ @SOCKET: 23/07/23-19:26:46 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4117. t/step: 6.84146e+01
+ @SOCKET: 23/07/23-19:27:54 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4118. t/step: 6.76824e+01
+ @SOCKET: 23/07/23-19:29:02 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4119. t/step: 7.13404e+01
+ @SOCKET: 23/07/23-19:30:13 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4120. t/step: 7.11823e+01
+ @SOCKET: 23/07/23-19:31:25 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4121. t/step: 7.26838e+01
+ @SOCKET: 23/07/23-19:32:37 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4122. t/step: 7.30800e+01
+ @SOCKET: 23/07/23-19:33:50 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4123. t/step: 6.88125e+01
+ @SOCKET: 23/07/23-19:34:59 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4124. t/step: 7.05895e+01
+ @SOCKET: 23/07/23-19:36:10 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4125. t/step: 6.81752e+01
+ @SOCKET: 23/07/23-19:37:18 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4126. t/step: 6.81762e+01
+ @SOCKET: 23/07/23-19:38:26 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4127. t/step: 6.81722e+01
+ @SOCKET: 23/07/23-19:39:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4128. t/step: 6.02399e+01
+ @SOCKET: 23/07/23-19:40:34 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4129. t/step: 6.77016e+01
+ @SOCKET: 23/07/23-19:41:42 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4130. t/step: 6.83793e+01
+ @SOCKET: 23/07/23-19:42:51 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4131. t/step: 6.72336e+01
+ @SOCKET: 23/07/23-19:43:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4132. t/step: 6.79799e+01
+ @SOCKET: 23/07/23-19:45:06 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4133. t/step: 6.89133e+01
+ @SOCKET: 23/07/23-19:46:15 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4134. t/step: 6.77456e+01
+ @SOCKET: 23/07/23-19:47:22 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4135. t/step: 6.82759e+01
+ @SOCKET: 23/07/23-19:48:31 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4136. t/step: 6.80688e+01
+ @SOCKET: 23/07/23-19:49:39 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4137. t/step: 6.87525e+01
+ @SOCKET: 23/07/23-19:50:48 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4138. t/step: 6.19415e+01
+ @SOCKET: 23/07/23-19:51:49 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4139. t/step: 6.86490e+01
+ @SOCKET: 23/07/23-19:52:58 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4140. t/step: 6.59666e+01
+ @SOCKET: 23/07/23-19:54:04 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4141. t/step: 6.69000e+01
+ @SOCKET: 23/07/23-19:55:11 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4142. t/step: 6.82577e+01
+ @SOCKET: 23/07/23-19:56:19 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4143. t/step: 6.86875e+01
+ @SOCKET: 23/07/23-19:57:28 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4144. t/step: 6.83037e+01
+ @SOCKET: 23/07/23-19:58:36 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4145. t/step: 6.88765e+01
+ @SOCKET: 23/07/23-19:59:45 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4146. t/step: 6.83454e+01
+ @SOCKET: 23/07/23-20:00:53 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4147. t/step: 6.18472e+01
+ @SOCKET: 23/07/23-20:01:55 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4148. t/step: 6.62115e+01
+ @SOCKET: 23/07/23-20:03:02 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+ # Average timings at MD step    4149. t/step: 6.55139e+01
+ @SOCKET: 23/07/23-20:04:07 Assigning [match] request id    0 to client with last-id    0 (  0/  1 : )
+SOFTEXIT CALLED FROM THREAD <Thread(softexit, started daemon 47426669516544)>  @SOFTEXIT: Maximum wallclock time elapsed.
+ !W! Soft exit has been requested with message: ' @SOFTEXIT: Maximum wallclock time elapsed.
+Restartable as is: YES.'. Cleaning up.
+ @SOCKET: Shutting down the driver interface.
+ !W!  @SOCKET:   Inconsistent client state in dispatch thread! (III)
+Backup performed: RESTART -> #RESTART#0#
+SOFTEXIT CALLED FROM THREAD <Thread(Thread-412, started daemon 47426680022784)>  @ FORCES : cannot return so will die off here
+SOFTEXIT CALLED FROM THREAD <_MainThread(MainThread, started 47426364862208)>  @ SIMULATION: Exiting cleanly.

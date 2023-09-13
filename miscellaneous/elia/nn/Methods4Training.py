@@ -3,11 +3,13 @@ import numpy as np
 from torch_geometric.data import Data
 from scipy.stats import spearmanr
 from torch.nn import MSELoss
+from miscellaneous.elia.good_coding import froze
 from abc import ABC, abstractproperty, abstractmethod
 from typing import TypeVar
 A = TypeVar('A', bound='Methods4Training')
 T = TypeVar('T', bound='EDFMethods4Training')
 
+@froze
 class Methods4Training(ABC):
 
     @abstractproperty
@@ -35,7 +37,14 @@ class Methods4Training(ABC):
     def forces(self:A,**argv):
         pass
 
-class EDFMethods4Training(Methods4Training):
+# @froze
+class EDFMethods4Training():
+
+    def __init__(self: T,**argv)->None:
+
+        super().__init__(**argv)
+
+        self._mseloss = MSELoss()
 
     # @staticmethod
     def get_pred(self: T, X: Data) -> torch.tensor:
@@ -92,35 +101,35 @@ class EDFMethods4Training(Methods4Training):
 
         return y
 
-    def loss(self:T,lE:float=None,lF:float=None,lP:float=None)->callable:
+    def loss(self:T,lE:float=None,lF:float=None,lP:float=None,**argv)->callable:
 
         lE = lE if lE is not None else 1.0
         lF = lF if lF is not None else 1.0
         lP = lP if lP is not None else 1.0
 
         if self.output in ["E","D"]:
-            return MSELoss() #MSELoss(reduction='mean') # MSELoss(reduce='sum')
+            return self._mseloss #MSELoss(reduction='mean') # MSELoss(reduce='sum')
             #return lambda x,y: MSELoss()(x,y)
         
         elif self.output == "ED":
             def loss_EP(x,y):
-                E = MSELoss()(x[:,0],y[:,0])
-                P = MSELoss()(x[:,1:4],y[:,1:4])
+                E = self._mseloss(x[:,0],y[:,0])
+                P = self._mseloss(x[:,1:4],y[:,1:4])
                 return lE * E + lP * P
             return loss_EP
         
         elif self.output == "EF":
             def loss_EF(x,y):
-                E = MSELoss()(x[:,0],y[:,0])
-                F = MSELoss()(x[:,1:],y[:,1:])
+                E = self._mseloss(x[:,0],y[:,0])
+                F = self._mseloss(x[:,1:],y[:,1:])
                 return lE * E + lF * F
             return loss_EF
         
         elif self.output == "EDF":
             def loss_EPF(x,y):
-                E = MSELoss()(x[:,0],y[:,0])
-                P = MSELoss()(x[:,1:4],y[:,1:4])
-                F = MSELoss()(x[:,4:],y[:,4:])
+                E = self._mseloss(x[:,0],y[:,0])
+                P = self._mseloss(x[:,1:4],y[:,1:4])
+                F = self._mseloss(x[:,4:],y[:,4:])
                 return lE * E + lP * P + lF * F
             return loss_EPF
         

@@ -1,0 +1,62 @@
+<simulation verbosity='high'>
+
+  <total_steps>2000</total_steps>
+  <total_time> 28000 </total_time>
+
+  <ffsocket mode='unix' name='pw' pbc='False'>
+    <address>localhost</address>
+    <port>0000</port>
+    <!--timeout>100</timeout-->
+    <!--latency> 0.01</latency-->
+  </ffsocket>
+
+  <output prefix='i-pi'>
+    <trajectory filename='momenta'>momenta</trajectory>
+    <trajectory filename='forces'>forces</trajectory>
+    <trajectory filename='velocities'>velocities</trajectory>
+    <trajectory filename='positions'>positions</trajectory>
+    <trajectory filename='bec' format="txt">bec</trajectory>
+    <trajectory filename='extra' format="text">extra</trajectory>
+    <properties filename='properties.out' > [ step, time, conserved, polarization, kinetic_md, potential, volume ] </properties>
+  </output>
+
+  <prng>
+    <seed>10545</seed>
+  </prng>
+
+  <system>
+    <forces> <force forcefield='pw'/> </forces>
+
+    <initialize nbeads='1'>
+      <file mode='xyz' units='angstrom' > start.xyz </file>
+      <velocities mode='thermal' units='kelvin'>2000</velocities>
+      <cell mode="manual" units="angstrom">[
+        5.0747482210040511, -2.5373733908355391,  0.0000058698089519,
+        0.0000000000000000,  4.3948578270373035, -0.0000029162089701,
+        0.0000000000000000,  0.0000000000000000, 13.6997931761245120
+	    ]</cell>
+    </initialize>
+
+  <ensemble>
+    <temperature units='kelvin'>2000</temperature>
+    <cbec >True</cbec>
+    <cpol >True</cpol>
+  </ensemble>
+
+  <motion mode='dynamics'>
+    <dynamics mode='eda-nve'>
+      <timestep units='femtosecond'> 1 </timestep>
+      <thermostat mode='gle'>
+        <A shape='(5,5)'>
+          [   3.000808529642e-2,    4.399584111273e-5,    1.859973625080e-3,   -5.876241960891e-3,    3.739501316303e-2,
+              -4.487639396699e-5,    1.387005903925e-8,    1.164918923457e-4,   -3.202325012417e-5,    6.843606896798e-5,
+              -2.392449398053e-3,   -1.164918923457e-4,    2.193171887244e-4,    8.310407251729e-4,   -1.612887237074e-3,
+              -1.673766273885e-3,    3.202325012417e-5,   -8.310407251729e-4,    4.302448277896e-3,    1.857006833358e-3,
+              3.518096114231e-2,   -6.843606896798e-5,    1.612887237074e-3,   -1.857006833358e-3,    4.995774381244e-2  ]
+        </A>
+      </thermostat>
+    </dynamics>
+  </motion>
+    
+  </system>
+</simulation>

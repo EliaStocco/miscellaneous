@@ -841,6 +841,7 @@ class MicroState:
         plt.title("{:s}".format(what))
         plt.tight_layout()
         if file is not None :
+            print("\tSaving time series to file {:s}".format(file))
             plt.savefig(file)
         else :
             plt.show()

@@ -10,11 +10,12 @@
             "request": "launch",
             "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/train-e3nn-model.py",
             //"program": "/home/stoccoel/google-personal/i-pi-sabia/drivers/py/driver.py",
-            "cwd": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water/",
+            //"cwd": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/train-water/",
+            "cwd" : "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/tests/",
             "console": "integratedTerminal",
             "justMyCode": true,
             //"env": {"PYTHONPATH": "/home/stoccoel/google-personal/miscellaneous/"},
-            "args" : "--name mul=3.layers=3.lmax=2.name=2 --folder LiNbO3 --output_folder LiNbO3/results --mul 3 --layers 3 --lmax 2 --epochs 10000 --bs 10 --lr 2e-4"
+            //"args" : "--name mul=3.layers=3.lmax=2.name=2 --folder LiNbO3 --output_folder LiNbO3/results --mul 3 --layers 3 --lmax 2 --epochs 10 --bs 10 --lr 2e-4"
             //"args":["-m","e3nn_pol","-a","localhost","-p","0000","-u","-o",
             //"/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water/instructions.json,/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water/LiNbO3/MD/start.xyz"],
             // /home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/water/LiNbO3/results/networks/bs=10.lr=1.0e-03.torch,

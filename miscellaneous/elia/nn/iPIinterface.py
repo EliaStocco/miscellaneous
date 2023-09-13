@@ -1,26 +1,28 @@
 import torch
 from ase.io import read
-from miscellaneous.elia.nn.get_type_onehot_encoding import symbols2x
-# from miscellaneous.elia.nn.make_dataset import my_neighbor_list
-from miscellaneous.elia.nn.make_dataset_delta import make_datapoint_delta
-from miscellaneous.elia.nn.make_dataset import make_datapoint
+from miscellaneous.elia.nn.dataset.make_dataset_delta import make_datapoint_delta
+from miscellaneous.elia.nn.dataset import make_datapoint
+from miscellaneous.elia.good_coding import froze
 # from torch_geometric.loader import DataLoader
 # from torch_geometric.data import Data
 from abc import ABC, abstractproperty
 
-class iPIinterface(ABC):
+#@froze
+class iPIinterface():
 
-    @abstractproperty
-    def ref_dipole(self): 
-        pass
+    # __slots__ = ("normalization","_max_radius","_symbols")
 
-    @abstractproperty
-    def ref_pos(self): 
-        pass
+    # @abstractproperty
+    # def ref_dipole(self): 
+    #     pass
 
-    @abstractproperty
-    def reference(self): 
-        pass
+    # @abstractproperty
+    # def ref_pos(self): 
+    #     pass
+
+    # @abstractproperty
+    # def reference(self): 
+    #     pass
 
     def __init__(self,max_radius:float,normalization:dict=None,**kwargs):
 
@@ -33,16 +35,16 @@ class iPIinterface(ABC):
                     "std"  : 1.,
                 },
                 "dipole":{
-                    "mean" : torch.tensor([0.,0.,0.]),
-                    "std"  : torch.tensor([1.,1.,1.]),
+                    "mean" : 0.,# torch.tensor([0.,0.,0.]),
+                    "std"  : 1.,# torch.tensor([1.,1.,1.]),
                 },
             }
         
         self.normalization = normalization
-        for k in self.normalization.keys():
-            for j in self.normalization[k].keys():
-                x = self.normalization[k][j]
-                self.normalization[k][j] = torch.tensor(x)
+        # for k in self.normalization.keys():
+        #     for j in self.normalization[k].keys():
+        #         x = self.normalization[k][j]
+        #         self.normalization[k][j] = torch.tensor(x)
 
         self._max_radius = max_radius
         self._symbols = None
@@ -110,13 +112,13 @@ class iPIinterface(ABC):
             std = self.normalization["dipole"]["std"]
 
         # resize
-        batch_size = y.shape[0]
-        newdim = [1]*(len(y.shape)-2) # I remove the batch_size axis and the 'actual' value of the output
-        mean = mean.view(batch_size,3,*newdim) if mean is not None else mean
-        std  =  std.view(batch_size,3,*newdim) if  std is not None else std
+        # batch_size = y.shape[0]
+        # newdim = [1]*(len(y.shape)-2) # I remove the batch_size axis and the 'actual' value of the output
+        # mean = mean.view(batch_size,3,*newdim) if mean is not None else mean
+        # std  =  std.view(batch_size,3,*newdim) if  std is not None else std
 
         if what in ["energy","dipole"] :
-            return y * std + mean # this will be wrong for sure
+            return y * std + mean
         
         elif what in ["forces","bec"]:
             return y * std
