@@ -113,10 +113,10 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
         file_path = "temp-info.csv"  # Replace with the path to your file
         try:
             os.remove(file_path)
-            print(f"File '{file_path}' deleted successfully.")
+            print("File '{:s}' deleted successfully.".format(file_path))
         except OSError as e:
-            print(f"Error deleting file '{e}'")
+            print("Error deleting file '{:s}'".format(e))
     except OSError as e:
-        print(f"Error writing file '{e}'")
+        print("Error writing file '{:s}'".format(e))
 
     pass

@@ -74,7 +74,7 @@ def train(model:torch.nn.Module,\
 
     default = { "plot":{"learning-curve":{"N":10}},\
                 "dataloader":{"shuffle":False},\
-                "thr":{"exit":100},\
+                "thr":{"exit":10000},\
                 "disable":False,\
                 "Natoms":1,\
                 "save":{"parameters":1}} # ,"networks-temp":-1
