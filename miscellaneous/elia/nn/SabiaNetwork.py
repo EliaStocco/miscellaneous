@@ -18,16 +18,16 @@ T = TypeVar('T', bound='SabiaNetwork')
 
 class SabiaNetwork(torch.nn.Module):
 
-    default_dtype : torch.dtype
-    lmax : int
-    max_radius: float
-    number_of_basis : int
-    num_nodes : int
-    pool_nodes : bool
-    debug : bool
-    mp : MessagePassing
-    irreps_in : o3.Irreps
-    irreps_out : o3.Irreps
+    default_dtype = torch.float64 #: torch.dtype
+    # lmax : int
+    # max_radius: float
+    # number_of_basis : int
+    # num_nodes : int
+    # pool_nodes : bool
+    # debug : bool
+    # mp : MessagePassing
+    # irreps_in : o3.Irreps
+    # irreps_out : o3.Irreps
 
     def __init__(self,
         irreps_in,
@@ -43,12 +43,12 @@ class SabiaNetwork(torch.nn.Module):
         p=["o","e"],
         debug=False,
         pool_nodes=True,
-        default_dtype=torch.float64,
+        # default_dtype=torch.float64,
         **argv) -> None:
         
         super().__init__(**argv)
 
-        self.default_dtype = default_dtype
+        # self.default_dtype = default_dtype
         torch.set_default_dtype(self.default_dtype)
         self.lmax = lmax
         self.max_radius = max_radius
@@ -81,10 +81,12 @@ class SabiaNetwork(torch.nn.Module):
             num_neighbors=num_neighbors,
         )
 
-        self.sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")
+        self._sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")
 
         self.irreps_in = self.mp.irreps_node_input
         self.irreps_out = self.mp.irreps_node_output
+
+        pass
     
     # Overwriting preprocess method of SimpleNetwork to adapt for periodic boundary data
     def preprocess(self, data: Union[Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
@@ -129,7 +131,7 @@ class SabiaNetwork(torch.nn.Module):
         # del data
 
         # edge_attr = o3.spherical_harmonics( range(self.lmax + 1), edge_vec, True, normalization="component")
-        edge_attr = self.sh(edge_vec)
+        edge_attr = self._sh(edge_vec)
         
         # Edge length embedding
         edge_length = edge_vec.norm(dim=1)

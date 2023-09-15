@@ -1,12 +1,12 @@
 # Import necessary modules and classes
-from miscellaneous.elia.nn.dataset import make_dataset, make_datapoint
+from miscellaneous.elia.nn.make_dataset import make_dataset, make_datapoint
 import torch
 from torch_geometric.data import Data
 
 #----------------------------------------------------------------#
 # Function to add a reference to a datapoint
 def add_reference(datapoint: Data,
-                  #dipole: torch.tensor,
+                  dipole: torch.tensor,
                   pos: torch.tensor):
     """
     Adds a reference to a datapoint by subtracting dipole and adding deltaR.
@@ -50,14 +50,14 @@ def make_dataset_delta(ref_index: int = 0, **argv):
     dataset = make_dataset(**argv)
 
     # Clone the dipole and position of the reference datapoint
-    # dipole = dataset[ref_index].dipole.clone()
+    dipole = dataset[ref_index].dipole.clone()
     pos = dataset[ref_index].pos.clone()
 
     # Add references to each datapoint in the dataset
     for n in range(len(dataset)):
-        dataset[n] = add_reference(dataset[n], pos)
+        dataset[n] = add_reference(dataset[n], dipole, pos)
 
-    return dataset, pos
+    return dataset, dipole, pos
 
 #----------------------------------------------------------------#
 

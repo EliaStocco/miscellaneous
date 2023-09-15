@@ -2,7 +2,7 @@ from torch_geometric.data import Data
 import torch
 from torch.func import jacrev
 import numpy as np
-from .SabiaNetwork import SabiaNetwork
+
 from .iPIinterface import iPIinterface
 from .Methods4Training import EDFMethods4Training
 from .Methods4AngularOutput import Methods4AngularOutput
@@ -16,18 +16,7 @@ T = TypeVar('T', bound='SabiaNetworkManager')
 __all__ = ["SabiaNetworkManager"]
 
 # @froze
-class SabiaNetworkManager(EDFMethods4Training,iPIinterface,SabiaNetwork):
-
-    # __slots__ = ("output","reference","_forces","_bec","_X","ref_dipole","ref_pos")
-
-    # output:str
-    # lattice: torch.Tensor
-    # max_radius: float
-    # _radial_cutoff: float
-    # symbols: list
-    # x: Data
-    # R:torch.Tensor
-    # _make_datapoint:callable
+class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
 
     def __init__(self: T, 
                  output: str = "ED",
@@ -71,9 +60,9 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface,SabiaNetwork):
 
         if self.reference :
 
-            if dipole is None :
-                raise ValueError("'dipole' can not be 'None'")
-            self.ref_dipole = torch.tensor(dipole)
+            # if dipole is None :
+            #     raise ValueError("'dipole' can not be 'None'")
+            # self.ref_dipole = torch.tensor(dipole)
             
             if pos is None :
                 raise ValueError("'pos' can not be 'None'")
@@ -299,162 +288,57 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface,SabiaNetwork):
 
         return y
 
-    # # @staticmethod
-    # def get_pred(self: T, X: Data) -> torch.tensor:
-    #     """return Energy, Polarization and Forces"""
+    # def check_equivariance(self:T,X: Data,angles=None)->np.ndarray:
 
-    #     N = {"E": 1, "D": 3, "ED": 4, "EF": 1+3*X.Natoms[0], "EDF": 1+3+3*X.Natoms[0]}
-    #     N = N[self.output]
-    #     batch_size = len(np.unique(X.batch))
-    #     y = torch.zeros((batch_size, N))
+    #     from e3nn import o3
 
-    #     if self.output in ["E", "ED","D"]:
-    #         y = self(X)
+    #     with torch.no_grad():
 
-    #     elif self.output == "EDF":
-    #         EP = self(X)
-    #         y[:, 0] = EP[:, 0]         # 1st column for the energy
-    #         y[:, 1:4] = EP[:, 1:4]     # 2nd to 4th columns for the dipole
-    #         y[:, 4:] = self.forces(X) # other columns for the forces
+    #         batch_size = len(np.unique(X.batch))
+    #         y = np.zeros(batch_size)
 
-    #     elif self.output == "EF":
-    #         EP = self(X)
-    #         y[:, 0]  = EP[:, 0]         # 1st column for the energy
-    #         y[:, 1:] = self.forces(X)  # other columns for the forces
+    #         irreps_out = o3.Irreps(self.irreps_out)
 
+    #         if angles is None :
+    #             angles = o3.rand_angles()
+
+    #         for n in range(batch_size):
+
+    #             irreps_in = "{:d}x1o".format(int(X.Natoms[n]))
+    #             irreps_in = o3.Irreps(irreps_in)
+
+    #             # prepare data -> prepare self.R and self._X
+
+    #             # rotate output
+    #             x,R = self._prepare(X,n)
+    #             R_out = irreps_out.D_from_angles(*angles)
+    #             y0 = self(x)
+    #             rot_out = torch.einsum("ij,zj->zi",R_out,y0)
+
+    #             # rotate input
+    #             R_in  = irreps_in.D_from_angles(*angles)
+    #             x,R = self._prepare(X,n,R_in)
+    #             #R = R.reshape((1,-1))
+
+                
+                
+    #             # R = x.pos.reshape((1,-1))                
+    #             # rot_in  = torch.einsum("ij,zj->zi",R_in,R)
+
+    #             # l = x.lattice.reshape((1,-1))
+    #             # l_in  = torch.einsum("ij,zj->zi",R_in,l)
+                
+    #             # x.pos     = rot_in.reshape((-1,3))
+    #             # x.lattice = l_in.reshape((-1,3))
+
+    #             #x,R_ = self._prepare(X,n,replace_pos=rot_in.reshape((-1,3)))
+    #             out_rot = self(x)
+
+    #             thr = torch.norm(rot_out - out_rot)
+                
+    #             y[n] = thr
+        
     #     return y
-
-    # # @staticmethod
-    # def get_real(self:T,X: Data) -> torch.tensor:
-    #     """return Energy, Polarization and/or Forces"""
-
-    #     # 'EPF' has to be modified in case we have different molecules in the dataset
-    #     N = {"E": 1, "EF": 1+3*X.Natoms[0], "D": 3, "ED": 4, "EDF": 1+3+3*X.Natoms[0]}
-    #     N = N[self.output]
-    #     batch_size = len(np.unique(X.batch))
-
-    #     # if batch_size > 1 :
-
-    #     y = torch.zeros((batch_size, N))
-
-    #     if self.output in ["E", "EF", "ED", "EDF"]:
-    #         y[:, 0] = X.energy
-
-    #         if self.output in ["ED", "EDF"]:
-    #             y[:, 1:4] = X.dipole.reshape((batch_size, -1))
-
-    #         elif self.output == "EDF":
-    #             y[:, 4:] = X.forces.reshape((batch_size, -1))
-
-    #         if self.output == "EF":
-    #             y[:, 1:] = X.forces.reshape((batch_size, -1))
-
-    #     elif self.output == "D":
-    #         y[:,0:3] = X.dipole.reshape((batch_size, -1))
-
-    #     return y
-
-    # def loss(self:T,lE:float=None,lF:float=None,lP:float=None)->callable:
-
-    #     lE = lE if lE is not None else 1.0
-    #     lF = lF if lF is not None else 1.0
-    #     lP = lP if lP is not None else 1.0
-
-    #     if self.output in ["E","D"]:
-    #         return MSELoss() #MSELoss(reduction='mean') # MSELoss(reduce='sum')
-    #         #return lambda x,y: MSELoss()(x,y)
-        
-    #     elif self.output == "ED":
-    #         def loss_EP(x,y):
-    #             E = MSELoss()(x[:,0],y[:,0])
-    #             P = MSELoss()(x[:,1:4],y[:,1:4])
-    #             return lE * E + lP * P
-    #         return loss_EP
-        
-    #     elif self.output == "EF":
-    #         def loss_EF(x,y):
-    #             E = MSELoss()(x[:,0],y[:,0])
-    #             F = MSELoss()(x[:,1:],y[:,1:])
-    #             return lE * E + lF * F
-    #         return loss_EF
-        
-    #     elif self.output == "EDF":
-    #         def loss_EPF(x,y):
-    #             E = MSELoss()(x[:,0],y[:,0])
-    #             P = MSELoss()(x[:,1:4],y[:,1:4])
-    #             F = MSELoss()(x[:,4:],y[:,4:])
-    #             return lE * E + lP * P + lF * F
-    #         return loss_EPF
-        
-    #     else :
-    #         raise ValueError("error in output mode")
-        
-    # @staticmethod
-    # def correlation(x:torch.tensor,y:torch.tensor):
-
-    #     #N = {"E": 1, "P": 3, "EP": 4, "EPF": 1+3+3*X.Natoms[0]}
-
-    #     x = x.detach().numpy()
-    #     y = y.detach().numpy()
-
-    #     N = x.shape[1]
-    #     out = np.zeros(N)
-    #     for i in range(N):
-    #         out[i] = spearmanr(x[:,i],y[:,i]).correlation
-
-    #     return out
-
-    def check_equivariance(self:T,X: Data,angles=None)->np.ndarray:
-
-        from e3nn import o3
-
-        with torch.no_grad():
-
-            batch_size = len(np.unique(X.batch))
-            y = np.zeros(batch_size)
-
-            irreps_out = o3.Irreps(self.irreps_out)
-
-            if angles is None :
-                angles = o3.rand_angles()
-
-            for n in range(batch_size):
-
-                irreps_in = "{:d}x1o".format(int(X.Natoms[n]))
-                irreps_in = o3.Irreps(irreps_in)
-
-                # prepare data -> prepare self.R and self._X
-
-                # rotate output
-                x,R = self._prepare(X,n)
-                R_out = irreps_out.D_from_angles(*angles)
-                y0 = self(x)
-                rot_out = torch.einsum("ij,zj->zi",R_out,y0)
-
-                # rotate input
-                R_in  = irreps_in.D_from_angles(*angles)
-                x,R = self._prepare(X,n,R_in)
-                #R = R.reshape((1,-1))
-
-                
-                
-                # R = x.pos.reshape((1,-1))                
-                # rot_in  = torch.einsum("ij,zj->zi",R_in,R)
-
-                # l = x.lattice.reshape((1,-1))
-                # l_in  = torch.einsum("ij,zj->zi",R_in,l)
-                
-                # x.pos     = rot_in.reshape((-1,3))
-                # x.lattice = l_in.reshape((-1,3))
-
-                #x,R_ = self._prepare(X,n,replace_pos=rot_in.reshape((-1,3)))
-                out_rot = self(x)
-
-                thr = torch.norm(rot_out - out_rot)
-                
-                y[n] = thr
-        
-        return y
 
         
 def main():

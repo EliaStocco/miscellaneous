@@ -7,16 +7,26 @@ from tqdm import tqdm
 import pandas as pd
 import warnings
 import os
+import shutil
 from copy import copy
 from .make_dataloader import _make_dataloader
 from ..functions import add_default, remove_empty_folder
 from .plot import plot_learning_curves
+import time
 
 __all__ = ["train"]
 
+yval_real = None 
+all_dataloader_val   = None
+
+ytrain_real = None
+all_dataloader_train = None
+
+#@torch.jit.script
 def train(model:torch.nn.Module,\
           train_dataset:list,\
           val_dataset:list,\
+          parameters:dict,\
           hyperparameters:dict=None,\
           get_pred:callable=None,\
           get_real:callable=None,\
@@ -65,7 +75,8 @@ def train(model:torch.nn.Module,\
                 'val_loss'  : array with the average loss (mean over the mini-batches) of the validation dataset
             Each element of these arrays is referred to one epoch. 
     """
-    
+    start_task_time = time.time()
+
     print("\nTraining:")
     print("\tPreparing training")
 
@@ -76,7 +87,7 @@ def train(model:torch.nn.Module,\
                 "dataloader":{"shuffle":False},\
                 "thr":{"exit":10000},\
                 "disable":False,\
-                "Natoms":1,\
+                #"Natoms":1,\
                 "save":{"parameters":1}} # ,"networks-temp":-1
     opts = add_default(opts,default)
 
@@ -228,14 +239,18 @@ def train(model:torch.nn.Module,\
     arrays = pd.DataFrame({ "train":train_loss,\
                             "val":val_loss})
 
+    global yval_real, all_dataloader_val
     # compute the real values of the validation dataset only once
-    print("\tCompute validation dataset output (this will save time in the future)")
-    yval_real   = get_all(val_dataset)
-    all_dataloader_val   = get_all_dataloader(val_dataset)
+    if yval_real is None or not opts["keep_dataset"]:
+        print("\tCompute validation dataset output (this will save time in the future)")
+        yval_real   = get_all(val_dataset)
+        all_dataloader_val   = get_all_dataloader(val_dataset)
 
-    print("\tCompute training dataset output (this will save time in the future)")
-    ytrain_real = get_all(train_dataset)
-    all_dataloader_train = get_all_dataloader(train_dataset)
+    global ytrain_real, all_dataloader_train
+    if ytrain_real is None or not opts["keep_dataset"]:
+        print("\tCompute training dataset output (this will save time in the future)")
+        ytrain_real = get_all(train_dataset)
+        all_dataloader_train = get_all_dataloader(train_dataset)
 
     savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
     print("\tSaving 'model' with dummy parameters to file '{:s}'".format(savefile))
@@ -245,14 +260,79 @@ def train(model:torch.nn.Module,\
     corr = None
     if correlation is not None:        
         corr = pd.DataFrame(columns=["train","val"],index=np.arange(n_epochs))
-    
+
+    ##########################################
+    # prepare output files
+    savefiles = {
+        "dataframes"   : "{:s}/{:s}.csv".format(folders["dataframes"],name),
+        "correlations" : "{:s}/{:s}.csv".format(folders["correlations"],name),
+        "images"       : "{:s}/{:s}.pdf".format(folders["images"],name),
+    }
+
+    ##########################################
+    # prepare checkpoint
+    # https://pytorch.org/tutorials/recipes/recipes/saving_and_loading_a_general_checkpoint.html 
+
+    start_epoch = 0 
+
+    checkpoint_folder = "checkpoint"
+    if not os.path.exists(checkpoint_folder):
+        os.mkdir(checkpoint_folder)
+
+    checkpoint_file = "{:s}/{:s}.pth".format(checkpoint_folder,name)
+    if os.path.exists(checkpoint_file):
+        print("\tReading checkpoint from file '{:s}'".format(checkpoint_file))
+        checkpoint = torch.load(checkpoint_file)
+
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch']
+        # loss = checkpoint['loss']
+
+        # read array and csv
+        if os.path.exists(savefiles["dataframes"]):
+            arrays = pd.read_csv(savefiles["dataframes"])
+        if os.path.exists(savefiles["correlations"]):
+            corr   = pd.read_csv(savefiles["correlations"])
+
+    def save_checkpoint():
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+        }, checkpoint_file)
+
+    ##########################################    
     # start the training procedure
     print("\n\t...and here we go!")
-    for epoch in range(n_epochs):    
+    for epoch in range(start_epoch,n_epochs):    
 
         if info != "all good":
             break
-        
+
+        ##########################################
+        # measure elapsed time
+        now = time.time()
+        if abs(now - opts["start_time"]+60) > parameters["max_time"] and parameters["max_time"] > 0 :
+            print("\n\tMaximum time reached: stopping")
+            info = "time over"
+            break
+        if abs(now - start_task_time + 60 ) > parameters["task_time"] and parameters["task_time"] > 0 :
+            print("\n\tMaximum time per task reached: stopping task")
+            info = "time over"
+            break
+
+        if os.path.exists("EXIT"):
+            info = "exit file detected"
+            break
+
+        if os.path.exists("EXIT-TASK"):
+            os.remove("EXIT-TASK")
+            info = "exit-task file detected"
+            break
+
+        ##########################################
+        # training loop per epoch
         with tqdm(enumerate(dataloader_train),\
                   total=batches_per_epoch,\
                   bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}',\
@@ -273,7 +353,7 @@ def train(model:torch.nn.Module,\
                 loss = loss_fn(y_pred,y_real)
 
                 # store the loss function in an array
-                train_loss_one_epoch[step] = float(loss)/opts["Natoms"]
+                train_loss_one_epoch[step] = float(loss)/parameters["Natoms"]
 
                 # backward pass
                 optimizer.zero_grad()
@@ -300,6 +380,8 @@ def train(model:torch.nn.Module,\
             # maybe it inferferes with the calculation of the forces
             # model.eval()
             with torch.no_grad():
+
+                model.eval()
                 
                 # saving model to temporary file
                 # N = opts["save"]["networks-temp"]
@@ -316,13 +398,13 @@ def train(model:torch.nn.Module,\
                 # compute the loss function
                 # predict the value for the validation dataset
                 yval_pred = get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
-                val_loss[epoch] = float(loss_fn(yval_pred,yval_real))/opts["Natoms"]
+                val_loss[epoch] = float(loss_fn(yval_pred,yval_real))/parameters["Natoms"]
 
                 # set arrays
                 ytrain_pred = get_pred(X=all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
-                train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real))/opts["Natoms"]
+                train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real))/parameters["Natoms"]
 
-                if train_loss[epoch] > opts["thr"]["exit"]:
+                if train_loss[epoch] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
                     info = "try again"
                     break
 
@@ -331,8 +413,8 @@ def train(model:torch.nn.Module,\
                 arrays.at[epoch,"val"  ] = val_loss  [epoch]
 
                 # save loss to file
-                savefile =  "{:s}/{:s}.csv".format(folders["dataframes"],name)
-                arrays.to_csv(savefile,index=False)
+                # savefile = "{:s}/{:s}.csv".format(folders["dataframes"],name)
+                arrays.to_csv(savefiles["dataframes"],index=False)
 
                 if correlation is not None :
                     # compute correlation
@@ -341,15 +423,15 @@ def train(model:torch.nn.Module,\
                     corr["val"][epoch] = correlation(yval_pred, yval_real)
 
                     # save correlation to file
-                    savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
-                    corr.to_csv(savefile,index=False)
+                    # savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
+                    corr.to_csv(savefiles["correlations"],index=False)
 
                 # produce learning curve plot
                 if epoch > 1:
-                    savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
+                    # savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
                     plot_learning_curves(train_loss[:epoch+1],\
                                         val_loss[:epoch+1],\
-                                        file=savefile,\
+                                        file=savefiles["images"],\
                                         title=name if name != "untitled" else None,\
                                         opts=opts["plot"]["learning-curve"])
 
@@ -364,6 +446,14 @@ def train(model:torch.nn.Module,\
                                     corr_train=corr["train"][epoch],
                                     val=val_loss[epoch],
                                     corr_val=corr["val"][epoch])
+        
+        # saving checkpoint to file
+        N = opts["save"]["checkpoint"]
+        if N != -1 and epoch % N == 0 :
+            save_checkpoint()
+        
+    #
+    save_checkpoint()
     
     # Finished training 
     #print("\n\tTraining done!")
@@ -371,6 +461,13 @@ def train(model:torch.nn.Module,\
     # Saving some quantities to file
     if info == "all good":
         
+        # modify checkpoint filename
+        if os.path.exists(checkpoint_file):
+            new_file = "{:s}/finished-{:s}.pth".format(checkpoint_folder,name)
+            os.rename(checkpoint_file,new_file)
+        else :
+            save_checkpoint()
+
         # saving model to file
         savefile = "{:s}/{:s}.torch".format(folders["networks"],name)
         print("\tSaving 'model' to file '{:s}'".format(savefile))
@@ -407,5 +504,7 @@ def train(model:torch.nn.Module,\
     # We will let the user know about that through the variable 'info'
     elif info == "try again":
         print("\n\tTraining stopped: we could try again\n")
+    elif info == "exit-task file detected":
+        print("\n\t'exit-task' file detected\n")
     
     return model, arrays, corr, info

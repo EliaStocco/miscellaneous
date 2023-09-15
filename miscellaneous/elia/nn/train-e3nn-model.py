@@ -1,7 +1,12 @@
+import time
+start_time = time.time()
+
 import numpy as np
 import random
 import json
 import argparse
+from copy import copy
+
 import torch
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
@@ -12,6 +17,7 @@ from miscellaneous.elia.nn.prepare_dataset import prepare_dataset
 from miscellaneous.elia.nn.normalize_datasets import normalize_datasets
 from miscellaneous.elia.nn import SabiaNetworkManager
 from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
+from miscellaneous.elia.nn import compute_normalization_factors
 
 #----------------------------------------------------------------#
 # Documentation
@@ -43,6 +49,10 @@ default_values = {
         "epochs"        : 10000,
         "bs"            : [1],
         "lr"            : [1e-3],
+        "grid"          : True,
+        "trial"         : None,
+        "max_time"      : -1,
+        "task_time"     : -1
     }
 
 #####################
@@ -54,19 +64,25 @@ def get_args():
 
     # Argument for "input"
     parser.add_argument(
-        "-i", "--input", action="store", type=int, metavar="\bjson_file",
+        "-i", "--input", action="store", type=str, metavar="\bjson_file",
         help="input json file", default=None
+    )
+
+    # Argument for "input"
+    parser.add_argument(
+        "--options", action="store", type=str, metavar="\boptions_file",
+        help="options json file", default=None
     )
 
     # Argument for "mul"
     parser.add_argument(
-        "-m", "--mul", action="store", type=int, metavar="\bmultiplicity",
+        "--mul", action="store", type=int, metavar="\bmultiplicity",
         help="multiplicity for each node (default: 2)", default=default_values["mul"]
     )
 
     # Argument for "layers"
     parser.add_argument(
-        "-l", "--layers", action="store", type=int, metavar="\bn_layers",
+        "--layers", action="store", type=int, metavar="\bn_layers",
         help="number of layers (default: 6)", default=default_values["layers"]
     )
 
@@ -153,8 +169,36 @@ def get_args():
 
     # Argument for "lr"
     parser.add_argument(
-        "--lr", action="store", type=float, nargs="+", metavar="\blr",
+        "--lr", action="store", type=float, nargs="+", metavar="\blearning_rate",
         help="some description here (default: [1e-3])", default=default_values["lr"]
+    )
+
+    # Argument for "reference"
+    parser.add_argument(
+        "--grid", action="store",type=str2bool, metavar="\bas_grid",
+        help="some description here (default: True)",
+        default=default_values["grid"]
+    )
+
+    # Argument for "reference"
+    parser.add_argument(
+        "--trial", action="store",type=int, metavar="\bn_trial",
+        help="some description here (default: True)",
+        default=default_values["trial"]
+    )
+
+    # Argument for "max_time"
+    parser.add_argument(
+        "--max_time", action="store",type=int, metavar="\bmax_time",
+        help="some description here (default: True)",
+        default=default_values["max_time"]
+    )
+
+    # Argument for "task_time"
+    parser.add_argument(
+        "--task_time", action="store",type=int, metavar="\btask_time",
+        help="some description here (default: True)",
+        default=default_values["task_time"]
     )
 
     return parser.parse_args()
@@ -162,6 +206,16 @@ def get_args():
 #####################
 
 def check_parameters(parameters):
+    
+    str2bool_keys = ["reference","phases","random","grid"]
+    for k in str2bool_keys : 
+        parameters[k] = str2bool(parameters[k])
+    
+    if parameters["task_time"] <= 0 :
+        parameters["task_time"] = -1
+
+    if parameters["max_time"] <= 0 :
+        parameters["max_time"] = -1
 
     if parameters["reference"] and parameters["phases"]:
         raise ValueError("You can use 'reference'=true or 'phases'=true, not both.")
@@ -173,6 +227,8 @@ def check_parameters(parameters):
 
 def main():
 
+    start_time 
+
     ##########################################
     # get user parameters
 
@@ -181,7 +237,9 @@ def main():
     if args.input is not None :
         # read parameters from file
         try :
-            parameters = json.load(args.input)
+            with open(args.input, 'r') as file:
+                parameters = json.load(file)
+
         except :
             raise ValueError("error reading input file")
         # it should not be needed ...
@@ -217,7 +275,7 @@ def main():
     ##########################################
     # preparing dataset
     opts = {"prepare":{"restart":False},"build":{"restart":False}}
-    datasets, data, dipole, pos, example = prepare_dataset(ref_index=parameters["ref_index"],\
+    datasets, data, pos, example = prepare_dataset(ref_index=parameters["ref_index"],\
                                                   max_radius=parameters["max_radius"],\
                                                   reference=parameters["reference"],\
                                                   output=parameters["output"],\
@@ -241,7 +299,35 @@ def main():
 
     ##########################################
     # normalizing dataset
-    normalization_factors, datasets = normalize_datasets(datasets)
+    normalization_factors = {
+        "dipole":{
+            "mean":0,
+            "std":1
+        },
+        "energy":{
+            "mean":0,
+            "std":1
+        }
+    }
+
+    if "D" in parameters["output"] :
+        mean, std = compute_normalization_factors(datasets["train"],"dipole")
+        normalization_factors["dipole"] = {"mean":mean,"std":std}
+
+    if "E" in parameters["output"] :
+        mean, std = compute_normalization_factors(datasets["train"],"energy")
+        normalization_factors["energy"] = {"mean":mean,"std":std}
+
+    # normalization_factors, datasets = normalize_datasets(datasets)
+
+    match parameters["output"] :
+        case "D" :
+            normalization_factors = normalization_factors["dipole"]
+        case ["E","F"] :
+            normalization_factors = normalization_factors["energy"]
+        case _ :
+            raise ValueError("not implemented yet")
+
 
     ##########################################
     # visualize dataset
@@ -297,7 +383,7 @@ def main():
         "reference" : parameters["reference"],
         "phases" : parameters["phases"],
         "normalization" : normalization_factors,
-        "dipole" : dipole.tolist(),
+        # "dipole" : dipole.tolist(),
         "pos" : pos.tolist(),  
     }
 
@@ -320,12 +406,13 @@ def main():
     kwargs = {**metadata_kwargs, **model_kwargs}
 
     instructions = {
-            "kwargs":kwargs,
+            "kwargs":copy(kwargs),
             "class":"SabiaNetworkManager",
             "module":"miscellaneous.elia.nn",
             "chemical-symbols" : example.get_chemical_symbols()
         }
     
+    del instructions["kwargs"]["normalization"]
     with open("instructions.json", "w") as json_file:
         # The 'indent' parameter is optional for pretty formatting
         json.dump(instructions, json_file, indent=4)
@@ -334,7 +421,10 @@ def main():
     print(net)
     N = 0 
     for i in net.parameters():
-        N += len(i)
+        if len(i.shape) != 0 :
+            N += len(i)
+        else :
+            N += 1
     print("Tot. number of parameters: ",N)
 
     ##########################################
@@ -347,24 +437,40 @@ def main():
     ##########################################
     # optional settings
 
-    if parameters["Natoms"] is None :
-        parameters["Natoms"] = example.get_number_of_atoms()
+    if parameters["Natoms"] is None or parameters["Natoms"] == 'None' :
+        parameters["Natoms"] = example.get_global_number_of_atoms()
 
     opts = {
-            "name" : parameters["name"],
+            #"name" : parameters["name"],
             "plot":{
                 "learning-curve" : {"N":10},
                 "correlation" : {"N":10}
             },
             "thr":{
-                "exit":1e2
+                "exit":-1
             },
-            "Natoms" : parameters["Natoms"] ,
-            "output_folder" : parameters["output_folder"],
+            #"Natoms" : parameters["Natoms"] ,
+            #"output_folder" : parameters["output_folder"],
             "save":{
                 "parameters":1,
-            }
+                "checkpoint":1,
+            },
+            #"grid" : parameters["grid"],
+            #"trial" : parameters["trial"],
+            "start_time" : start_time,
+            'keep_dataset' : True,
         }
+
+    if args.options is not None :
+        # read parameters from file
+        try :
+            with open(args.options, 'r') as file:
+                options = json.load(file)
+
+        except :
+            raise ValueError("error reading options file")
+        # it should not be needed ...
+        opts = add_default(options,opts)
 
     ##########################################
     # hyper-train the model
@@ -374,7 +480,8 @@ def main():
                                 epochs   = parameters["epochs"],\
                                 loss     = loss,\
                                 datasets = datasets,\
-                                opts     = opts )
+                                opts     = opts,\
+                                parameters = parameters)
 
     print("\nJob done :)")
 

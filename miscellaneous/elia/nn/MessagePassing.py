@@ -112,7 +112,7 @@ class MessagePassing(torch.nn.Module):
             -1: torch.tanh,
         }
 
-        self.layers = torch.nn.ModuleList()
+        tmp = torch.nn.ModuleList()
 
         for _ in range(layers):
             irreps_scalars = o3.Irreps(
@@ -147,13 +147,18 @@ class MessagePassing(torch.nn.Module):
                 irreps_node, self.irreps_node_attr, self.irreps_edge_attr, gate.irreps_in, fc_neurons, num_neighbors
             )
             irreps_node = gate.irreps_out
-            self.layers.append(Compose(conv, gate))
+            tmp.append(Compose(conv, gate))
 
-        self.layers.append(
+        tmp.append(
             Convolution(
                 irreps_node, self.irreps_node_attr, self.irreps_edge_attr, self.irreps_node_output, fc_neurons, num_neighbors
             )
         )
+
+        #self.layers = torch.nn.ModuleList(tmp)
+        self.layers = tmp
+
+        pass
 
     def forward(self:T, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
         if self.debug:

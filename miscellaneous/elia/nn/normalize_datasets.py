@@ -46,13 +46,15 @@ def normalize_datasets(datasets):
             mu, sigma = compute_normalization_factors(test_dataset ,var)
             print("\t\ttest  :",mu,",",sigma)
 
-        datasets = {"train":train_dataset}
-        
-        if val_dataset is not None :
-            datasets["val"] = val_dataset
+        print("\n")
 
-        if val_dataset is not None :
-            datasets["test"] = test_dataset
+    datasets = {"train":train_dataset}
+    
+    if val_dataset is not None :
+        datasets["val"] = val_dataset
+
+    if val_dataset is not None :
+        datasets["test"] = test_dataset       
         
 
     return normalization_factors, datasets

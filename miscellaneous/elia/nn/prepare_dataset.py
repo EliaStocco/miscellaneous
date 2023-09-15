@@ -105,14 +105,14 @@ def prepare_dataset(ref_index:int,\
         if os.path.exists(savefile+".torch") and not RESTART:
             dataset = torch.load(savefile+".torch")
             if reference:
-                dipole  = dataset[ref_index].dipole
+                # dipole  = dataset[ref_index].dipole
                 pos     = dataset[ref_index].pos
             else :
-                dipole = torch.full((3,),torch.nan)
+                # dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
         else :
             if reference :
-                dataset, dipole, pos = make_dataset_delta(  ref_index = ref_index,
+                dataset, pos = make_dataset_delta(  ref_index = ref_index,
                                                             data = data,
                                                             max_radius = max_radius,\
                                                             output=output,\
@@ -122,14 +122,14 @@ def prepare_dataset(ref_index:int,\
                                                 max_radius = max_radius,\
                                                 output=output,\
                                                 requires_grad = requires_grad)
-                dipole = torch.full((3,),torch.nan)
+                # dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
             else :
                 dataset = make_dataset( data=data,\
                                         max_radius=max_radius,\
                                         output=output,\
                                         requires_grad=requires_grad)
-                dipole = torch.full((3,),torch.nan)
+                # dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
         # shuffle
         random.shuffle(dataset)
@@ -157,10 +157,10 @@ def prepare_dataset(ref_index:int,\
             # Open the JSON file and load the data
             with open("{:s}/reference.json".format(folder)) as f:
                 reference = json.load(f)
-            dipole = torch.tensor(reference['dipole'])
+            # dipole = torch.tensor(reference['dipole'])
             pos    = torch.tensor(reference['pos'])
         else :
-            dipole = torch.full((3,),torch.nan)
+            # dipole = torch.full((3,),torch.nan)
             pos = torch.full((3,),torch.nan)
 
         SAVE = False
@@ -175,7 +175,7 @@ def prepare_dataset(ref_index:int,\
             # Write the dictionary to the JSON file
             with open("reference.json", "w") as json_file:
                 # The 'indent' parameter is optional for pretty formatting
-                json.dump({"dipole":dipole.tolist(),"pos":pos.tolist()}, json_file, indent=4)  
+                json.dump({"pos":pos.tolist()}, json_file, indent=4)  
 
     print("\n\tDatasets summary:")
     print("\t\ttrain:",len(train_dataset))
@@ -192,4 +192,4 @@ def prepare_dataset(ref_index:int,\
 
     example = Atoms(positions=pos,cell=cell,symbols=symbols)
 
-    return datasets, data, dipole, pos, example
+    return datasets, data, pos, example
