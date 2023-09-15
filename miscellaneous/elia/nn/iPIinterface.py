@@ -36,8 +36,8 @@ class iPIinterface(SabiaNetwork):
 
         if normalization is None :
             normalization = {
-                    "mean" : None,
-                    "std"  : None,
+                    "mean" : 0.0,
+                    "std"  : 1.0,
                 }
             # normalization = {
             #     "energy":{
@@ -50,7 +50,7 @@ class iPIinterface(SabiaNetwork):
             #     },
             # }
 
-        self._mean = torch.nn.Parameter(torch.tensor(normalization["mean"]))
+        # self._mean = torch.nn.Parameter(torch.tensor(normalization["mean"]))
         self._std  = torch.nn.Parameter(torch.tensor(normalization["std"]))
         
         # self.normalization = normalization
@@ -66,7 +66,7 @@ class iPIinterface(SabiaNetwork):
 
     def forward(self:T,data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])-> torch.Tensor:
         y = super().forward(data)
-        return y * self._std + self._mean
+        return y * self._std # + self._mean
 
     def make_datapoint(self,lattice, positions,**argv):
 
@@ -142,6 +142,8 @@ class iPIinterface(SabiaNetwork):
         
     def get(self,cell,pos,what:str,detach=True,**argv):
 
+        # 'cell' has to be in i-PI format
+
         self.eval()
 
         requires_grad = {   "pos"        : True,\
@@ -154,7 +156,8 @@ class iPIinterface(SabiaNetwork):
 
         # y = self._get(what=what,X=X,**argv)
         if what.lower() not in ["bec","forces"]:
-            y = self(X)
+            with torch.no_grad():
+                y = self(X)
         else :
             raise ValueError("not implemented yet")
 

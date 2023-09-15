@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from torch_geometric.data import Data
-from scipy.stats import spearmanr
+from scipy.stats import pearsonr
 from torch.nn import MSELoss
 from miscellaneous.elia.good_coding import froze
 from abc import ABC, abstractproperty, abstractmethod
@@ -147,6 +147,6 @@ class EDFMethods4Training():
         N = x.shape[1]
         out = np.zeros(N)
         for i in range(N):
-            out[i] = spearmanr(x[:,i],y[:,i]).correlation
+            out[i] = pearsonr(x[:,i],y[:,i]).correlation
 
         return out

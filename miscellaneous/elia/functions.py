@@ -21,7 +21,22 @@ __all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations'
             'str2bool','get_one_file_in_folder','get_property_header','getproperty',
             'vector_type', 'output_folder', 'save2xyz', 'print_cell', 'convert',
             'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
-            'recursive_copy', 'add_default', 'args_to_dict']
+            'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector']
+
+def plot_bisector(ax):
+	xlim = ax.get_xlim()
+	ylim = ax.get_ylim()
+	
+	# x1 = min(x.min(),y.min())
+	# y2 = max(x.max(),y.max())
+	x1 = min(xlim[0],ylim[0])
+	y2 = max(xlim[1],ylim[1])
+	bis = np.linspace(x1,y2,1000)
+	
+	ax.plot(bis,bis,color="black",alpha=0.5,linestyle="dashed")
+	
+	ax.set_xlim(*xlim)
+	ax.set_ylim(*ylim)
 
 def recursive_copy(source_dict:dict, target_dict:dict)->dict:
     """

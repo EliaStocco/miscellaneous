@@ -27,5 +27,6 @@ from .dataset import *
 from .normalize_datasets import normalize_datasets
 from .normalize import normalize, compute_normalization_factors
 from .prepare_dataset import prepare_dataset
+from .functions import get_model, get_class
 
 # print("\t\timported 'miscellaneous.elia.nn'")

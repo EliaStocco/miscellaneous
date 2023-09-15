@@ -312,7 +312,7 @@ def main():
 
     if "D" in parameters["output"] :
         mean, std = compute_normalization_factors(datasets["train"],"dipole")
-        normalization_factors["dipole"] = {"mean":mean,"std":std}
+        normalization_factors["dipole"] = {"mean":0.0,"std":std}
 
     if "E" in parameters["output"] :
         mean, std = compute_normalization_factors(datasets["train"],"energy")
