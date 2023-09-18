@@ -1,5 +1,5 @@
 import torch
-import json
+import json5 as json
 import importlib
 from ase.io import read 
 

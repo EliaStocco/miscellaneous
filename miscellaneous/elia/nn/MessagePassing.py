@@ -113,7 +113,7 @@ class MessagePassing(torch.nn.Module):
             -1: torch.tanh,
         }
 
-        tmp = torch.nn.ModuleList()
+        self.layers = torch.nn.ModuleList()
 
         for _ in range(layers):
             irreps_scalars = o3.Irreps(
@@ -148,29 +148,42 @@ class MessagePassing(torch.nn.Module):
                 irreps_node, self.irreps_node_attr, self.irreps_edge_attr, gate.irreps_in, fc_neurons, num_neighbors
             )
             irreps_node = gate.irreps_out
-            tmp.append(Compose(conv, gate))
+            self.layers.append(Compose(conv, gate))
 
-        tmp.append(
+        self.layers.append(
             Convolution(
                 irreps_node, self.irreps_node_attr, self.irreps_edge_attr, self.irreps_node_output, fc_neurons, num_neighbors
             )
         )
 
-        #self.layers = torch.nn.ModuleList(tmp)
-        self.layers = tmp
+        # self.layers = torch.nn.ModuleList(tmp)
+        # self.layers = tmp
 
         # Define proportion or neurons to dropout
-        self.dropout = Dropout(dropout_probability)
+        # self.dropout = Dropout(dropout_probability)
+
+        if dropout_probability < 0 :
+            raise ValueError("'dropout_probability' should be >= zero")
+
+        self.dropout = torch.nn.ModuleList()
+        for lay in self.layers :
+            try :
+                self.dropout.append(Dropout(irreps=lay.irreps_node_output,p=dropout_probability))
+            except:
+                self.dropout.append(Dropout(irreps=lay.second._irreps_out,p=dropout_probability))
+
+        self.dropout_probability = dropout_probability
 
         pass
 
     def forward(self:T, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
         if self.debug:
             print("MessagePassing:1")
-        for lay in self.layers:
+        for lay,drop in zip(self.layers,self.dropout):
             node_features = lay(node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars)
 
             # Apply dropout
-            node_features = self.dropout(node_features)
+            if self.dropout_probability > 0 :
+                node_features = drop(node_features)
 
         return node_features

@@ -3,7 +3,7 @@ start_time = time.time()
 
 import numpy as np
 import random
-import json
+import json5 as json
 import argparse
 from copy import copy
 

@@ -59,7 +59,7 @@ class SabiaNetwork(torch.nn.Module):
         self.debug = debug
 
         # https://docs.e3nn.org/en/latest/guide/periodic_boundary_conditions.html
-        if self.pool :
+        if self.pool_nodes :
             self.num_nodes = 1
 
         # if irreps_node_attr is None :

@@ -136,8 +136,8 @@ def train(model:torch.nn.Module,\
             os.mkdir(folder)
 
     # hyperparameters    
-    if "batch_size" not in hyperparameters:
-        hyperparameters["batch_size"] = 32
+    if "bs" not in hyperparameters:
+        hyperparameters["bs"] = 32
     if "n_epochs" not in hyperparameters:
         hyperparameters["n_epochs"] = 100
     if "optimizer" not in hyperparameters:
@@ -159,7 +159,7 @@ def train(model:torch.nn.Module,\
             return "some problem, but don't worry :("
         
     print("\tHyperparameters:")
-    print("\t\tbatch_size:{:d}".format(tryprint(hyperparameters["batch_size"])))
+    print("\t\tbatch_size:{:d}".format(tryprint(hyperparameters["bs"])))
     print("\t\tn_epochs:{:d}".format(tryprint(hyperparameters["n_epochs"])))
     print("\t\toptimizer:{:s}".format(tryprint(hyperparameters["optimizer"])))
     print("\t\tlr:{:.2e}".format(tryprint(hyperparameters["lr"])))
@@ -167,7 +167,7 @@ def train(model:torch.nn.Module,\
     if type(hyperparameters["loss"]) == str : print("\tloss_fn:{:s}".format(tryprint(hyperparameters["loss"])))
        
     # extract hyperparameters for the dict 'hyperparameters'
-    batch_size = int(hyperparameters["batch_size"])
+    batch_size = int(hyperparameters["bs"])
     n_epochs   = int(hyperparameters["n_epochs"])
     optimizer  = hyperparameters["optimizer"]
     lr         = float(hyperparameters["lr"])
