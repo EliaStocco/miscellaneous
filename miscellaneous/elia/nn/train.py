@@ -183,7 +183,9 @@ def train(model:torch.nn.Module,\
     # Natoms
     if parameters["Natoms"] > 1 :
         parameters["Natoms"] = torch.tensor(parameters["Natoms"],requires_grad=False)
-        loss_fn = lambda x,y : _loss_fn(x,y) / parameters["Natoms"]
+        def loss_fn(x:torch.tensor,y:torch.tensor) -> torch.Tensor:
+            tmp = _loss_fn(x,y)
+            return tmp / parameters["Natoms"]
     else :
         loss_fn = _loss_fn
 
@@ -369,7 +371,7 @@ def train(model:torch.nn.Module,\
                 loss = loss_fn(y_pred,y_real)
 
                 # store the loss function in an array
-                train_loss_one_epoch[step] = float(loss) # /parameters["Natoms"]
+                train_loss_one_epoch[step] = float(loss) # / parameters["Natoms"]
 
                 # backward pass
                 optimizer.zero_grad()
@@ -414,11 +416,11 @@ def train(model:torch.nn.Module,\
                 # compute the loss function
                 # predict the value for the validation dataset
                 yval_pred = get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
-                arrays.at[epoch,"val"] = float(loss_fn(yval_pred,yval_real)) # /parameters["Natoms"]
+                arrays.at[epoch,"val"] = float(loss_fn(yval_pred,yval_real)) # / parameters["Natoms"]
 
                 # set arrays
                 # ytrain_pred = get_pred(X=all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
-                # train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real)) # /parameters["Natoms"]
+                # train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real))  /parameters["Natoms"]
                 arrays.at[epoch,"train"] = np.mean(train_loss_one_epoch)
 
                 if arrays.at[epoch,"train"] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
@@ -444,9 +446,9 @@ def train(model:torch.nn.Module,\
                     corr[:epoch+1].to_csv(savefiles["correlations"],index=False)
 
                 # produce learning curve plot
-                if epoch > 1:
+                if epoch >= 1:
                     # savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
-                    plot_learning_curves(   arrays.loc[:epoch+1,"train"],\
+                    plot_learning_curves(   arrays.loc[:epoch,"train"],\
                                             arrays.loc[:epoch+1,"val"],\
                                             file=savefiles["images"],\
                                             title=name if name != "untitled" else None,\

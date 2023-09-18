@@ -38,8 +38,8 @@ def prepare_dataset(ref_index:int,\
                 "size":
                 {
                     "train":1000,
-                    "val":100,
-                    "test":100,
+                    "val":10,
+                    "test":10,
                 },
             }
 

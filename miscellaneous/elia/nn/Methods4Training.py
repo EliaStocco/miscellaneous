@@ -107,31 +107,40 @@ class EDFMethods4Training():
         lF = lF if lF is not None else 1.0
         lP = lP if lP is not None else 1.0
 
-        if self.output in ["E","D"]:
-            return self._mseloss #MSELoss(reduction='mean') # MSELoss(reduce='sum')
-            #return lambda x,y: MSELoss()(x,y)
+        def loss_scalar(x:torch.tensor,y:torch.tensor)->torch.Tensor:
+            """Loss function for scalar quantity"""
+            return self._mseloss(x,y)
         
-        elif self.output == "ED":
-            def loss_EP(x,y):
-                E = self._mseloss(x[:,0],y[:,0])
-                P = self._mseloss(x[:,1:4],y[:,1:4])
-                return lE * E + lP * P
-            return loss_EP
+        def loss_vector(x:torch.tensor,y:torch.tensor)->torch.Tensor:
+            return torch.mean(torch.norm(x-y,dim=1)) # / np.sqrt(x.shape[1])
+
+        if self.output == "E":
+            return loss_scalar
+        
+        elif self.output == "D" :
+            return loss_vector
+        
+        # elif self.output == "ED":
+        #     def loss_EP(x,y):
+        #         E = self._mseloss(x[:,0],y[:,0])
+        #         P = self._mseloss(x[:,1:4],y[:,1:4])
+        #         return lE * E + lP * P
+        #     return loss_EP
         
         elif self.output == "EF":
             def loss_EF(x,y):
-                E = self._mseloss(x[:,0],y[:,0])
-                F = self._mseloss(x[:,1:],y[:,1:])
+                E = loss_scalar(x[:,0],y[:,0])
+                F = loss_vector(x[:,1:],y[:,1:])
                 return lE * E + lF * F
             return loss_EF
         
-        elif self.output == "EDF":
-            def loss_EPF(x,y):
-                E = self._mseloss(x[:,0],y[:,0])
-                P = self._mseloss(x[:,1:4],y[:,1:4])
-                F = self._mseloss(x[:,4:],y[:,4:])
-                return lE * E + lP * P + lF * F
-            return loss_EPF
+        # elif self.output == "EDF":
+        #     def loss_EPF(x,y):
+        #         E = self._mseloss(x[:,0],y[:,0])
+        #         P = self._mseloss(x[:,1:4],y[:,1:4])
+        #         F = self._mseloss(x[:,4:],y[:,4:])
+        #         return lE * E + lP * P + lF * F
+        #     return loss_EPF
         
         else :
             raise ValueError("error in output mode")

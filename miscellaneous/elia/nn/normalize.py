@@ -45,7 +45,7 @@ def compute_normalization_factors(dataset,variable):
     # mu    = np.mean(data,axis=0)
     # sigma = np.std(data,axis=0)
     if len(data.shape) == 2 :
-        x = np.linalg.norm(data,axis=1)
+        x = np.linalg.norm(data,axis=1)/np.sqrt(data.shape[1])
     elif len(data.shape) == 1 :
         x = data
     else :

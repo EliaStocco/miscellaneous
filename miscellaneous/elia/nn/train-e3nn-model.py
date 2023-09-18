@@ -3,7 +3,7 @@ start_time = time.time()
 
 import numpy as np
 import random
-import json5 as json
+import json
 import argparse
 from copy import copy
 
@@ -52,7 +52,8 @@ default_values = {
         "grid"          : True,
         "trial"         : None,
         "max_time"      : -1,
-        "task_time"     : -1
+        "task_time"     : -1,
+        "dropout"       : 0.3,
     }
 
 #####################
@@ -201,6 +202,13 @@ def get_args():
         default=default_values["task_time"]
     )
 
+    # Argument for "dropout"
+    parser.add_argument(
+        "--dropout", action="store",type=float, metavar="\bdropout_prob",
+        help="some description here (default: True)",
+        default=default_values["dropout"]
+    )
+
     return parser.parse_args()
 
 #####################
@@ -312,7 +320,7 @@ def main():
 
     if "D" in parameters["output"] :
         mean, std = compute_normalization_factors(datasets["train"],"dipole")
-        normalization_factors["dipole"] = {"mean":0.0,"std":std}
+        normalization_factors["dipole"] = {"mean":0.0,"std":mean} # yes, this is really what I intended to do
 
     if "E" in parameters["output"] :
         mean, std = compute_normalization_factors(datasets["train"],"energy")
@@ -399,7 +407,7 @@ def main():
         "mul":parameters["mul"],
         "layers":parameters["layers"],
         "lmax":parameters["lmax"],
-        "dropout_probability" : 0.3
+        "dropout_probability" : parameters["dropout"]
     }
 
     #####################
@@ -444,17 +452,17 @@ def main():
     opts = {
             #"name" : parameters["name"],
             "plot":{
-                "learning-curve" : {"N":10},
-                "correlation" : {"N":10}
+                "learning-curve" : {"N":50},
+                "correlation" : {"N":-1}
             },
             "thr":{
-                "exit":-1
+                "exit":100
             },
             #"Natoms" : parameters["Natoms"] ,
             #"output_folder" : parameters["output_folder"],
             "save":{
-                "parameters":1,
-                "checkpoint":1,
+                "parameters":10,
+                "checkpoint":10,
             },
             #"grid" : parameters["grid"],
             #"trial" : parameters["trial"],
