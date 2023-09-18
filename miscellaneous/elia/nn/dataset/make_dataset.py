@@ -160,6 +160,7 @@ def make_dataset(data:MicroState,
             "energy": e,  # energy
             "dipole": d,  # dipole
             "Natoms": torch.tensor(crystal.get_global_number_of_atoms()).to(int),  # valid only if all the structures have the same number of atoms
+            "index" : n # to be able to reconstruct the dataset
         }
         
         if "F" in output :

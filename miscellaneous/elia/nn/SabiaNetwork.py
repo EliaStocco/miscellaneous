@@ -43,6 +43,7 @@ class SabiaNetwork(torch.nn.Module):
         p=["o","e"],
         debug=False,
         pool_nodes=True,
+        dropout_probability=0,
         # default_dtype=torch.float64,
         **argv) -> None:
         
@@ -56,6 +57,10 @@ class SabiaNetwork(torch.nn.Module):
         self.num_nodes = num_nodes
         self.pool_nodes = pool_nodes
         self.debug = debug
+
+        # https://docs.e3nn.org/en/latest/guide/periodic_boundary_conditions.html
+        if self.pool :
+            self.num_nodes = 1
 
         # if irreps_node_attr is None :
         #     irreps_node_attr = irreps_in
@@ -79,12 +84,14 @@ class SabiaNetwork(torch.nn.Module):
             layers=layers,
             fc_neurons=[self.number_of_basis, 100],
             num_neighbors=num_neighbors,
+            dropout_probability=dropout_probability,
         )
 
         self._sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")
 
         self.irreps_in = self.mp.irreps_node_input
         self.irreps_out = self.mp.irreps_node_output
+
 
         pass
     

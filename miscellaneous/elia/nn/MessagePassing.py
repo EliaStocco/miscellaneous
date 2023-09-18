@@ -1,4 +1,4 @@
-from e3nn.nn import Gate
+from e3nn.nn import Gate, Dropout
 import torch
 from e3nn import o3
 from .Convolution import Convolution
@@ -82,6 +82,7 @@ class MessagePassing(torch.nn.Module):
         fc_neurons,
         num_neighbors,
         debug=False,
+        dropout_probability=0.,
     ) -> None:
         super().__init__()
         self.num_neighbors = num_neighbors
@@ -158,6 +159,9 @@ class MessagePassing(torch.nn.Module):
         #self.layers = torch.nn.ModuleList(tmp)
         self.layers = tmp
 
+        # Define proportion or neurons to dropout
+        self.dropout = Dropout(dropout_probability)
+
         pass
 
     def forward(self:T, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
@@ -165,5 +169,8 @@ class MessagePassing(torch.nn.Module):
             print("MessagePassing:1")
         for lay in self.layers:
             node_features = lay(node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars)
+
+            # Apply dropout
+            node_features = self.dropout(node_features)
 
         return node_features

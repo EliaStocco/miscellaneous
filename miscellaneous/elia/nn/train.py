@@ -22,7 +22,6 @@ all_dataloader_val   = None
 ytrain_real = None
 all_dataloader_train = None
 
-#@torch.jit.script
 def train(model:torch.nn.Module,\
           train_dataset:list,\
           val_dataset:list,\
@@ -36,45 +35,50 @@ def train(model:torch.nn.Module,\
           name=None,
           opts=None):
     """
-    Input:
-        model: torch.nn.Modules
-            NN to be trained.
-            
-        train_dataset: list, array
-            train dataset.
-        
-        val_dataset: list, array
-            validation dataset.
-           
-        hyperparameters: dict
-            hyperparameters, it has to contain the following keys:
-                'batch_size': int
-                'n_epochs'  : int
-                'optimizer' : str (then converted to torch.optim.Optimizer)
-                'lr'        : float
-                'loss'      : str (then converted to torch.nn._Loss)
-                
-        get_pred: None(default), lambda
-            lambda function to be applied to the predicted value,
-            e.g. (the default is) 'lambda f,x : f(x).flatten()'
-            where f is the neural network and x is the input value.
-            
-        get_real: None(default), lambda
-            lambda function to be applied to the input values to get the values to be modeled,
-            e.g. (the default is) 'lambda x : x.yreal' 
-            assuming that the values are stored in the 'yreal' attribute
-    
-    Output:
-        out_model: torch.nn.Modules
-            trained NN
-        
-        arrays: pandas.DataFrame
-            DataFrame the following columns:
-                'train_loss': array with the average loss (mean over the mini-batches) of the train dataset 
-                'train_std' : array with the loss std-dev (mean over the mini-batches) of the train dataset
-                'val_loss'  : array with the average loss (mean over the mini-batches) of the validation dataset
-            Each element of these arrays is referred to one epoch. 
+    Train a neural network model.
+
+    Args:
+        model (torch.nn.Module): 
+            The neural network model to be trained.
+
+        train_dataset (list): 
+            List of training data.
+
+        val_dataset (list): 
+            List of validation data.
+
+        parameters (dict): 
+            Dictionary containing various parameters for training.
+
+        hyperparameters (dict, optional): 
+            Dictionary containing hyperparameters for training. Defaults to None.
+
+        get_pred (callable, optional): 
+            A function that predicts the output given input data. Defaults to None.
+
+        get_real (callable, optional): 
+            A function that extracts the real values from the data. Defaults to None.
+
+        make_dataloader (callable, optional): 
+            A function that creates a data loader from a dataset. Defaults to None.
+
+        correlation (callable, optional): 
+            A function to compute correlation. Defaults to None.
+
+        output (str, optional): 
+            Folder name for saving training information. Defaults to None.
+
+        name (str, optional): 
+            A filename to distinguish results from other hyperparameters. Defaults to None.
+
+        opts (dict, optional): 
+            Additional options for training. Defaults to None.
+
+    Returns:
+        tuple: 
+            A tuple containing the trained model, arrays, correlation, and information about the training.
     """
+   
     start_task_time = time.time()
 
     print("\nTraining:")
@@ -167,14 +171,21 @@ def train(model:torch.nn.Module,\
     n_epochs   = int(hyperparameters["n_epochs"])
     optimizer  = hyperparameters["optimizer"]
     lr         = float(hyperparameters["lr"])
-    loss_fn    = hyperparameters["loss"]
+    _loss_fn    = hyperparameters["loss"]
     
     # set default values for some hyperparameters
     if type(optimizer) == str and optimizer.lower() == "adam":
         optimizer = Adam(model.parameters(), lr=lr)
     
-    if type(loss_fn) == str and loss_fn.lower() == "mse":
-        loss_fn = MSELoss()
+    if type(_loss_fn) == str and _loss_fn.lower() == "mse":
+        _loss_fn = MSELoss()
+    
+    # Natoms
+    if parameters["Natoms"] > 1 :
+        parameters["Natoms"] = torch.tensor(parameters["Natoms"],requires_grad=False)
+        loss_fn = lambda x,y : _loss_fn(x,y) / parameters["Natoms"]
+    else :
+        loss_fn = _loss_fn
 
     # a useful function
     def get_all_dataloader(dataset):
@@ -231,13 +242,14 @@ def train(model:torch.nn.Module,\
     # in_model = copy(model) 
         
     # some arrays to store information during the training process
-    val_loss = np.full(n_epochs,np.nan)
-    train_loss = np.full(n_epochs,np.nan)
+    # val_loss = np.full(n_epochs,np.nan)
+    # train_loss = np.full(n_epochs,np.nan)
+    tmp = np.full(n_epochs,np.nan)
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
 
     # dataframe
-    arrays = pd.DataFrame({ "train":train_loss,\
-                            "val":val_loss})
+    arrays = pd.DataFrame({ "train":copy(tmp),"val":copy(tmp)})
+    del tmp
 
     global yval_real, all_dataloader_val
     # compute the real values of the validation dataset only once
@@ -289,11 +301,15 @@ def train(model:torch.nn.Module,\
         start_epoch = checkpoint['epoch']
         # loss = checkpoint['loss']
 
-        # read array and csv
+        # read array and corr
         if os.path.exists(savefiles["dataframes"]):
-            arrays = pd.read_csv(savefiles["dataframes"])
+            tmp = pd.read_csv(savefiles["dataframes"])
+            arrays.iloc[:len(tmp)] = copy(tmp)
+            del tmp
         if os.path.exists(savefiles["correlations"]):
-            corr   = pd.read_csv(savefiles["correlations"])
+            tmp   = pd.read_csv(savefiles["correlations"])
+            corr.iloc[:len(tmp)] = copy(tmp)
+            del tmp
 
     def save_checkpoint():
         torch.save({
@@ -353,7 +369,7 @@ def train(model:torch.nn.Module,\
                 loss = loss_fn(y_pred,y_real)
 
                 # store the loss function in an array
-                train_loss_one_epoch[step] = float(loss)/parameters["Natoms"]
+                train_loss_one_epoch[step] = float(loss) # /parameters["Natoms"]
 
                 # backward pass
                 optimizer.zero_grad()
@@ -366,7 +382,7 @@ def train(model:torch.nn.Module,\
                     bar.set_postfix(epoch=epoch,
                                     train=np.mean(train_loss_one_epoch[:step+1]),
                                     #train=train_loss_one_epoch[step],
-                                    val=val_loss[epoch-1] if epoch != 0 else np.nan)
+                                    val=arrays.at[epoch-1,"val"] if epoch != 0 else np.nan)
                 else :
                     bar.set_postfix(epoch=epoch,
                                     train=np.mean(train_loss_one_epoch[:step+1]),
@@ -398,23 +414,24 @@ def train(model:torch.nn.Module,\
                 # compute the loss function
                 # predict the value for the validation dataset
                 yval_pred = get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
-                val_loss[epoch] = float(loss_fn(yval_pred,yval_real))/parameters["Natoms"]
+                arrays.at[epoch,"val"] = float(loss_fn(yval_pred,yval_real)) # /parameters["Natoms"]
 
                 # set arrays
-                ytrain_pred = get_pred(X=all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
-                train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real))/parameters["Natoms"]
+                # ytrain_pred = get_pred(X=all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
+                # train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real)) # /parameters["Natoms"]
+                arrays.at[epoch,"train"] = np.mean(train_loss_one_epoch)
 
-                if train_loss[epoch] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
+                if arrays.at[epoch,"train"] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
                     info = "try again"
                     break
 
-                arrays.at[epoch,"train"] = train_loss[epoch]
-                #arrays.at[epoch,"train_std" ] = train_std [epoch]
-                arrays.at[epoch,"val"  ] = val_loss  [epoch]
+                # arrays.at[epoch,"train"] = train_loss[epoch]
+                # arrays.at[epoch,"train_std" ] = train_std [epoch]
+                # arrays.at[epoch,"val"  ] = val_loss  [epoch]
 
                 # save loss to file
                 # savefile = "{:s}/{:s}.csv".format(folders["dataframes"],name)
-                arrays.to_csv(savefiles["dataframes"],index=False)
+                arrays[:epoch+1].to_csv(savefiles["dataframes"],index=False)
 
                 if correlation is not None :
                     # compute correlation
@@ -424,22 +441,22 @@ def train(model:torch.nn.Module,\
 
                     # save correlation to file
                     # savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
-                    corr.to_csv(savefiles["correlations"],index=False)
+                    corr[:epoch+1].to_csv(savefiles["correlations"],index=False)
 
                 # produce learning curve plot
                 if epoch > 1:
                     # savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
-                    plot_learning_curves(train_loss[:epoch+1],\
-                                        val_loss[:epoch+1],\
-                                        file=savefiles["images"],\
-                                        title=name if name != "untitled" else None,\
-                                        opts=opts["plot"]["learning-curve"])
+                    plot_learning_curves(   arrays.loc[:epoch+1,"train"],\
+                                            arrays.loc[:epoch+1,"val"],\
+                                            file=savefiles["images"],\
+                                            title=name if name != "untitled" else None,\
+                                            opts=opts["plot"]["learning-curve"])
 
                 # print progress
                 if True: #correlation is None :
                     bar.set_postfix(epoch=epoch,
-                                    train=train_loss[epoch],
-                                    val=val_loss[epoch])
+                                    train=arrays.at[epoch,"train"],
+                                    val=arrays.at[epoch,"val"])
                 else :
                     bar.set_postfix(epoch=epoch,
                                     train=train_loss[epoch],

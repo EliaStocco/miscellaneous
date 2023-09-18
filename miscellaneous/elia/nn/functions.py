@@ -1,6 +1,7 @@
 import torch
 import json
 import importlib
+from ase.io import read 
 
 def get_class(module_name, class_name):
     try:
@@ -50,5 +51,8 @@ def get_model(instructions,parameters:str):
     # Update the model's state dictionary with the loaded parameters
     model.load_state_dict(checkpoint)
     model.eval()
+
+    # Store the chemical species that will be used during the simulation.
+    model._symbols = instructions["chemical-symbols"]
 
     return model

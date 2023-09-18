@@ -51,7 +51,8 @@ class iPIinterface(SabiaNetwork):
             # }
 
         # self._mean = torch.nn.Parameter(torch.tensor(normalization["mean"]))
-        self._std  = torch.nn.Parameter(torch.tensor(normalization["std"]))
+        # self._std  = torch.nn.Parameter(torch.tensor(normalization["std"]))
+        self._std  = torch.tensor(normalization["std"])
         
         # self.normalization = normalization
         # for k in self.normalization.keys():
@@ -66,7 +67,7 @@ class iPIinterface(SabiaNetwork):
 
     def forward(self:T,data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])-> torch.Tensor:
         y = super().forward(data)
-        return y * self._std # + self._mean
+        return y * self._std  # + self._mean
 
     def make_datapoint(self,lattice, positions,**argv):
 

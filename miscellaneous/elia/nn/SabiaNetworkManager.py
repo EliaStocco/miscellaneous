@@ -21,7 +21,7 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
     def __init__(self: T, 
                  output: str = "ED",
                  reference:bool=False,
-                 dipole:torch.tensor=None,
+                 # dipole:torch.tensor=None,
                  pos:torch.tensor=None,
                  phases:bool=False,
                  **kwargs) -> None:
@@ -450,7 +450,7 @@ def main():
         "max_radius":max_radius, # Cutoff radius for convolution
         "num_neighbors":2,          # scaling factor based on the typical number of neighbors
         "pool_nodes":True,          # We pool nodes to predict total energy
-        "num_nodes":2,
+        # "num_nodes":2,
         "mul":10,
         "layers":2,
         "lmax":1,

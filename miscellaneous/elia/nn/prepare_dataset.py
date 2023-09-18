@@ -71,6 +71,8 @@ def prepare_dataset(ref_index:int,\
     # fix polarization
     if "D" in output :
         data.fix_polarization(same_lattice=same_lattice,inplace=True)
+        if "dipole" in data.properties :
+            del data.properties["dipole"]
 
     ##########################################
     # show time-series
@@ -132,7 +134,7 @@ def prepare_dataset(ref_index:int,\
                 # dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
         # shuffle
-        random.shuffle(dataset)
+        # random.shuffle(dataset)
 
         # train, test, validation
         #p_test = 20/100 # percentage of data in test dataset
@@ -141,9 +143,10 @@ def prepare_dataset(ref_index:int,\
         i = opts["size"]["val"] #int(p_test*len(dataset))
         j = opts["size"]["test"]#int(p_val*len(dataset))
 
-        train_dataset = dataset[:n]
-        val_dataset   = dataset[n:n+j]
-        test_dataset  = dataset[n+j:n+j+i]
+        train_dataset   = dataset[:n]
+        val_dataset     = dataset[n:n+j]
+        test_dataset    = dataset[n+j:n+j+i]
+        unused_dataset  = dataset[n+j+i:]
 
         del dataset
 
@@ -170,6 +173,7 @@ def prepare_dataset(ref_index:int,\
         torch.save(train_dataset,savefile+".train.torch")
         torch.save(val_dataset,  savefile+".val.torch")
         torch.save(test_dataset, savefile+".test.torch")
+        torch.save(unused_dataset, savefile+".unused.torch")
 
         if reference :
             # Write the dictionary to the JSON file
@@ -190,6 +194,7 @@ def prepare_dataset(ref_index:int,\
     cell = train_dataset[0].lattice[0].numpy()
     symbols = data.types[0]
 
-    example = Atoms(positions=pos,cell=cell,symbols=symbols)
+    # check that the 'cell' format is okay
+    example = Atoms(positions=pos,cell=cell.T,symbols=symbols)
 
     return datasets, data, pos, example

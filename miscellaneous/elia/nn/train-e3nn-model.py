@@ -399,6 +399,7 @@ def main():
         "mul":parameters["mul"],
         "layers":parameters["layers"],
         "lmax":parameters["lmax"],
+        "dropout_probability" : 0.3
     }
 
     #####################
