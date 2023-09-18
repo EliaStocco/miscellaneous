@@ -1518,9 +1518,78 @@ class MicroState:
         
         return phases
         
+    def shift_phases(self,
+                    unit=None,
+                    same_lattice=True,
+                    shift=None,
+                    inplace=False):
+        
+        phases = self.get_phases(unit=unit,same_lattice=same_lattice,fix=True)
+
+        if shift is None :
+
+            up = np.ceil(phases.max(axis=0))
+            dw = np.floor(phases.min(axis=0))
+
+            for n in range(3):
+                num = int((up[n] - dw[n] ))
+
+                # Check if it's even or odd
+                if num % 2 == 0:
+                    # print("{:d} is even.".format(num))
+                    continue
+                else:
+                    raise ValueError("error: odd number")
+                    # print("{:s} is odd.".format(num))
+            
+            shift = [ int((u+d)/2.) for u,d in zip(up,dw) ]
+            for n in range(3):
+                phases[:,n] -= shift[n]
+
+        else :
+            for n in range(3):
+                phases[:,n] -= shift[n]
+
+        if inplace :
+            self.properties["phases"] = phases
+
+        return phases, shift
+
+    def _get_pol_from_phases(self,phases,same_lattice,unit):
+
+        volume = self.get_volume(same_lattice=same_lattice,only_first=False)
+        length = self.get_basisvectors_length(same_lattice=same_lattice,only_first=False)
+        polarization = np.zeros((len(phases),3))
+        for xyz in range(3):            
+            polarization[:,xyz] = phases[:,xyz]*length[:,xyz]/volume[:]
+        
+        polarization = self.lattice2cart(array=polarization,\
+                                         family="polarization",\
+                                         unit=unit,\
+                                         same_lattice=same_lattice,\
+                                         reshape=None)
+        
+        return polarization
+    
+    def shift_polarization(self,
+                            unit=None,
+                            same_lattice=True,
+                            shift=None,
+                            inplace=False):
+        
+        if unit is None :
+            unit = self.units["polarization"]
+
+        phases, shift = self.shift_phases(unit=unit,same_lattice=same_lattice,inplace=inplace,shift=shift)
+        
+        polarization = self._get_pol_from_phases(phases,same_lattice=same_lattice,unit=unit)
+
+        if inplace :
+            self.properties["polarization"] = polarization
+
+        return polarization, shift
 
     def fix_polarization(self,
-                         array=None,
                          unit=None,
                          same_lattice=True,
                          inplace=False,
@@ -1532,13 +1601,13 @@ class MicroState:
                 - the polarization is automatically converted into atomic_unit,
                     so you can not to worry about its measure unit
         """
-        if array is None:
-            array = self.properties["polarization"]
-            if unit is None :
-                unit = self.units["polarization"]
+
+        array = self.properties["polarization"]
+        if unit is None :
+            unit = self.units["polarization"]
 
         if "phases" not in self.properties or recompute:
-            phases = self.get_phases(array=array,unit=unit,same_lattice=same_lattice,fix=True)
+            phases = self.get_phases(array=array,unit=unit,same_lattice=same_lattice,fix=True,inplace=inplace)
         else :
             phases = self.fix_phases()
 
@@ -1553,17 +1622,7 @@ class MicroState:
         #     phases[:,xyz] = np.unwrap(phases[:,xyz],discont=0.0,period=1.0)
             
         #
-        volume = self.get_volume(same_lattice=same_lattice,only_first=False)
-        length = self.get_basisvectors_length(same_lattice=same_lattice,only_first=False)
-        polarization = np.zeros((len(phases),3))
-        for xyz in range(3):            
-            polarization[:,xyz] = phases[:,xyz]*length[:,xyz]/volume[:]
-        
-        polarization = self.lattice2cart(array=polarization,\
-                                         family="polarization",\
-                                         unit=unit,\
-                                         same_lattice=same_lattice,\
-                                         reshape=None)
+        polarization = self._get_pol_from_phases(phases,same_lattice=same_lattice,unit=unit)
 
         if inplace :
             self.properties["polarization"] = polarization

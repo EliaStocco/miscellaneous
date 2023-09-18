@@ -1,4 +1,4 @@
-from e3nn.nn import Gate, Dropout
+from e3nn.nn import Gate, Dropout, BatchNorm
 import torch
 from e3nn import o3
 from .Convolution import Convolution
@@ -83,6 +83,7 @@ class MessagePassing(torch.nn.Module):
         num_neighbors,
         debug=False,
         dropout_probability=0.,
+        batchnorm=True,
     ) -> None:
         super().__init__()
         self.num_neighbors = num_neighbors
@@ -148,7 +149,12 @@ class MessagePassing(torch.nn.Module):
                 irreps_node, self.irreps_node_attr, self.irreps_edge_attr, gate.irreps_in, fc_neurons, num_neighbors
             )
             irreps_node = gate.irreps_out
-            self.layers.append(Compose(conv, gate))
+            if batchnorm :
+                bn = BatchNorm(irreps=conv.irreps_node_output)
+                tmp = Compose(conv, bn)
+                self.layers.append(Compose(tmp, gate))
+            else :
+                self.layers.append(Compose(conv, gate))
 
         self.layers.append(
             Convolution(

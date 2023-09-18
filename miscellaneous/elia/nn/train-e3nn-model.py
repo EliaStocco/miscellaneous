@@ -54,6 +54,8 @@ default_values = {
         "max_time"      : -1,
         "task_time"     : -1,
         "dropout"       : 0.3,
+        "batchnorm"     : True,
+        "shift"         : None,
     }
 
 #####################
@@ -209,6 +211,19 @@ def get_args():
         default=default_values["dropout"]
     )
 
+    # Argument for "dropout"
+    parser.add_argument(
+        "--batchnorm", action="store",type=str2bool, metavar="\buse_batch_norm",
+        help="some description here (default: True)",
+        default=default_values["batchnorm"]
+    )
+
+    # Argument for "shift"
+    parser.add_argument(
+        "--shift", action="store", type=int, nargs="+", metavar="\bpahses_shift",
+        help="some description here (default: [1])", default=default_values["shift"]
+    )
+
     return parser.parse_args()
 
 #####################
@@ -282,8 +297,16 @@ def main():
     
     ##########################################
     # preparing dataset
-    opts = {"prepare":{"restart":False},"build":{"restart":False}}
-    datasets, data, pos, example = prepare_dataset(ref_index=parameters["ref_index"],\
+    opts = {
+        "prepare":{
+            "restart":False
+        },
+        "build":{
+            "restart":False
+        },
+        "shift": parameters["shift"]
+    }
+    datasets, data, pos, example, shift = prepare_dataset(ref_index=parameters["ref_index"],\
                                                   max_radius=parameters["max_radius"],\
                                                   reference=parameters["reference"],\
                                                   output=parameters["output"],\
@@ -393,6 +416,7 @@ def main():
         "normalization" : normalization_factors,
         # "dipole" : dipole.tolist(),
         "pos" : pos.tolist(),  
+        "shift" : list(shift),
     }
 
     #####################
@@ -407,7 +431,8 @@ def main():
         "mul":parameters["mul"],
         "layers":parameters["layers"],
         "lmax":parameters["lmax"],
-        "dropout_probability" : parameters["dropout"]
+        "dropout_probability" : parameters["dropout"],
+        "batchnorm" : parameters["batchnorm"]
     }
 
     #####################

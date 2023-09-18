@@ -44,6 +44,7 @@ class SabiaNetwork(torch.nn.Module):
         debug=False,
         pool_nodes=True,
         dropout_probability=0,
+        batchnorm=True,
         # default_dtype=torch.float64,
         **argv) -> None:
         
@@ -85,6 +86,7 @@ class SabiaNetwork(torch.nn.Module):
             fc_neurons=[self.number_of_basis, 100],
             num_neighbors=num_neighbors,
             dropout_probability=dropout_probability,
+            batchnorm=batchnorm
         )
 
         self._sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")

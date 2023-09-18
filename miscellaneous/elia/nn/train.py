@@ -246,12 +246,13 @@ def train(model:torch.nn.Module,\
     # some arrays to store information during the training process
     # val_loss = np.full(n_epochs,np.nan)
     # train_loss = np.full(n_epochs,np.nan)
-    tmp = np.full(n_epochs,np.nan)
+    # tmp = np.full(n_epochs,np.nan)
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
 
     # dataframe
-    arrays = pd.DataFrame({ "train":copy(tmp),"val":copy(tmp)})
-    del tmp
+    arrays = pd.DataFrame(np.nan,columns=["epoch","train","val"],index=np.arange(n_epochs))
+    # pd.DataFrame({ "train":copy(tmp),"val":copy(tmp),"epoch":copy(tmp)})
+    # del tmp
 
     global yval_real, all_dataloader_val
     # compute the real values of the validation dataset only once
@@ -273,7 +274,7 @@ def train(model:torch.nn.Module,\
     # correlation
     corr = None
     if correlation is not None:        
-        corr = pd.DataFrame(columns=["train","val"],index=np.arange(n_epochs))
+        corr = pd.DataFrame(np.nan,columns=["epoch","train","val"],index=np.arange(n_epochs))
 
     ##########################################
     # prepare output files
@@ -400,6 +401,8 @@ def train(model:torch.nn.Module,\
             with torch.no_grad():
 
                 model.eval()
+
+                arrays.at[epoch,"epoch"] = epoch
                 
                 # saving model to temporary file
                 # N = opts["save"]["networks-temp"]
@@ -437,9 +440,10 @@ def train(model:torch.nn.Module,\
 
                 if correlation is not None :
                     # compute correlation
+                    corr.at[epoch,"epoch"] = epoch
                     ytrain_pred = model(all_dataloader_train)
-                    corr["train"][epoch] = correlation(ytrain_pred, ytrain_real)
-                    corr["val"][epoch] = correlation(yval_pred, yval_real)
+                    corr.at[epoch,"train"] = correlation(ytrain_pred, ytrain_real)
+                    corr.at[epoch,"val"] = correlation(yval_pred, yval_real)
 
                     # save correlation to file
                     # savefile =  "{:s}/{:s}.csv".format(folders["correlations"],name)
@@ -449,7 +453,7 @@ def train(model:torch.nn.Module,\
                 if epoch >= 1:
                     # savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
                     plot_learning_curves(   arrays.loc[:epoch,"train"],\
-                                            arrays.loc[:epoch+1,"val"],\
+                                            arrays.loc[:epoch,"val"],\
                                             file=savefiles["images"],\
                                             title=name if name != "untitled" else None,\
                                             opts=opts["plot"]["learning-curve"])

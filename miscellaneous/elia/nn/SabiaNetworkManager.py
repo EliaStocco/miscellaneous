@@ -23,6 +23,7 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
                  reference:bool=False,
                  # dipole:torch.tensor=None,
                  pos:torch.tensor=None,
+                 shift=None,
                  phases:bool=False,
                  **kwargs) -> None:
         
@@ -43,6 +44,7 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
         #self.R = torch.Tensor()
 
         self.reference = reference
+        self.shift = shift
 
         self.phases = phases
         if self.output != "D" and self.phases :

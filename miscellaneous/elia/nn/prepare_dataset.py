@@ -41,6 +41,7 @@ def prepare_dataset(ref_index:int,\
                     "val":10,
                     "test":10,
                 },
+                "shift" : None,
             }
 
     opts = add_default(opts,default)
@@ -71,6 +72,7 @@ def prepare_dataset(ref_index:int,\
     # fix polarization
     if "D" in output :
         data.fix_polarization(same_lattice=same_lattice,inplace=True)
+        _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
         if "dipole" in data.properties :
             del data.properties["dipole"]
 
@@ -197,4 +199,4 @@ def prepare_dataset(ref_index:int,\
     # check that the 'cell' format is okay
     example = Atoms(positions=pos,cell=cell.T,symbols=symbols)
 
-    return datasets, data, pos, example
+    return datasets, data, pos, example, shift
