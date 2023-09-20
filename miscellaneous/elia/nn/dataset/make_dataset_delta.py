@@ -1,5 +1,5 @@
 # Import necessary modules and classes
-from miscellaneous.elia.nn.dataset import make_dataset, make_datapoint
+from  . import make_dataset, make_datapoint
 import torch
 from torch_geometric.data import Data
 

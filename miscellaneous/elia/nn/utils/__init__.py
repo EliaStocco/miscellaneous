@@ -1,3 +1,1 @@
-from .utils_data  import *
-from .utils_model import *
-from .utils_plot  import *
+from .functions import get_data_from_dataset as get_data_from_dataset

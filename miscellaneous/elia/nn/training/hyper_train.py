@@ -3,8 +3,8 @@ import pandas as pd
 from copy import copy, deepcopy
 import torch
 import os
-from miscellaneous.elia.nn import train
-from ..functions import add_default
+from .train import train
+from miscellaneous.elia.functions import add_default
 from itertools import product
 
 def hyper_train_at_fixed_model( net:torch.nn.Module,\

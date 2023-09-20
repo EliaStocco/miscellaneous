@@ -2,7 +2,7 @@ import torch
 from ase.io import read
 from miscellaneous.elia.nn.dataset.make_dataset_delta import make_datapoint_delta
 from miscellaneous.elia.nn.dataset import make_datapoint
-from miscellaneous.elia.good_coding import froze
+# from miscellaneous.elia.good_coding import froze
 from .SabiaNetwork import SabiaNetwork
 from typing import Dict, Union
 import torch_geometric

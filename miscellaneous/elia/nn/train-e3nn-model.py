@@ -11,13 +11,12 @@ import torch
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 
-from miscellaneous.elia.nn.hyper_train import hyper_train_at_fixed_model
-from miscellaneous.elia.nn.visualize_dataset import visualize_datasets
-from miscellaneous.elia.nn.prepare_dataset import prepare_dataset
-from miscellaneous.elia.nn.normalize_datasets import normalize_datasets
-from miscellaneous.elia.nn import SabiaNetworkManager
+from training import hyper_train_at_fixed_model
+from plot import visualize_datasets
+from dataset import prepare_dataset
+from utils import get_data_from_dataset
+from network import SabiaNetworkManager
 from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
-from miscellaneous.elia.nn import compute_normalization_factors, get_data
 
 #----------------------------------------------------------------#
 # Documentation
@@ -358,7 +357,7 @@ def main():
     }
 
     if "D" in parameters["output"] :
-        dipole = get_data(datasets["all"],"dipole")
+        dipole = get_data_from_dataset(datasets["all"],"dipole")
         x = torch.mean(dipole,dim=0)
         normalization_factors["dipole"] = {
             "mean":x,
@@ -369,8 +368,9 @@ def main():
         print("\t std: ",normalization_factors["dipole"]["std"])
 
     elif "E" in parameters["output"] :
-        mean, std = compute_normalization_factors(datasets["train"],"energy")
-        normalization_factors["energy"] = {"mean":mean,"std":std}
+        raise ValueError("not implemented yet")
+        # mean, std = compute_normalization_factors(datasets["train"],"energy")
+        # normalization_factors["energy"] = {"mean":mean,"std":std}
 
     # normalization_factors, datasets = normalize_datasets(datasets)
 

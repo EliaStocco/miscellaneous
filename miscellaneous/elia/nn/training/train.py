@@ -7,12 +7,12 @@ from tqdm import tqdm
 import pandas as pd
 import warnings
 import os
-import shutil
-from copy import copy
-from .make_dataloader import _make_dataloader
-from ..functions import add_default, remove_empty_folder
-from .plot import plot_learning_curves
 import time
+from copy import copy
+from miscellaneous.elia.nn.dataset import make_dataloader as _make_dataloader
+from miscellaneous.elia.functions import add_default, remove_empty_folder
+from miscellaneous.elia.nn.plot import plot_learning_curves
+
 
 __all__ = ["train"]
 

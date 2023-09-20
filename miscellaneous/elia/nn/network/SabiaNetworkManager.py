@@ -5,8 +5,8 @@ import numpy as np
 
 from .iPIinterface import iPIinterface
 from .Methods4Training import EDFMethods4Training
-from .Methods4AngularOutput import Methods4AngularOutput
-from miscellaneous.elia.good_coding import froze
+# from .Methods4AngularOutput import Methods4AngularOutput
+# from miscellaneous.elia.good_coding import froze
 from typing import TypeVar
 T = TypeVar('T', bound='SabiaNetworkManager')
 # See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
