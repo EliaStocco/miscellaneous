@@ -1,11 +1,12 @@
 import os
-import json
+import json5 as json
 import torch
 import random
+from copy import copy
+from ase import Atoms
 from miscellaneous.elia.nn.dataset import make_dataset, make_dataset_delta, make_dataset_phases
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import add_default
-from ase import Atoms
 
 # ELIA: modify 'same_lattice' to false
 same_lattice = True
@@ -38,8 +39,8 @@ def prepare_dataset(ref_index:int,\
                 "size":
                 {
                     "train":1000,
-                    "val":10,
-                    "test":10,
+                    "val":100,
+                    "test":100,
                 },
                 "shift" : None,
             }
@@ -72,7 +73,8 @@ def prepare_dataset(ref_index:int,\
     # fix polarization
     if "D" in output :
         data.fix_polarization(same_lattice=same_lattice,inplace=True)
-        _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
+        # _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
+        shift = [0,0,0]
         if "dipole" in data.properties :
             del data.properties["dipole"]
 
@@ -88,7 +90,7 @@ def prepare_dataset(ref_index:int,\
             if var == "dipole":
                 _ = data.get_dipole(same_lattice=same_lattice)
 
-            data.plot_time_series(what=var,file=filename,opts={"mean":True})
+            data.plot_time_series(what=var,file=filename,opts={"mean":False,"plot":{"markersize":0.1}})
 
     ########################################## 
 
@@ -135,6 +137,7 @@ def prepare_dataset(ref_index:int,\
                                         requires_grad=requires_grad)
                 # dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
+        not_shuffled = copy(dataset)
         # shuffle
         # random.shuffle(dataset)
 
@@ -145,18 +148,20 @@ def prepare_dataset(ref_index:int,\
         i = opts["size"]["val"] #int(p_test*len(dataset))
         j = opts["size"]["test"]#int(p_val*len(dataset))
 
-        train_dataset   = dataset[:n]
-        val_dataset     = dataset[n:n+j]
-        test_dataset    = dataset[n+j:n+j+i]
-        unused_dataset  = dataset[n+j+i:]
+        train_dataset   = copy(dataset[:n])
+        val_dataset     = copy(dataset[n:n+j])
+        test_dataset    = copy(dataset[n+j:n+j+i])
+        unused_dataset  = copy(dataset[n+j+i:])
 
         del dataset
 
     else :
         print("\tReading datasets from file {:s}".format(savefile))
-        train_dataset = torch.load(savefile+".train.torch")
-        val_dataset   = torch.load(savefile+".val.torch")
-        test_dataset  = torch.load(savefile+".test.torch")
+        not_shuffled   = torch.load(savefile+".all.torch")
+        train_dataset  = torch.load(savefile+".train.torch")
+        val_dataset    = torch.load(savefile+".val.torch")
+        test_dataset   = torch.load(savefile+".test.torch")
+        unused_dataset = torch.load(savefile+".unused.torch")
 
         if reference :
             # Open the JSON file and load the data
@@ -172,6 +177,7 @@ def prepare_dataset(ref_index:int,\
             
     if SAVE :
         print("\tSaving dataset to file {:s}".format(savefile))
+        torch.save(not_shuffled,savefile+".all.torch")
         torch.save(train_dataset,savefile+".train.torch")
         torch.save(val_dataset,  savefile+".val.torch")
         torch.save(test_dataset, savefile+".test.torch")
@@ -188,9 +194,11 @@ def prepare_dataset(ref_index:int,\
     print("\t\t  val:",len(val_dataset))
     print("\t\t test:",len(test_dataset))
 
-    datasets = {"train":train_dataset,\
-                "val"  :val_dataset,\
-                "test" :test_dataset }
+    datasets = {"train"  : train_dataset,\
+                "val"    : val_dataset,\
+                "test"   : test_dataset,\
+                "unsused": unused_dataset,\
+                "all"    : not_shuffled}
     
     pos  = train_dataset[0].pos.numpy()
     cell = train_dataset[0].lattice[0].numpy()

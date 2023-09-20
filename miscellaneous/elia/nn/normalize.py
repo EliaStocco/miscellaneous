@@ -1,7 +1,8 @@
 import numpy as np
 from copy import copy
+import torch
 
-__all__ = ["normalize","compute_normalization_factors"]
+__all__ = ["normalize","compute_normalization_factors","get_data"]
 
 def normalize(dataset,mu,sigma,variable):
     """
@@ -23,6 +24,14 @@ def normalize(dataset,mu,sigma,variable):
         setattr(new_dataset[n],variable,x)
 
     return new_dataset
+
+def get_data(dataset,variable):
+    # Extract data for the specified variable from the dataset
+    v = getattr(dataset[0],variable)
+    data = torch.full((len(dataset),*v.shape),np.nan)
+    for n,x in enumerate(dataset):
+        data[n,:] = getattr(x,variable)
+    return data
 
 def compute_normalization_factors(dataset,variable):
     """

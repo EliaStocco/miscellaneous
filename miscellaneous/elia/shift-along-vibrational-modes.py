@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 from ase.io import read, write
 from ase import Atoms
-import json
+import json5 as json
 
 def prepare_parser():
     description= "Create a sequence of nuclear configurations (xyz format) where the nuclei are displaced along the vibrational mode.\

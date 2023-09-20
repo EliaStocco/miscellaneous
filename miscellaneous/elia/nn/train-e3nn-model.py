@@ -17,7 +17,7 @@ from miscellaneous.elia.nn.prepare_dataset import prepare_dataset
 from miscellaneous.elia.nn.normalize_datasets import normalize_datasets
 from miscellaneous.elia.nn import SabiaNetworkManager
 from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
-from miscellaneous.elia.nn import compute_normalization_factors
+from miscellaneous.elia.nn import compute_normalization_factors, get_data
 
 #----------------------------------------------------------------#
 # Documentation
@@ -33,29 +33,31 @@ description = "train a 'e3nn' model"
 #####################
 
 default_values = {
-        "mul"           : 2,
-        "layers"        : 6,
-        "lmax"          : 2,
-        "name"          : "untitled",
-        "reference"     : True,
-        "phases"        : False,
-        "output"        : "D",
-        "max_radius"    : 6.0,
-        "folder"        : "LiNbO3",
-        "output_folder" : "LiNbO3/results",
-        "ref_index"     : 0 ,
-        "Natoms"        : None,
-        "random"        : False,
-        "epochs"        : 10000,
-        "bs"            : [1],
-        "lr"            : [1e-3],
-        "grid"          : True,
-        "trial"         : None,
-        "max_time"      : -1,
-        "task_time"     : -1,
-        "dropout"       : 0.3,
-        "batchnorm"     : True,
-        "shift"         : None,
+        "mul"            : 2,
+        "layers"         : 6,
+        "lmax"           : 2,
+        "name"           : "untitled",
+        "reference"      : True,
+        "phases"         : False,
+        "output"         : "D",
+        "max_radius"     : 6.0,
+        "folder"         : "LiNbO3",
+        "output_folder"  : "LiNbO3/results",
+        "ref_index"      : 0 ,
+        "Natoms"         : None,
+        "random"         : False,
+        "epochs"         : 10000,
+        "bs"             : [1],
+        "lr"             : [1e-3],
+        "grid"           : True,
+        "trial"          : None,
+        "max_time"       : -1,
+        "task_time"      : -1,
+        "dropout"        : 0.01,
+        "batchnorm"      : True,
+        "shift"          : None,
+        "restart"        : False,
+        "recompute_loss" : False
     }
 
 #####################
@@ -224,6 +226,20 @@ def get_args():
         help="some description here (default: [1])", default=default_values["shift"]
     )
 
+    # Argument for "restart"
+    parser.add_argument(
+        "--restart", action="store",type=str2bool, metavar="\brestart",
+        help="some description here (default: True)",
+        default=default_values["restart"]
+    )
+
+    # Argument for "restart"
+    parser.add_argument(
+        "--recompute_loss", action="store",type=str2bool, metavar="\brecompute_loss",
+        help="some description here (default: True)",
+        default=default_values["recompute_loss"]
+    )
+
     return parser.parse_args()
 
 #####################
@@ -342,10 +358,17 @@ def main():
     }
 
     if "D" in parameters["output"] :
-        mean, std = compute_normalization_factors(datasets["train"],"dipole")
-        normalization_factors["dipole"] = {"mean":0.0,"std":mean} # yes, this is really what I intended to do
+        dipole = get_data(datasets["all"],"dipole")
+        x = torch.mean(dipole,dim=0)
+        normalization_factors["dipole"] = {
+            "mean":x,
+            "std":torch.norm(dipole-x,dim=1).mean()
+        }
 
-    if "E" in parameters["output"] :
+        print("\tmean: ",normalization_factors["dipole"]["mean"])
+        print("\t std: ",normalization_factors["dipole"]["std"])
+
+    elif "E" in parameters["output"] :
         mean, std = compute_normalization_factors(datasets["train"],"energy")
         normalization_factors["energy"] = {"mean":mean,"std":std}
 
@@ -380,7 +403,7 @@ def main():
         val_dataset   = datasets["val"]
         test_dataset  = datasets["test"]
         
-        train_dataset = train_dataset[0:100] 
+        train_dataset = train_dataset[0:10] 
         val_dataset   = val_dataset  [0:10] 
 
         print("\n\tDatasets summary:")
@@ -391,6 +414,8 @@ def main():
         datasets = {"train":train_dataset,\
                     "val"  :val_dataset,\
                     "test" :test_dataset }
+        
+        parameters["bs"] = [len(train_dataset)]
 
     ##########################################
     # construct the model
@@ -460,20 +485,21 @@ def main():
         else :
             N += 1
     print("Tot. number of parameters: ",N)
+    
+    ##########################################
+    # Natoms
+    if parameters["Natoms"] is None or parameters["Natoms"] == 'None' :
+        parameters["Natoms"] = example.get_global_number_of_atoms() 
 
     ##########################################
     # choose the loss function
     if parameters["output"] in ["D","E"] :
-        loss = net.loss()
+        loss = net.loss(Natoms=parameters["Natoms"])
     elif parameters["output"] == "EF" :
         loss = net.loss(lE=0.1,lF=0.9)
     
     ##########################################
     # optional settings
-
-    if parameters["Natoms"] is None or parameters["Natoms"] == 'None' :
-        parameters["Natoms"] = example.get_global_number_of_atoms()
-
     opts = {
             #"name" : parameters["name"],
             "plot":{
@@ -483,16 +509,14 @@ def main():
             "thr":{
                 "exit":100
             },
-            #"Natoms" : parameters["Natoms"] ,
-            #"output_folder" : parameters["output_folder"],
             "save":{
                 "parameters":10,
                 "checkpoint":10,
             },
-            #"grid" : parameters["grid"],
-            #"trial" : parameters["trial"],
-            "start_time" : start_time,
-            'keep_dataset' : True,
+            "start_time"     : start_time,
+            'keep_dataset'   : True,
+            "restart"        : parameters["restart"],
+            "recompute_loss" : parameters["recompute_loss"],
         }
 
     if args.options is not None :

@@ -806,7 +806,7 @@ class MicroState:
     def plot_time_series(self,what:str,file:str=None,opts=None):
 
         if opts is None :
-            opts = {"mean":False}
+            opts = {"mean":False,"plot":None}
 
         if "time" in self.properties :
             time = self.convert_property(what="time",family="time",unit="picosecond")
@@ -815,7 +815,10 @@ class MicroState:
             time = None
 
         quantity = self.properties[what]
-        dim = quantity.shape[1]
+        if len(quantity.shape) == 2:
+            dim = quantity.shape[1]
+        else :
+            dim = 1
         if dim == 3:
             labels = ["x","y","z"]
             colors = ["red","green","blue"]
@@ -824,6 +827,7 @@ class MicroState:
             colors = None
 
         fig, ax = plt.subplots(figsize=(15,5))
+        quantity = quantity.reshape((-1,dim))
         for n in range(dim):
             arr = quantity[:,n]
             if opts["mean"] : arr -= arr.mean()
@@ -831,7 +835,7 @@ class MicroState:
             c = colors[n] if colors is not None else None
             if time is None :
                 time = np.arange(len(arr))
-            ax.plot(time,arr,label=l,c=c,marker="o")
+            ax.plot(time,arr,label=l,c=c,marker="o",**opts["plot"])
         
         plt.grid()
         plt.legend()
@@ -1511,7 +1515,7 @@ class MicroState:
             phases = self.properties["phases"]
 
         for xyz in range(3):
-            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,**argv)
+            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,discont=0.5)
 
         if inplace :
             self.properties["phases"] = phases

@@ -32,8 +32,6 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
 
         # if debug is None :
         #     debug = list()
-        
-        super().__init__(**kwargs)
 
         self.output = output
         if self.output not in ["E", "D", "ED", "EF", "EDF"]:
@@ -70,6 +68,8 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
                 raise ValueError("'pos' can not be 'None'")
             self.ref_pos = torch.tensor(pos)
 
+        super().__init__(**kwargs)
+        
         pass
 
     # https://stackoverflow.com/questions/2345944/exclude-objects-field-from-pickling-in-python

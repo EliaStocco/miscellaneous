@@ -141,17 +141,22 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
     for bs,lr in hyper_pars :
         if parameters["trial"] is not None : 
             for n_trial in parameters["trial"] : 
-                run(n,bs,lr)
+                info = run(n,bs,lr)
                 n += 1
+                if info == "exit file detected":
+                    break
         else :       
-            run(n,bs,lr)
+            info = run(n,bs,lr)
             n += 1
+        if info == "exit file detected":
+            break
 
     ##########################################
     # remove EXIT file if detected
     if os.path.exists("EXIT"):
+        # print("\n\t'exit' file detected\n")
         os.remove("EXIT")
-        print("\n\t'exit' file detected\n")
+        print("\n\t'exit' file removed\n")
 
     ##########################################
     # finish

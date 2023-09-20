@@ -91,7 +91,8 @@ def train(model:torch.nn.Module,\
                 "dataloader":{"shuffle":False},\
                 "thr":{"exit":10000},\
                 "disable":False,\
-                #"Natoms":1,\
+                "restart":False,\
+                "recompute_loss":False,\
                 "save":{"parameters":1}} # ,"networks-temp":-1
     opts = add_default(opts,default)
 
@@ -171,23 +172,23 @@ def train(model:torch.nn.Module,\
     n_epochs   = int(hyperparameters["n_epochs"])
     optimizer  = hyperparameters["optimizer"]
     lr         = float(hyperparameters["lr"])
-    _loss_fn    = hyperparameters["loss"]
+    loss_fn    = hyperparameters["loss"]
     
     # set default values for some hyperparameters
     if type(optimizer) == str and optimizer.lower() == "adam":
         optimizer = Adam(model.parameters(), lr=lr)
     
-    if type(_loss_fn) == str and _loss_fn.lower() == "mse":
-        _loss_fn = MSELoss()
+    # if type(loss_fn) == str and loss_fn.lower() == "mse":
+    #     loss_fn = MSELoss()
     
-    # Natoms
-    if parameters["Natoms"] > 1 :
-        parameters["Natoms"] = torch.tensor(parameters["Natoms"],requires_grad=False)
-        def loss_fn(x:torch.tensor,y:torch.tensor) -> torch.Tensor:
-            tmp = _loss_fn(x,y)
-            return tmp / parameters["Natoms"]
-    else :
-        loss_fn = _loss_fn
+    # # Natoms
+    # if parameters["Natoms"] > 1 :
+    #     parameters["Natoms"] = torch.tensor(parameters["Natoms"],requires_grad=False)
+    #     def loss_fn(x:torch.tensor,y:torch.tensor) -> torch.Tensor:
+    #         tmp = _loss_fn(x,y)
+    #         return tmp / parameters["Natoms"]
+    # else :
+    #     loss_fn = _loss_fn
 
     # a useful function
     def get_all_dataloader(dataset):
@@ -251,6 +252,8 @@ def train(model:torch.nn.Module,\
 
     # dataframe
     arrays = pd.DataFrame(np.nan,columns=["epoch","train","val"],index=np.arange(n_epochs))
+    if opts["recompute_loss"] :
+        arrays["train-2"] = None
     # pd.DataFrame({ "train":copy(tmp),"val":copy(tmp),"epoch":copy(tmp)})
     # del tmp
 
@@ -295,7 +298,7 @@ def train(model:torch.nn.Module,\
         os.mkdir(checkpoint_folder)
 
     checkpoint_file = "{:s}/{:s}.pth".format(checkpoint_folder,name)
-    if os.path.exists(checkpoint_file):
+    if os.path.exists(checkpoint_file) and not opts["restart"]:
         print("\tReading checkpoint from file '{:s}'".format(checkpoint_file))
         checkpoint = torch.load(checkpoint_file)
 
@@ -307,12 +310,17 @@ def train(model:torch.nn.Module,\
         # read array and corr
         if os.path.exists(savefiles["dataframes"]):
             tmp = pd.read_csv(savefiles["dataframes"])
+            if not opts["recompute_loss"] and "train-2" in tmp:
+                arrays["train-2"] = None
             arrays.iloc[:len(tmp)] = copy(tmp)
             del tmp
         if os.path.exists(savefiles["correlations"]):
             tmp   = pd.read_csv(savefiles["correlations"])
             corr.iloc[:len(tmp)] = copy(tmp)
             del tmp
+
+        if opts["recompute_loss"] and "train-2" not in arrays:
+            arrays["train-2"] = None        
 
     def save_checkpoint():
         torch.save({
@@ -422,8 +430,10 @@ def train(model:torch.nn.Module,\
                 arrays.at[epoch,"val"] = float(loss_fn(yval_pred,yval_real)) # / parameters["Natoms"]
 
                 # set arrays
-                # ytrain_pred = get_pred(X=all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
-                # train_loss[epoch] = float(loss_fn(ytrain_pred,ytrain_real))  /parameters["Natoms"]
+                if opts["recompute_loss"] :
+                    ytrain_pred = get_pred(all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
+                    arrays.at[epoch,"train-2"] = float(loss_fn(ytrain_pred,ytrain_real))  #/parameters["Natoms"]
+
                 arrays.at[epoch,"train"] = np.mean(train_loss_one_epoch)
 
                 if arrays.at[epoch,"train"] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
@@ -452,11 +462,12 @@ def train(model:torch.nn.Module,\
                 # produce learning curve plot
                 if epoch >= 1:
                     # savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
-                    plot_learning_curves(   arrays.loc[:epoch,"train"],\
-                                            arrays.loc[:epoch,"val"],\
+                    plot_learning_curves(   train_loss = arrays.loc[:epoch,"train"],\
+                                            val_loss = arrays.loc[:epoch,"val"],\
                                             file=savefiles["images"],\
                                             title=name if name != "untitled" else None,\
-                                            opts=opts["plot"]["learning-curve"])
+                                            opts=opts["plot"]["learning-curve"],\
+                                            train_loss2 = arrays.loc[:epoch,"train-2"] if "train-2" in arrays else None )
 
                 # print progress
                 if True: #correlation is None :
@@ -527,6 +538,10 @@ def train(model:torch.nn.Module,\
     # We will let the user know about that through the variable 'info'
     elif info == "try again":
         print("\n\tTraining stopped: we could try again\n")
+        if os.path.exists(checkpoint_file):
+            print("\tRemoving checkpoint file '{:s}'".format(checkpoint_file))
+            os.remove(checkpoint_file)
+
     elif info == "exit-task file detected":
         print("\n\t'exit-task' file detected\n")
     

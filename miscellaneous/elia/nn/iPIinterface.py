@@ -36,8 +36,8 @@ class iPIinterface(SabiaNetwork):
 
         if normalization is None :
             normalization = {
-                    "mean" : 0.0,
-                    "std"  : 1.0,
+                    "mean" : torch.tensor(0.0),
+                    "std"  : torch.tensor(1.0),
                 }
             # normalization = {
             #     "energy":{
@@ -50,8 +50,8 @@ class iPIinterface(SabiaNetwork):
             #     },
             # }
 
-        self._mean = torch.nn.Parameter(torch.tensor(normalization["mean"]))
-        self._std  = torch.nn.Parameter(torch.tensor(normalization["std"]))
+        self._mean = torch.nn.Parameter(normalization["mean"])
+        self._std  = torch.nn.Parameter(normalization["std"])
         #self._mean  = torch.tensor(normalization["mean"])
         #self._std   = torch.tensor(normalization["std"])
         
@@ -66,18 +66,23 @@ class iPIinterface(SabiaNetwork):
 
         print("\tiPIinterface._mean: ",self._mean)
         print("\tiPIinterface._std: ",self._std)
-        print("\tiPIinterface._max_radius: ",self._max_radius)
+        # print("\tiPIinterface._max_radius: ",self._max_radius)
 
+        if self.output not in ["D","E"] :
+            raise ValueError("not implemented yet")
+        
         pass
 
     def forward(self:T,data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])-> torch.Tensor:
         y = super().forward(data)
-        if self.output == "D" :
-            return y * self._std  # + self._mean
-        elif self.output in ["E","EF"] :
-            return y * self._std  + self._mean
-        else :
-            raise ValueError("not implemented yet")
+        return y * self._std  + self._mean
+            
+        # if self.output == "D" :
+        #     return y * self._std  # + self._mean
+        # elif self.output in ["E","EF"] :
+        #     return y * self._std  + self._mean
+        # else :
+        #     raise ValueError("not implemented yet")
 
     def make_datapoint(self,lattice, positions,**argv):
 

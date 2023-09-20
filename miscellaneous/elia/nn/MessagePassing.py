@@ -189,7 +189,7 @@ class MessagePassing(torch.nn.Module):
             node_features = lay(node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars)
 
             # Apply dropout
-            if self.dropout_probability > 0 :
-                node_features = drop(node_features)
+            # if self.dropout_probability > 0 :
+            node_features = drop(node_features)
 
         return node_features

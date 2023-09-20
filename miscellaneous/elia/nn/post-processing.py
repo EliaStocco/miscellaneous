@@ -1,5 +1,5 @@
 import argparse
-import json
+import json5 as json
 import os
 import torch
 import pandas as pd

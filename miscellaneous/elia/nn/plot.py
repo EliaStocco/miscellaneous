@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
-def plot_learning_curves(train_loss,val_loss,file,title=None,opts=None):
+def plot_learning_curves(train_loss,val_loss,file,title=None,opts=None,train_loss2=None):
     if opts is None:
         opts["N"] = 1
     N = len(train_loss)
@@ -18,6 +18,8 @@ def plot_learning_curves(train_loss,val_loss,file,title=None,opts=None):
 
             ax.plot(x,val_loss,  color="red" ,label="val",  marker="x",linewidth=0.7,markersize=2)
             ax.plot(x,train_loss,color="navy",label="train",marker=".",linewidth=0.7,markersize=2)
+            if train_loss2 is not None :
+                ax.plot(x,train_loss2,color="green",label="train$^*$",marker=".",linewidth=0.7,markersize=2,linestyle="--")
 
             plt.ylabel("loss")
             plt.xlabel("epoch")

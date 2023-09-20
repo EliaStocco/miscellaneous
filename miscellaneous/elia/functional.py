@@ -1,4 +1,4 @@
-import json5 as json
+import json5 as json5 as json
 import os
 from .functions import add_default
 

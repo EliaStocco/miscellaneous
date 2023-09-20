@@ -1,6 +1,8 @@
 import torch
 import numpy as np
+import torch_geometric
 from torch_geometric.data import Data
+from typing import Dict, Union
 from scipy.stats import pearsonr
 from torch.nn import MSELoss
 from miscellaneous.elia.good_coding import froze
@@ -43,8 +45,6 @@ class EDFMethods4Training():
     def __init__(self: T,**argv)->None:
 
         super().__init__(**argv)
-
-        self._mseloss = MSELoss()
 
     # @staticmethod
     def get_pred(self: T, X: Data) -> torch.tensor:
@@ -101,38 +101,65 @@ class EDFMethods4Training():
 
         return y
 
-    def loss(self:T,lE:float=None,lF:float=None,lP:float=None,**argv)->callable:
+    def loss(self:T,lE:float=None,lF:float=None,lP:float=None,Natoms=None,periodic=False,regularization=0.1)->callable:
 
         lE = lE if lE is not None else 1.0
         lF = lF if lF is not None else 1.0
         lP = lP if lP is not None else 1.0
 
+        self._mseloss = MSELoss() # Mean Squared Error -> it's not the RMSE!
+
+        if Natoms is None or Natoms <= 0 :
+            Natoms = 1
+
+        def add_Natoms(func:callable):
+            if Natoms > 1 :
+                def divide(x:torch.tensor,y:torch.tensor)->torch.Tensor:
+                    return func(x,y) / Natoms
+                return divide
+            else :
+                return func
+
+        @add_Natoms
         def loss_scalar(x:torch.tensor,y:torch.tensor)->torch.Tensor:
             """Loss function for scalar quantity"""
             return self._mseloss(x,y)
         
+        @add_Natoms
         def loss_vector(x:torch.tensor,y:torch.tensor)->torch.Tensor:
-            return torch.mean(torch.norm(x-y,dim=1)) # / np.sqrt(x.shape[1])
+            return torch.mean(torch.square(x-y).sum(dim=1)) # mean only along the batch size
 
         if self.output == "E":
+            # if Natoms > 1 :
+            #     return lambda x,y: loss_scalar(x,y) / Natoms
+            # else :
+            #     return loss_scalar
             return loss_scalar
         
         elif self.output == "D" :
-            return loss_vector
-        
-        # elif self.output == "ED":
-        #     def loss_EP(x,y):
-        #         E = self._mseloss(x[:,0],y[:,0])
-        #         P = self._mseloss(x[:,1:4],y[:,1:4])
-        #         return lE * E + lP * P
-        #     return loss_EP
+            # if Natoms > 1 :
+            #     def non_periodic_loss(x:torch.tensor,y:torch.tensor)->torch.Tensor:
+            #         return loss_vector(x,y) / Natoms
+            # else :
+            #     non_periodic_loss = loss_vector 
+            if periodic :
+                def periodic_loss(x:torch.tensor,y:torch.tensor,\
+                                  X:Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])->torch.Tensor:
+                    # do things
+                    return loss_vector(x,y)
+                return periodic_loss
+            else :
+                return loss_vector
         
         elif self.output == "EF":
             def loss_EF(x,y):
                 E = loss_scalar(x[:,0],y[:,0])
                 F = loss_vector(x[:,1:],y[:,1:])
                 return lE * E + lF * F
-            return loss_EF
+            if Natoms > 1 :
+                return lambda x,y: loss_EF(x,y) / Natoms
+            else :
+                return loss_EF 
         
         # elif self.output == "EDF":
         #     def loss_EPF(x,y):
