@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats import pearsonr
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from miscellaneous.elia.nn.utils.functions import get_model
+from miscellaneous.elia.nn.functions.functions import get_model
 from miscellaneous.elia.functions import plot_bisector
 
 #####################

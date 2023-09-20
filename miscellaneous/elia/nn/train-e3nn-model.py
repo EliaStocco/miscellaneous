@@ -14,7 +14,7 @@ torch.set_default_dtype(default_dtype)
 from training import hyper_train_at_fixed_model
 from plot import visualize_datasets
 from dataset import prepare_dataset
-from utils import get_data_from_dataset
+from functions import get_data_from_dataset
 from network import SabiaNetworkManager
 from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
 

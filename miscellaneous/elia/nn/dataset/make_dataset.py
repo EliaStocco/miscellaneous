@@ -4,7 +4,7 @@ from tqdm import tqdm
 from ase.neighborlist import neighbor_list, primitive_neighbor_list
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import add_default
-from miscellaneous.elia.nn.utils.get_type_onehot_encoding import symbols2x
+from miscellaneous.elia.nn.functions.get_type_onehot_encoding import symbols2x
 from ase import Atoms
 import numpy as np
 
