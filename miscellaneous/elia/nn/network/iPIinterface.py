@@ -36,9 +36,13 @@ class iPIinterface(SabiaNetwork):
 
         if normalization is None :
             normalization = {
-                    "mean" : torch.tensor(0.0),
+                    "mean" : torch.tensor([0.,0.,0.]),
                     "std"  : torch.tensor(1.0),
                 }
+        else :
+            normalization["mean"] = torch.tensor(normalization["mean"])
+            normalization["std"]  = torch.tensor(normalization["std"])
+
             # normalization = {
             #     "energy":{
             #         "mean" : 0.,
@@ -64,8 +68,8 @@ class iPIinterface(SabiaNetwork):
         self._max_radius = max_radius
         self._symbols = None
 
-        print("\tiPIinterface._mean: ",self._mean)
-        print("\tiPIinterface._std: ",self._std)
+        # print("\tiPIinterface._mean: ",self._mean)
+        # print("\tiPIinterface._std: ",self._std)
         # print("\tiPIinterface._max_radius: ",self._max_radius)
 
         if self.output not in ["D","E"] :
@@ -172,12 +176,12 @@ class iPIinterface(SabiaNetwork):
 
         # y = self._get(what=what,X=X,**argv)
         if what.lower() not in ["bec","forces"]:
-            with torch.no_grad():
-                y = self(X)
+            #with torch.no_grad():
+            y = self(X)
         else :
             raise ValueError("not implemented yet")
 
         if detach :
             y = y.detach()
 
-        return  y
+        return  y,X

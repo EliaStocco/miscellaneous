@@ -130,6 +130,7 @@ def main():
     for name in ["train","val","test"]:
         for n,X in enumerate(datasets[name]):
             
+            del X.edge_vec
             real[name][n,:] = get_real(X).detach().numpy()
             pred[name][n,:] = model(X).detach().numpy()
 

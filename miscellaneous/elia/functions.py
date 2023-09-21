@@ -21,7 +21,27 @@ __all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations'
             'str2bool','get_one_file_in_folder','get_property_header','getproperty',
             'vector_type', 'output_folder', 'save2xyz', 'print_cell', 'convert',
             'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
-            'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector']
+            'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector','remove_files_in_folder']
+
+def remove_files_in_folder(folder,extension):
+
+    # List all files in the folder
+    files = os.listdir(folder)
+
+    # Iterate over the files and delete files with the specified extension
+    for file in files:
+        file_path = os.path.join(folder, file)
+        try:
+            if os.path.isfile(file_path) and file.endswith(extension):
+                os.remove(file_path)
+                print(f"Deleted: {file_path}")
+            else:
+                print(f"Skipped: {file_path} (not a file or wrong extension)")
+        except Exception as e:
+            print(f"Error deleting {file_path}: {str(e)}")
+
+    return 
+
 
 def plot_bisector(ax):
 	xlim = ax.get_xlim()

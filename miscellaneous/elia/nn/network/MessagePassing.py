@@ -150,7 +150,7 @@ class MessagePassing(torch.nn.Module):
             )
             irreps_node = gate.irreps_out
             if batchnorm :
-                bn = BatchNorm(irreps=conv.irreps_node_output)
+                bn = BatchNorm(irreps=conv.irreps_node_output,affine=False)
                 tmp = Compose(conv, bn)
                 self.layers.append(Compose(tmp, gate))
             else :

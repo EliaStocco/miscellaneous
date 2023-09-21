@@ -807,6 +807,8 @@ class MicroState:
 
         if opts is None :
             opts = {"mean":False,"plot":None}
+        if "plot" not in opts :
+            opts["plot"] = {}
 
         if "time" in self.properties :
             time = self.convert_property(what="time",family="time",unit="picosecond")
@@ -835,7 +837,7 @@ class MicroState:
             c = colors[n] if colors is not None else None
             if time is None :
                 time = np.arange(len(arr))
-            ax.plot(time,arr,label=l,c=c,marker="o",**opts["plot"])
+            ax.plot(time,arr,label=l,c=c,marker="o")#,**opts["plot"])
         
         plt.grid()
         plt.legend()
@@ -1515,7 +1517,7 @@ class MicroState:
             phases = self.properties["phases"]
 
         for xyz in range(3):
-            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,discont=0.5)
+            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,discont=np.inf)
 
         if inplace :
             self.properties["phases"] = phases

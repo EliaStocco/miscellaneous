@@ -10,7 +10,7 @@ import os
 import time
 from copy import copy
 from miscellaneous.elia.nn.dataset import make_dataloader as _make_dataloader
-from miscellaneous.elia.functions import add_default, remove_empty_folder
+from miscellaneous.elia.functions import add_default, remove_empty_folder, remove_files_in_folder
 from miscellaneous.elia.nn.plot import plot_learning_curves
 
 
@@ -297,6 +297,13 @@ def train(model:torch.nn.Module,\
     if not os.path.exists(checkpoint_folder):
         os.mkdir(checkpoint_folder)
 
+    parameters_folder = "{:s}/{:s}".format(folders["parameters"],name)
+    if not os.path.exists(parameters_folder):
+        os.mkdir(parameters_folder)
+    elif parameters["restart"]:
+        print("\tCleaning parameters folder '{:s}'".format(parameters_folder))
+        remove_files_in_folder(parameters_folder,"pth")
+
     checkpoint_file = "{:s}/{:s}.pth".format(checkpoint_folder,name)
     if os.path.exists(checkpoint_file) and not opts["restart"]:
         print("\tReading checkpoint from file '{:s}'".format(checkpoint_file))
@@ -421,8 +428,25 @@ def train(model:torch.nn.Module,\
                 # saving parameters to temporary file
                 N = opts["save"]["parameters"]
                 if N != -1 and epoch % N == 0 :
-                    savefile = "{:s}/{:s}.epoch={:d}.pth".format(folders["parameters"],name,epoch)
+                    savefile = "{:s}/epoch={:d}.pth".format(parameters_folder,epoch)
                     torch.save(model.state_dict(), savefile)
+
+                    if False : 
+                        from miscellaneous.elia.nn.functions import count_parameters
+                        loaded_state_dict = torch.load(savefile)
+
+                        total_parameters = 0 
+                        for key, value in loaded_state_dict.items():
+                            total_parameters += value.numel()
+                        
+                        # model.load_state_dict(loaded_state_dict)
+                        if total_parameters != model.n_parameters():
+                            print("error with the number of parameters")
+                        
+                        test = model.state_dict() == loaded_state_dict
+                        if test :
+                            raise ValueError("error with 'state_dict'")
+                        
 
                 # compute the loss function
                 # predict the value for the validation dataset
@@ -512,7 +536,7 @@ def train(model:torch.nn.Module,\
         # print("\tSaving parameters to file '{:s}'".format(savefile))
         # torch.save(model.(), savefile)
 
-        savefile = "{:s}/{:s}.final.pth".format(folders["parameters"],name)
+        savefile = "{:s}/{:s}.pth".format(folders["parameters"],name)
         torch.save(model.state_dict(), savefile)
 
         # removing initial model 

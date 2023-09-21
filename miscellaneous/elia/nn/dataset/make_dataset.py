@@ -97,8 +97,10 @@ def preprocess(lattice, positions, symbols, max_radius, default_dtype,requires_g
         edge_index.requires_grad_(requires_grad["edge_index"])
 
     #x = type_onehot[[type_encoding[atom] for atom in symbols]]
+    if not torch.is_tensor(x):
+        x = torch.tensor(x)
     if requires_grad["x"] is not None :
-        x = torch.tensor(x).requires_grad_(requires_grad["x"])
+        x.requires_grad_(requires_grad["x"])
 
     #pos = pos.type(default_dtype)
     #edge_vec = torch.tensor(edge_vec)

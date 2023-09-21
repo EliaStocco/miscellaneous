@@ -3,6 +3,20 @@ import json5 as json
 import importlib
 from ase.io import read 
 import numpy as np
+from prettytable import PrettyTable
+
+def count_parameters(model):
+    table = PrettyTable(["Modules", "Parameters"])
+    total_params = 0
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad:
+            continue
+        params = parameter.numel()
+        table.add_row([name, params])
+        total_params += params
+    print(table)
+    print(f"Total Trainable Params: {total_params}")
+    return total_params
 
 def get_data_from_dataset(dataset,variable):
     # Extract data for the specified variable from the dataset
@@ -53,9 +67,23 @@ def get_model(instructions,parameters:str):
     # instantiate class
     #try :
     model = class_obj(**kwargs)
+    if not model :
+        raise ValueError("Error instantiating class '{:s}' from module '{:s}'".format(cls,mod))
+    
+    N = model.n_parameters()
+    print("\tLoaded model has {:d} parameters".format(N))
+
+    # total_parameters = sum(p.numel() for p in model.parameters())
 
     # Load the parameters from the saved file
     checkpoint = torch.load(parameters)
+
+    # Initialize a variable to store the total number of parameters
+    total_parameters = 0
+
+    # Iterate through the state_dict and sum the sizes of the tensors
+    for key, value in checkpoint.items():
+        total_parameters += value.numel()
 
     # Update the model's state dictionary with the loaded parameters
     model.load_state_dict(checkpoint)

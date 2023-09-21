@@ -20,7 +20,7 @@ from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
 
 #----------------------------------------------------------------#
 # Documentation
-# - https://pytorch.org/docs/stable/autograd.html
+# - https://pytorch.org/docs/stablfe/autograd.html
 # - https://towardsdatascience.com/introduction-to-functional-pytorch-b5bf739e1e6e
 
 #----------------------------------------------------------------#
@@ -360,8 +360,8 @@ def main():
         dipole = get_data_from_dataset(datasets["all"],"dipole")
         x = torch.mean(dipole,dim=0)
         normalization_factors["dipole"] = {
-            "mean":x,
-            "std":torch.norm(dipole-x,dim=1).mean()
+            "mean" :x.tolist(),
+            "std" :torch.norm(dipole-x,dim=1).mean().tolist()
         }
 
         print("\tmean: ",normalization_factors["dipole"]["mean"])
@@ -471,7 +471,7 @@ def main():
             "chemical-symbols" : example.get_chemical_symbols()
         }
     
-    del instructions["kwargs"]["normalization"]
+    # del instructions["kwargs"]["normalization"]
     with open("instructions.json", "w") as json_file:
         # The 'indent' parameter is optional for pretty formatting
         json.dump(instructions, json_file, indent=4)

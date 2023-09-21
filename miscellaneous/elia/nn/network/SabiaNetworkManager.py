@@ -72,6 +72,16 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
         
         pass
 
+    def n_parameters(self:T):
+        return sum(p.numel() for p in self.parameters())
+        # N = 0 
+        # for i in self.parameters():
+        #     if len(i.shape) == 0 :
+        #         N += 1
+        #     else : # len(i.shape) != 0 :
+        #         N += len(i.flatten())
+        # return N
+
     # https://stackoverflow.com/questions/2345944/exclude-objects-field-from-pickling-in-python
     def __getstate__(self):
         state = self.__dict__.copy()
