@@ -467,7 +467,7 @@ def main():
     instructions = {
             "kwargs":copy(kwargs),
             "class":"SabiaNetworkManager",
-            "module":"miscellaneous.elia.nn",
+            "module":"miscellaneous.elia.nn.network",
             "chemical-symbols" : example.get_chemical_symbols()
         }
     

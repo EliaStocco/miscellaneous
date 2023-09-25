@@ -21,25 +21,25 @@ def get_args():
 
     # Argument for "input"
     parser.add_argument(
-        "--training", action="store", type=str, metavar="\binput.json",
+        "--training", action="store", type=str,
         help="training input file", default="input.json"
     )
 
     # Argument for "instructions"
     parser.add_argument(
-        "--instructions", action="store", type=str, metavar="\binstructions.json",
+        "--instructions", action="store", type=str,
         help="model input file", default="instructions.json"
     )
 
     # Argument for "instructions"
     parser.add_argument(
-        "--bs", action="store", type=int, metavar="\bbatch_size",
+        "--bs", action="store", type=int,
         help="batch size"
     )
 
     # Argument for "instructions"
     parser.add_argument(
-        "--lr", action="store", type=str, metavar="\blearning_rate",
+        "--lr", action="store", type=str,
         help="learning rate"
     )
 
@@ -66,24 +66,25 @@ def main():
     tmp = parameters["output_folder"], parameters["name"], args.bs, args.lr
     file = "{:s}/dataframes/{:s}.bs={:d}.lr={:s}.csv".format(*tmp)
     if not os.path.exists(file):
-        raise ValueError("file does not exist")
+        raise ValueError("fifolderle does not exist")
     loss = pd.read_csv(file)
 
     epoch = loss["val"].argmin()
 
-    par_folder = "{:s}/parameters/".format(parameters["output_folder"])
+    tmp = parameters["output_folder"], parameters["name"], args.bs, args.lr
+    par_folder = "{:s}/parameters/{:s}.bs={:d}.lr={:s}/".format(*tmp)
     par_files = os.listdir(par_folder)
     best_parameters = None
     best_epoch = 0
     for file in par_files:
-        if parameters["name"] in file :
-            tmp = int(file.split("epoch=")[1].split(".")[0])
-            if tmp > best_epoch and tmp <= epoch :
-                best_parameters = file
-                best_epoch = tmp
+        #if parameters["name"] in file :
+        tmp = int(file.split("epoch=")[1].split(".")[0])
+        if tmp > best_epoch and tmp <= epoch :
+            best_parameters = file
+            best_epoch = tmp
 
     best_parameters = "{:s}/{:s}".format(par_folder,best_parameters)
-    print("\n\tbest file: {:s}".format(best_parameters))
+    print("\n\tbest file: {:s}\n".format(best_parameters))
 
     #####################
     # get model
@@ -91,10 +92,12 @@ def main():
 
     #####################
     # get train dataset
+    print("\n\tLoading datasets:")
     datasets = { "train":None, "val":None, "test":None }
 
     for name in ["train","val","test"]:
         file = "{:s}/dataset.{:s}.torch".format(parameters["folder"],name)
+        print("\t\t{:s}: {:s}".format(name,file))
         datasets[name] = torch.load(file)
 
     #####################

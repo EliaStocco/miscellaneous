@@ -70,22 +70,28 @@ def get_model(instructions,parameters:str):
     if not model :
         raise ValueError("Error instantiating class '{:s}' from module '{:s}'".format(cls,mod))
     
-    N = model.n_parameters()
-    print("\tLoaded model has {:d} parameters".format(N))
+    try : 
+        N = model.n_parameters()
+        print("\tLoaded model has {:d} parameters".format(N))
+    except :
+        print("\tCannot count parameters")
+    
 
     # total_parameters = sum(p.numel() for p in model.parameters())
 
     # Load the parameters from the saved file
     checkpoint = torch.load(parameters)
 
-    # Initialize a variable to store the total number of parameters
-    total_parameters = 0
+    # # Initialize a variable to store the total number of parameters
+    # total_parameters = 0
 
-    # Iterate through the state_dict and sum the sizes of the tensors
-    for key, value in checkpoint.items():
-        total_parameters += value.numel()
+    # # Iterate through the state_dict and sum the sizes of the tensors
+    # for key, value in checkpoint.items():
+    #     total_parameters += value.numel()
 
     # Update the model's state dictionary with the loaded parameters
+    # del checkpoint["_mean"]
+    # del checkpoint["_std"]
     model.load_state_dict(checkpoint)
     model.eval()
 

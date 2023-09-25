@@ -173,6 +173,7 @@ class iPIinterface(SabiaNetwork):
                             "edge_index" : False }
 
         X = self.make_datapoint(lattice=cell.T,positions=pos,requires_grad=requires_grad)
+        del X.edge_vec
 
         # y = self._get(what=what,X=X,**argv)
         if what.lower() not in ["bec","forces"]:

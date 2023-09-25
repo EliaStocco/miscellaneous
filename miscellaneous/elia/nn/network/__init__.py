@@ -1,1 +1,2 @@
 from .SabiaNetworkManager import SabiaNetworkManager as SabiaNetworkManager
+from .SabiaNetwork import SabiaNetwork as SabiaNetwork
