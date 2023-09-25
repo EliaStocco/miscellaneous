@@ -63,14 +63,6 @@ class MessagePassing(torch.nn.Module):
         first layer and hidden layers but not the output layer
     """
 
-    # irreps_node_input : o3.Irreps
-    # irreps_node_hidden : o3.Irreps
-    # irreps_node_output : o3.Irreps
-    # irreps_node_attr : o3.Irreps
-    # irreps_edge_attr : o3.Irreps
-    # debug : bool
-    # layers: torch.nn.ModuleList
-
     def __init__(
         self:T,
         irreps_node_input,
@@ -95,14 +87,6 @@ class MessagePassing(torch.nn.Module):
         self.irreps_edge_attr = o3.Irreps(irreps_edge_attr)
         self.debug = debug
         
-        if self.debug:
-            print()
-            print("MessagePassing.irreps_node_input:",self.irreps_node_input)
-            print("MessagePassing.irreps_node_hidden:",self.irreps_node_hidden)
-            print("MessagePassing.irreps_node_output:",self.irreps_node_output)
-            print("MessagePassing.irreps_node_attr:",self.irreps_node_attr)
-            print("MessagePassing.irreps_edge_attr:",self.irreps_edge_attr)
-
         irreps_node = self.irreps_node_input
 
         act = {
@@ -156,11 +140,12 @@ class MessagePassing(torch.nn.Module):
             else :
                 self.layers.append(Compose(conv, gate))
 
-        self.layers.append(
-            Convolution(
-                irreps_node, self.irreps_node_attr, self.irreps_edge_attr, self.irreps_node_output, fc_neurons, num_neighbors
-            )
-        )
+        conv = Convolution(irreps_node, self.irreps_node_attr, self.irreps_edge_attr, \
+                           self.irreps_node_output, fc_neurons, num_neighbors)
+        if batchnorm:
+            self.layers.append(Compose(conv,BatchNorm(irreps=conv.irreps_node_output,affine=True)))
+        else:
+            self.layers.append(conv)
 
         # self.layers = torch.nn.ModuleList(tmp)
         # self.layers = tmp
@@ -183,13 +168,12 @@ class MessagePassing(torch.nn.Module):
         pass
 
     def forward(self:T, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
-        if self.debug:
-            print("MessagePassing:1")
+
         for lay,drop in zip(self.layers,self.dropout):
             node_features = lay(node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars)
 
             # Apply dropout
-            # if self.dropout_probability > 0 :
-            node_features = drop(node_features)
+            if self.dropout_probability > 0 :
+                node_features = drop(node_features)
 
         return node_features

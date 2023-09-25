@@ -18,8 +18,8 @@ def prepare_dataset(ref_index:int,\
                     variables:list,\
                     folder:str="data",\
                     opts:dict=None,\
-                    requires_grad:bool=False,\
-                    phases:bool=False):
+                    requires_grad:bool=False):
+                    #phases:bool=False):
     
     # Attention:
     # Please keep 'requires_grad' = False
@@ -73,8 +73,8 @@ def prepare_dataset(ref_index:int,\
     # fix polarization
     if "D" in output :
         data.fix_polarization(same_lattice=same_lattice,inplace=True)
-        # _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
-        shift = [0,0,0]
+        _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
+        # shift = [0,0,0]
         if "dipole" in data.properties :
             del data.properties["dipole"]
 
@@ -99,8 +99,8 @@ def prepare_dataset(ref_index:int,\
     SAVE = opts["build"]["save"]
     if reference :
         name = "dataset-delta"
-    elif phases :
-        name = "dataset-phases"
+    # elif phases :
+    #     name = "dataset-phases"
     else :
         name = "dataset"
     savefile = "{:s}/{:s}".format(folder,name)
@@ -123,13 +123,13 @@ def prepare_dataset(ref_index:int,\
                                                             max_radius = max_radius,\
                                                             output=output,\
                                                             requires_grad = requires_grad)
-            elif phases :
-                dataset = make_dataset_phases(  data = data,
-                                                max_radius = max_radius,\
-                                                output=output,\
-                                                requires_grad = requires_grad)
-                # dipole = torch.full((3,),torch.nan)
-                pos = torch.full((3,),torch.nan)
+            # elif phases :
+            #     dataset = make_dataset_phases(  data = data,
+            #                                     max_radius = max_radius,\
+            #                                     output=output,\
+            #                                     requires_grad = requires_grad)
+            #     # dipole = torch.full((3,),torch.nan)
+            #     pos = torch.full((3,),torch.nan)
             else :
                 dataset = make_dataset( data=data,\
                                         max_radius=max_radius,\

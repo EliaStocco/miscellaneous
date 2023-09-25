@@ -37,7 +37,7 @@ default_values = {
         "lmax"           : 2,
         "name"           : "untitled",
         "reference"      : True,
-        "phases"         : False,
+        # "phases"         : False,
         "output"         : "D",
         "max_radius"     : 6.0,
         "folder"         : "LiNbO3",
@@ -109,12 +109,12 @@ def get_args():
         default=default_values["reference"]
     )
 
-        # Argument for "reference"
-    parser.add_argument(
-        "--phases", action="store",type=str2bool, metavar="\buse_phases",
-        help="some description here (default: True)",
-        default=default_values["phases"]
-    )
+    # # Argument for "reference"
+    # parser.add_argument(
+    #     "--phases", action="store",type=str2bool, metavar="\buse_phases",
+    #     help="some description here (default: True)",
+    #     default=default_values["phases"]
+    # )
 
     # Argument for "output"
     parser.add_argument(
@@ -245,7 +245,7 @@ def get_args():
 
 def check_parameters(parameters):
     
-    str2bool_keys = ["reference","phases","random","grid"]
+    str2bool_keys = ["reference","random","grid"] # "phases"
     for k in str2bool_keys : 
         parameters[k] = str2bool(parameters[k])
     
@@ -255,11 +255,11 @@ def check_parameters(parameters):
     if parameters["max_time"] <= 0 :
         parameters["max_time"] = -1
 
-    if parameters["reference"] and parameters["phases"]:
-        raise ValueError("You can use 'reference'=true or 'phases'=true, not both.")
+    # if parameters["reference"] and parameters["phases"]:
+    #     raise ValueError("You can use 'reference'=true or 'phases'=true, not both.")
     
-    if parameters["output"] != "D" and parameters["phases"]:
-        raise ValueError("You can use 'phases'=true only with 'output'='D'")
+    # if parameters["output"] != "D" and parameters["phases"]:
+    #     raise ValueError("You can use 'phases'=true only with 'output'='D'")
 
 #####################
 
@@ -327,7 +327,7 @@ def main():
                                                   output=parameters["output"],\
                                                   variables=variables,\
                                                   folder=parameters["folder"],\
-                                                  phases=parameters["phases"],\
+                                                  # phases=parameters["phases"],\
                                                   opts=opts)#,\
                                                   #requires_grad=False)#parameters["output"]=="EF")
     
@@ -345,43 +345,43 @@ def main():
 
     ##########################################
     # normalizing dataset
-    normalization_factors = {
-        "dipole":{
-            "mean":0,
-            "std":1
-        },
-        "energy":{
-            "mean":0,
-            "std":1
-        }
-    }
-
-    if "D" in parameters["output"] :
-        dipole = get_data_from_dataset(datasets["all"],"dipole")
-        x = torch.mean(dipole,dim=0)
-        normalization_factors["dipole"] = {
-            "mean" :x.tolist(),
-            "std" :torch.norm(dipole-x,dim=1).mean().tolist()
+    if False :
+        normalization_factors = {
+            "dipole":{
+                "mean":0,
+                "std":1
+            },
+            "energy":{
+                "mean":0,
+                "std":1
+            }
         }
 
-        print("\tmean: ",normalization_factors["dipole"]["mean"])
-        print("\t std: ",normalization_factors["dipole"]["std"])
+        if "D" in parameters["output"] :
+            dipole = get_data_from_dataset(datasets["all"],"dipole")
+            x = torch.mean(dipole,dim=0)
+            normalization_factors["dipole"] = {
+                "mean" :x.tolist(),
+                "std" :torch.norm(dipole-x,dim=1).mean().tolist()
+            }
 
-    elif "E" in parameters["output"] :
-        raise ValueError("not implemented yet")
-        # mean, std = compute_normalization_factors(datasets["train"],"energy")
-        # normalization_factors["energy"] = {"mean":mean,"std":std}
+            print("\tmean: ",normalization_factors["dipole"]["mean"])
+            print("\t std: ",normalization_factors["dipole"]["std"])
 
-    # normalization_factors, datasets = normalize_datasets(datasets)
-
-    match parameters["output"] :
-        case "D" :
-            normalization_factors = normalization_factors["dipole"]
-        case ["E","F"] :
-            normalization_factors = normalization_factors["energy"]
-        case _ :
+        elif "E" in parameters["output"] :
             raise ValueError("not implemented yet")
+            # mean, std = compute_normalization_factors(datasets["train"],"energy")
+            # normalization_factors["energy"] = {"mean":mean,"std":std}
 
+        # normalization_factors, datasets = normalize_datasets(datasets)
+
+        match parameters["output"] :
+            case "D" :
+                normalization_factors = normalization_factors["dipole"]
+            case ["E","F"] :
+                normalization_factors = normalization_factors["energy"]
+            case _ :
+                raise ValueError("not implemented yet")
 
     ##########################################
     # visualize dataset
@@ -437,11 +437,11 @@ def main():
     metadata_kwargs = {
         "output":parameters["output"],
         "reference" : parameters["reference"],
-        "phases" : parameters["phases"],
-        "normalization" : normalization_factors,
+        # "phases" : parameters["phases"],
+        # "normalization" : normalization_factors,
         # "dipole" : dipole.tolist(),
         "pos" : pos.tolist(),  
-        "shift" : list(shift),
+        # "shift" : list(shift),
     }
 
     #####################
@@ -468,7 +468,8 @@ def main():
             "kwargs":copy(kwargs),
             "class":"SabiaNetworkManager",
             "module":"miscellaneous.elia.nn.network",
-            "chemical-symbols" : example.get_chemical_symbols()
+            "chemical-symbols" : example.get_chemical_symbols(),
+            "shift" : list(shift),
         }
     
     # del instructions["kwargs"]["normalization"]

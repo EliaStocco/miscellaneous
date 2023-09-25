@@ -100,7 +100,8 @@ class SabiaNetwork(torch.nn.Module):
     # Overwriting preprocess method of SimpleNetwork to adapt for periodic boundary data
     def preprocess(self, data: Union[Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
 
-        msg = "The author does no longer trust 'SabiaNetwork.preprocess' method. Use 'make_dataset.preprocess' instead."
+        msg = "The author does no longer trust 'SabiaNetwork.preprocess' method. \
+            Use 'make_dataset.preprocess' instead."
         
         if 'batch' in data:
             batch = data['batch']

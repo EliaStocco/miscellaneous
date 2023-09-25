@@ -23,8 +23,8 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
                  reference:bool=False,
                  # dipole:torch.tensor=None,
                  pos:torch.tensor=None,
-                 shift=None,
-                 phases:bool=False,
+                 # shift=None,
+                 # phases:bool=False,
                  **kwargs) -> None:
         
         # iPIinterface.__init__(self,**kwargs)
@@ -42,21 +42,21 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
         #self.R = torch.Tensor()
 
         self.reference = reference
-        self.shift = shift
+        # self.shift = shift
 
-        self.phases = phases
-        if self.output != "D" and self.phases :
-            raise ValueError("You can use 'phases'=true only with 'output'='D'")
+        # self.phases = phases
+        # if self.output != "D" and self.phases :
+        #     raise ValueError("You can use 'phases'=true only with 'output'='D'")
         
-        # overwrite loss
-        if self.phases :
-            self.loss = self.angular_loss
+        # # overwrite loss
+        # if self.phases :
+        #     self.loss = self.angular_loss
 
         # self.debug = debug
 
-        self._forces = None
-        self._bec = None
-        self._X = None
+        # self._forces = None
+        # self._bec = None
+        # self._X = None
 
         if self.reference :
 
@@ -82,223 +82,223 @@ class SabiaNetworkManager(EDFMethods4Training,iPIinterface):
         #         N += len(i.flatten())
         # return N
 
-    # https://stackoverflow.com/questions/2345944/exclude-objects-field-from-pickling-in-python
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Don't pickle baz
-        del state["_forces"]
-        del state["_bec"]
-        del state["_X"]
-        return state
+    # # https://stackoverflow.com/questions/2345944/exclude-objects-field-from-pickling-in-python
+    # def __getstate__(self):
+    #     state = self.__dict__.copy()
+    #     # Don't pickle baz
+    #     del state["_forces"]
+    #     del state["_bec"]
+    #     del state["_X"]
+    #     return state
 
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        # Add baz back since it doesn't exist in the pickle
-        self._forces = None
-        self._bec = None
-        self._X = None
-        pass
+    # def __setstate__(self, state):
+    #     self.__dict__.update(state)
+    #     # Add baz back since it doesn't exist in the pickle
+    #     self._forces = None
+    #     self._bec = None
+    #     self._X = None
+    #     pass
 
     @staticmethod
     def batch(X):
         return len(torch.unique(X.batch))
 
-    def _dummy_output_R(self: T, R:torch.tensor) -> torch.tensor:
-        """Potential Energy Surface
-        Input:
-            - R: (N,3) tensor of positions
-        Output:
-            - potential energy
-        Comments:
-            - this methods will be automatically differentiated to get the forces"""
+    # def _dummy_output_R(self: T, R:torch.tensor) -> torch.tensor:
+    #     """Potential Energy Surface
+    #     Input:
+    #         - R: (N,3) tensor of positions
+    #     Output:
+    #         - potential energy
+    #     Comments:
+    #         - this methods will be automatically differentiated to get the forces"""
 
-        # We reshape the positions so we can exploit the batches
-        self._X.pos = R.reshape((-1,3))
+    #     # We reshape the positions so we can exploit the batches
+    #     self._X.pos = R.reshape((-1,3))
 
-        # I need to delete this attribute since the NN depends on the
-        # relative positions 'edge_vec', but these HAVE to be "related" 
-        # to the input 'R', so we simply recompute them.
+    #     # I need to delete this attribute since the NN depends on the
+    #     # relative positions 'edge_vec', but these HAVE to be "related" 
+    #     # to the input 'R', so we simply recompute them.
 
-        if hasattr(self._X,"edge_vec"):
-            del self._X.edge_vec
+    #     if hasattr(self._X,"edge_vec"):
+    #         del self._X.edge_vec
 
-        # Compute the output
-        y = self(self._X)
+    #     # Compute the output
+    #     y = self(self._X)
 
-        return y
+    #     return y
     
-    def energy(self: T, X) -> torch.tensor:
+    # def energy(self: T, X) -> torch.tensor:
 
-        if self.output not in ["E","ED","EDF"]:
-            raise ValueError("'energy' not present in the output of this 'torch.nn.Module'")
+    #     if self.output not in ["E","ED","EDF"]:
+    #         raise ValueError("'energy' not present in the output of this 'torch.nn.Module'")
         
-        # Compute the output
-        y = self(X)
+    #     # Compute the output
+    #     y = self(X)
         
-        # Extract the energy in case we are evaluating also the dipole
-        y = y if self.output == "E" else y[:,0]
+    #     # Extract the energy in case we are evaluating also the dipole
+    #     y = y if self.output == "E" else y[:,0]
 
-        return y
+    #     return y
 
-    def _pes(self: T, R:torch.tensor) -> torch.tensor:
-        """Return the potential energy for a given set of nuclear coordinates."""
+    # def _pes(self: T, R:torch.tensor) -> torch.tensor:
+    #     """Return the potential energy for a given set of nuclear coordinates."""
 
-        if self.output not in ["E","ED","EDF","EF"]:
-            raise ValueError("'energy' not present in the output of this 'torch.nn.Module'")
+    #     if self.output not in ["E","ED","EDF","EF"]:
+    #         raise ValueError("'energy' not present in the output of this 'torch.nn.Module'")
 
-        # Compute the output
-        y = self._dummy_output_R(R)
+    #     # Compute the output
+    #     y = self._dummy_output_R(R)
         
-        # Extract the energy in case we are evaluating also the dipole
-        y = y if self.output == "E" else y[:,0]
+    #     # Extract the energy in case we are evaluating also the dipole
+    #     y = y if self.output == "E" else y[:,0]
 
-        return y
+    #     return y
 
-    def forces(self: T, X, recompute=False) -> torch.tensor:
-        """Compute the forces by automatic differentiating the energy"""
+    # def forces(self: T, X, recompute=False) -> torch.tensor:
+    #     """Compute the forces by automatic differentiating the energy"""
 
-        # Compute the jacobian of the energy
-        if ( not hasattr(self,"_forces") or self._forces is None) or recompute:
-            self._forces = jacrev(self._pes)
+    #     # Compute the jacobian of the energy
+    #     if ( not hasattr(self,"_forces") or self._forces is None) or recompute:
+    #         self._forces = jacrev(self._pes)
 
-        # Save the information into a global variable
-        # that will be used inside 'self._pes'
-        self._X = X
+    #     # Save the information into a global variable
+    #     # that will be used inside 'self._pes'
+    #     self._X = X
 
-        # Reshape the positions according to the batches
-        batch_size = self.batch(X)
-        R = X.pos.reshape((batch_size,-1,3))
+    #     # Reshape the positions according to the batches
+    #     batch_size = self.batch(X)
+    #     R = X.pos.reshape((batch_size,-1,3))
 
-        # I do not know if I actually need this line
-        #R.requires_grad_(True)
+    #     # I do not know if I actually need this line
+    #     #R.requires_grad_(True)
 
-        # Evaluate the jacobian.
-        # The positions are reshaped inside 'self._pes', but in this way
-        # we get 'y' with the batches in a separate dimension/axis.
-        y = self._forces(R)
+    #     # Evaluate the jacobian.
+    #     # The positions are reshaped inside 'self._pes', but in this way
+    #     # we get 'y' with the batches in a separate dimension/axis.
+    #     y = self._forces(R)
 
-        # Since 'jacrev' can not distinguish between batches and positions
-        # the first dimension/axis of 'y' is spurious:
-        # R.shape = [batch,Na,3]  -->  y = self._forces(R).shape = [batch,batch,Na,3]
-        # with y[i,i] = ['non zero'] but y[i,j] = [0,...0]
-        #  
-        # It's easier to get this bigger tensor and extract its diagonal (y --> y[i,i])
-        # than make a 'for' loop since we should modify also all the attributes of 'self._X'!
+    #     # Since 'jacrev' can not distinguish between batches and positions
+    #     # the first dimension/axis of 'y' is spurious:
+    #     # R.shape = [batch,Na,3]  -->  y = self._forces(R).shape = [batch,batch,Na,3]
+    #     # with y[i,i] = ['non zero'] but y[i,j] = [0,...0]
+    #     #  
+    #     # It's easier to get this bigger tensor and extract its diagonal (y --> y[i,i])
+    #     # than make a 'for' loop since we should modify also all the attributes of 'self._X'!
 
-        # We need to take the diagonal of 'y' since one dimension is spurious as we said
-        y = torch.diagonal(y,offset=0,dim1=0,dim2=1)
+    #     # We need to take the diagonal of 'y' since one dimension is spurious as we said
+    #     y = torch.diagonal(y,offset=0,dim1=0,dim2=1)
         
-        # The 'diagonalized' dimension is put at the end of the tensor 
-        # according to 'torch.diagonal' documentation.
-        # Then we simply permute the tensor dimensions/axis .
-        y = y.permute(2,0,1)
+    #     # The 'diagonalized' dimension is put at the end of the tensor 
+    #     # according to 'torch.diagonal' documentation.
+    #     # Then we simply permute the tensor dimensions/axis .
+    #     y = y.permute(2,0,1)
 
-        # Reshape the forces so we have only two axis: 
-        # - the first for the batches
-        # - the second with all the coordinates
-        y = y.reshape((batch_size,-1))
+    #     # Reshape the forces so we have only two axis: 
+    #     # - the first for the batches
+    #     # - the second with all the coordinates
+    #     y = y.reshape((batch_size,-1))
 
-        return y
+    #     return y
         
-    def dipole(self: T, X) -> torch.tensor:
-        """Return the dipole of the system"""
+    # def dipole(self: T, X) -> torch.tensor:
+    #     """Return the dipole of the system"""
 
-        if self.output not in ["D","ED","EDF"]:
-            raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
+    #     if self.output not in ["D","ED","EDF"]:
+    #         raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
         
-        # Compute the output
-        y = self(X)
+    #     # Compute the output
+    #     y = self(X)
         
-        # Extract the dipole in case we are evaluating also the energy (and the forces)
-        if self.output in ["ED","EDF"]:
-            y = y[:,1:4]
+    #     # Extract the dipole in case we are evaluating also the energy (and the forces)
+    #     if self.output in ["ED","EDF"]:
+    #         y = y[:,1:4]
 
-        return y
+    #     return y
         
-        # batch_size = self.batch(X)
-        # y = torch.zeros((batch_size,3), requires_grad=requires_grad)
+    #     # batch_size = self.batch(X)
+    #     # y = torch.zeros((batch_size,3), requires_grad=requires_grad)
 
-        # for n in range(batch_size):
+    #     # for n in range(batch_size):
 
-        #     # prepare data
-        #     x,R = self._prepare(X,n)
+    #     #     # prepare data
+    #     #     x,R = self._prepare(X,n)
         
-        #     tmp = self(self._X)
+    #     #     tmp = self(self._X)
 
-        #     if self.output == "D":
-        #         y.data[n,:] = tmp
-        #     elif self.output in ["ED","EDF"]:
-        #         y.data[n,:] = tmp[:,1:4]
+    #     #     if self.output == "D":
+    #     #         y.data[n,:] = tmp
+    #     #     elif self.output in ["ED","EDF"]:
+    #     #         y.data[n,:] = tmp[:,1:4]
 
-        # return y
+    #     # return y
 
-    def _dipole(self: T, R:torch.tensor) -> torch.tensor:
-        """Return the dipole of the system for a given set of nuclear coordinates."""
+    # def _dipole(self: T, R:torch.tensor) -> torch.tensor:
+    #     """Return the dipole of the system for a given set of nuclear coordinates."""
 
-        if self.output not in ["D","ED","EDF"]:
-            raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
+    #     if self.output not in ["D","ED","EDF"]:
+    #         raise ValueError("'dipole' not present in the output of this 'torch.nn.Module'")
 
-        # Compute the output
-        y = self._dummy_output_R(R)
+    #     # Compute the output
+    #     y = self._dummy_output_R(R)
         
-        # Extract the dipole in case we are evaluating also the energy (and the forces)
-        if self.output in ["ED","EDF"]:
-            y = y[:,1:4]
-        return y
+    #     # Extract the dipole in case we are evaluating also the energy (and the forces)
+    #     if self.output in ["ED","EDF"]:
+    #         y = y[:,1:4]
+    #     return y
 
-    def BEC(self: T, X, recompute=False) -> torch.tensor:
-        """Compute the Born Effective Charges tensors by automatic differentiating the polarization"""
+    # def BEC(self: T, X, recompute=False) -> torch.tensor:
+    #     """Compute the Born Effective Charges tensors by automatic differentiating the polarization"""
 
-        # Compute the jacobian of the dipole: 
-        # Z^i_j = \frac{\Omega}{q_e} \frac{\partial P^i}{\partial R_j}
-        #       = \frac{1}{q_e} \frac{\partial d^i}{\partial R_j}
-        # We assume that the dipole and the coordinates are given in atomic units
-        # then q_e = 1 and we can compute Z as directly the jacobian of the dipole.
-        #
-        if ( not hasattr(self,"_bec") or self._bec is None) or recompute:
-            self._bec = jacrev(self._dipole)
+    #     # Compute the jacobian of the dipole: 
+    #     # Z^i_j = \frac{\Omega}{q_e} \frac{\partial P^i}{\partial R_j}
+    #     #       = \frac{1}{q_e} \frac{\partial d^i}{\partial R_j}
+    #     # We assume that the dipole and the coordinates are given in atomic units
+    #     # then q_e = 1 and we can compute Z as directly the jacobian of the dipole.
+    #     #
+    #     if ( not hasattr(self,"_bec") or self._bec is None) or recompute:
+    #         self._bec = jacrev(self._dipole)
 
-        # Save the information into a global variable
-        # that will be used inside 'self._pes'
-        self._X = X
+    #     # Save the information into a global variable
+    #     # that will be used inside 'self._pes'
+    #     self._X = X
 
-        # Reshape the positions according to the batches
-        batch_size = self.batch(X)
-        R = X.pos.reshape((batch_size,-1,3))
+    #     # Reshape the positions according to the batches
+    #     batch_size = self.batch(X)
+    #     R = X.pos.reshape((batch_size,-1,3))
 
-        # I do not know if I actually need this line
-        #R.requires_grad_(True)
+    #     # I do not know if I actually need this line
+    #     #R.requires_grad_(True)
 
-        # Evaluate the jacobian.
-        # The positions are reshaped inside 'self._pes', but in this way
-        # we get 'y' with the batches in a separate dimension/axis.
-        y = self._bec(R)
+    #     # Evaluate the jacobian.
+    #     # The positions are reshaped inside 'self._pes', but in this way
+    #     # we get 'y' with the batches in a separate dimension/axis.
+    #     y = self._bec(R)
 
-        # Since 'jacrev' can not distinguish between batches and positions
-        # the first dimension/axis of 'y' is spurious:
-        # R.shape = [batch,Na,3]  -->  y = self._forces(R).shape = [batch,batch,Na,3]
-        # with y[i,i] = ['non zero'] but y[i,j] = [0,...0]
-        #  
-        # It's easier to get this bigger tensor and extract its diagonal (y --> y[i,i])
-        # than make a 'for' loop since we should modify also all the attributes of 'self._X'!
+    #     # Since 'jacrev' can not distinguish between batches and positions
+    #     # the first dimension/axis of 'y' is spurious:
+    #     # R.shape = [batch,Na,3]  -->  y = self._forces(R).shape = [batch,batch,Na,3]
+    #     # with y[i,i] = ['non zero'] but y[i,j] = [0,...0]
+    #     #  
+    #     # It's easier to get this bigger tensor and extract its diagonal (y --> y[i,i])
+    #     # than make a 'for' loop since we should modify also all the attributes of 'self._X'!
 
-        # put all the coordinates in the last axis
-        y = y.reshape((batch_size,3,batch_size,-1))
+    #     # put all the coordinates in the last axis
+    #     y = y.reshape((batch_size,3,batch_size,-1))
 
-        # We need to take the diagonal of 'y' since one dimension is spurious as we said
-        y = torch.diagonal(y,offset=0,dim1=0,dim2=2)
+    #     # We need to take the diagonal of 'y' since one dimension is spurious as we said
+    #     y = torch.diagonal(y,offset=0,dim1=0,dim2=2)
         
-        # The 'diagonalized' dimension is put at the end of the tensor 
-        # according to 'torch.diagonal' documentation.
-        # Then we simply permute the tensor dimensions/axis .
-        y = y.permute(2,0,1)
+    #     # The 'diagonalized' dimension is put at the end of the tensor 
+    #     # according to 'torch.diagonal' documentation.
+    #     # Then we simply permute the tensor dimensions/axis .
+    #     y = y.permute(2,0,1)
 
-        # Reshape the forces so we have only two axis: 
-        # - the first for the batches
-        # - the second with all the coordinates
-        # y = y.reshape((batch_size,3,-1))
+    #     # Reshape the forces so we have only two axis: 
+    #     # - the first for the batches
+    #     # - the second with all the coordinates
+    #     # y = y.reshape((batch_size,3,-1))
 
-        return y
+    #     return y
 
     # def check_equivariance(self:T,X: Data,angles=None)->np.ndarray:
 

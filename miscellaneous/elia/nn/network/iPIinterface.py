@@ -30,18 +30,18 @@ class iPIinterface(SabiaNetwork):
     # def reference(self): 
     #     pass
 
-    def __init__(self:T,max_radius:float,normalization:dict=None,**kwargs):
+    def __init__(self:T,max_radius:float,**kwargs):
 
         super().__init__(max_radius=max_radius,**kwargs)
 
-        if normalization is None :
-            normalization = {
-                    "mean" : torch.tensor([0.,0.,0.]),
-                    "std"  : torch.tensor(1.0),
-                }
-        else :
-            normalization["mean"] = torch.tensor(normalization["mean"])
-            normalization["std"]  = torch.tensor(normalization["std"])
+        # if normalization is None :
+        #     normalization = {
+        #             "mean" : torch.tensor([0.,0.,0.]),
+        #             "std"  : torch.tensor(1.0),
+        #         }
+        # else :
+        #     normalization["mean"] = torch.tensor(normalization["mean"])
+        #     normalization["std"]  = torch.tensor(normalization["std"])
 
             # normalization = {
             #     "energy":{
@@ -54,8 +54,8 @@ class iPIinterface(SabiaNetwork):
             #     },
             # }
 
-        self._mean = torch.nn.Parameter(normalization["mean"])
-        self._std  = torch.nn.Parameter(normalization["std"])
+        # self._mean = torch.nn.Parameter(normalization["mean"])
+        # self._std  = torch.nn.Parameter(normalization["std"])
         #self._mean  = torch.tensor(normalization["mean"])
         #self._std   = torch.tensor(normalization["std"])
         
@@ -77,9 +77,9 @@ class iPIinterface(SabiaNetwork):
         
         pass
 
-    def forward(self:T,data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])-> torch.Tensor:
-        y = super().forward(data)
-        return y * self._std  + self._mean
+    # def forward(self:T,data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])-> torch.Tensor:
+    #     y = super().forward(data)
+    #     return y * self._std  + self._mean
             
         # if self.output == "D" :
         #     return y * self._std  # + self._mean
@@ -173,7 +173,7 @@ class iPIinterface(SabiaNetwork):
                             "edge_index" : False }
 
         X = self.make_datapoint(lattice=cell.T,positions=pos,requires_grad=requires_grad)
-        del X.edge_vec
+        # del X.edge_vec
 
         # y = self._get(what=what,X=X,**argv)
         if what.lower() not in ["bec","forces"]:

@@ -1549,12 +1549,12 @@ class MicroState:
                     # print("{:s} is odd.".format(num))
             
             shift = [ int((u+d)/2.) for u,d in zip(up,dw) ]
-            for n in range(3):
-                phases[:,n] -= shift[n]
+            # for n in range(3):
+            #     phases[:,n] -= shift[n]
 
-        else :
-            for n in range(3):
-                phases[:,n] -= shift[n]
+        
+        for n in range(3):
+            phases[:,n] -= shift[n]
 
         if inplace :
             self.properties["phases"] = phases
