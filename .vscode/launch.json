@@ -15,7 +15,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             //"env": {"PYTHONPATH": "/u/elsto/miscellaneous/"},
-            "env": {"PYTHONPATH": "/home/stoccoel/google-personal/miscellaneous/:/home/stoccoel/google-personal/i-pi-sabia/drivers/" },
+            "env": {"PYTHONPATH": "/home/stoccoel/google-personal/miscellaneous/:/home/stoccoel/google-personal/i-pi-sabia/drivers/:/home/stoccoel/google-personal/i-pi-sabia/" },
             "args" : ["--input", "input.json"],
             //"args":["-m","e3nn_pol","-a","drive","-p","0000","-u","-o",
             //"../instructions.json,start.xyz,parameters.pth,False"],

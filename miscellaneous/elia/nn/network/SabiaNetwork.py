@@ -1,6 +1,7 @@
 from e3nn.math import soft_one_hot_linspace
 from torch_scatter import scatter
 from e3nn import o3
+from e3nn.nn import BatchNorm
 import torch
 import torch_geometric
 from torch_geometric.nn import radius_graph
@@ -89,11 +90,14 @@ class SabiaNetwork(torch.nn.Module):
             batchnorm=batchnorm
         )
 
+        # it's not clear to me what this class actually does
         self._sh = o3.SphericalHarmonics( range(self.lmax + 1), True, normalization="component")
 
-        self.irreps_in = self.mp.irreps_node_input
-        self.irreps_out = self.mp.irreps_node_output
+        # batch normalization to normalize output
+        self._bn = BatchNorm(irreps=self.mp.irreps_out,affine=True)
 
+        self.irreps_in  = self.mp.irreps_in
+        self.irreps_out = self.mp.irreps_out
 
         pass
     
@@ -162,7 +166,9 @@ class SabiaNetwork(torch.nn.Module):
         
         if self.pool_nodes:
             # Elia: understand what 'scatter' does
-            return scatter(node_outputs, batch, dim=0).div(self.num_nodes**0.5)
-        else:
-            return node_outputs
+            node_outputs = scatter(node_outputs, batch, dim=0).div(self.num_nodes**0.5)
+        # else:
+        #     y = node_outputs
+
+        return self._bn(node_outputs)
         

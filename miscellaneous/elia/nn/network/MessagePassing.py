@@ -31,6 +31,20 @@ class Compose(torch.nn.Module):
         self.first = first
         self.second = second
 
+        try :
+            self.irreps_in = self.first.irreps_in
+        except :
+            self.irreps_in = self.first.irreps_node_input
+        
+        try :
+            self.irreps_out = self.second.irreps_out
+        except :
+            try :
+                self.irreps_out = self.second.irreps_node_output
+            except : 
+                self.irreps_out = self.second.irreps
+
+
     def forward(self:C, *input):
         x = self.first(*input)
         return self.second(x)
@@ -86,6 +100,10 @@ class MessagePassing(torch.nn.Module):
         self.irreps_node_attr = o3.Irreps(irreps_node_attr)
         self.irreps_edge_attr = o3.Irreps(irreps_edge_attr)
         self.debug = debug
+
+        # redundant, but same 'attribute' for all the classes
+        self.irreps_in  = self.irreps_node_input
+        self.irreps_out = self.irreps_node_output
         
         irreps_node = self.irreps_node_input
 
@@ -134,18 +152,15 @@ class MessagePassing(torch.nn.Module):
             )
             irreps_node = gate.irreps_out
             if batchnorm :
-                bn = BatchNorm(irreps=conv.irreps_node_output,affine=True)
+                bn = BatchNorm(irreps=conv.irreps_out,affine=True)
                 tmp = Compose(conv, bn)
                 self.layers.append(Compose(tmp, gate))
             else :
                 self.layers.append(Compose(conv, gate))
 
         conv = Convolution(irreps_node, self.irreps_node_attr, self.irreps_edge_attr, \
-                           self.irreps_node_output, fc_neurons, num_neighbors)
-        if batchnorm:
-            self.layers.append(Compose(conv,BatchNorm(irreps=conv.irreps_node_output,affine=True)))
-        else:
-            self.layers.append(conv)
+                           self.irreps_out, fc_neurons, num_neighbors)
+        self.layers.append(conv)
 
         # self.layers = torch.nn.ModuleList(tmp)
         # self.layers = tmp
@@ -159,11 +174,17 @@ class MessagePassing(torch.nn.Module):
         self.dropout = torch.nn.ModuleList()
         for lay in self.layers :
             try :
-                self.dropout.append(Dropout(irreps=lay.irreps_node_output,p=dropout_probability))
+                self.dropout.append(Dropout(irreps=lay.irreps_out,p=dropout_probability))
             except:
                 self.dropout.append(Dropout(irreps=lay.second._irreps_out,p=dropout_probability))
 
         self.dropout_probability = dropout_probability
+
+        
+        # if batchnorm:
+        #     self.layers.append(Compose(conv,BatchNorm(irreps=conv.irreps_node_output,affine=True)))
+        # else:
+        #     self.layers.append(conv)
 
         pass
 

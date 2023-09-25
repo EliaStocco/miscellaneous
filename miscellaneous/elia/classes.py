@@ -191,7 +191,7 @@ class MicroState:
         if "positions" in toread:
 
             print("{:s}reading positions from file '{:s}'".format(MicroStatePrivate.tab,instructions.positions))
-            positions0 = io.read(instructions.positions,index=":",units="bohr")
+            positions0 = io.read(instructions.positions,index=":")
             
             tmp = positions0[0]
             atoms = tmp.get_chemical_symbols()
@@ -1212,7 +1212,7 @@ class MicroState:
             out = [None]*self.Nconf
             N = np.arange(len(out))
             for n,t,p,c in zip(N,self.types,self.positions,self.cell):
-                out[n] = Atoms(symbols=t, positions=p.reshape(-1,3), cell=c.T, pbc=True,units="bohr",**argv)
+                out[n] = Atoms(symbols=t, positions=p.reshape(-1,3), cell=c.T, pbc=True,**argv)
 
         if inplace and out is not None:
             self.ase = out

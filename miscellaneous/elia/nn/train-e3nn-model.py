@@ -453,6 +453,7 @@ def main():
         "num_neighbors":2,                      # scaling factor based on the typical number of neighbors
         "pool_nodes":True,                      # We pool nodes to predict total energy
         "num_nodes":2,
+        "number_of_basis" : 10,
         "mul":parameters["mul"],
         "layers":parameters["layers"],
         "lmax":parameters["lmax"],

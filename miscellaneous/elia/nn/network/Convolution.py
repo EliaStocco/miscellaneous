@@ -63,18 +63,21 @@ class Convolution(torch.nn.Module):
         self.num_neighbors = num_neighbors
         self.debug = debug
 
-        if self.debug: 
-            print()
-            print("Convolution.irreps_node_input (in-1)",self.irreps_node_input)
-            print("Convolution.irreps_node_attr (in-2)",self.irreps_node_attr)
-            print("Convolution.irreps_node_output (out)",self.irreps_node_output)
+        # redundant, but same 'attribute' for all the classes
+        self.irreps_out = self.irreps_node_output
+
+        # if self.debug: 
+        #     print()
+        #     print("Convolution.irreps_node_input (in-1)",self.irreps_node_input)
+        #     print("Convolution.irreps_node_attr (in-2)",self.irreps_node_attr)
+        #     print("Convolution.irreps_node_output (out)",self.irreps_node_output)
         self.sc = FullyConnectedTensorProduct(self.irreps_node_input, self.irreps_node_attr, self.irreps_node_output)
         # self.sc.visualize()
 
-        if self.debug: 
-            print("Convolution.irreps_node_input (in-1)",self.irreps_node_input)
-            print("Convolution.irreps_node_attr (in-2)",self.irreps_node_attr)
-            print("Convolution.irreps_node_input (out)",self.irreps_node_input)
+        # if self.debug: 
+        #     print("Convolution.irreps_node_input (in-1)",self.irreps_node_input)
+        #     print("Convolution.irreps_node_attr (in-2)",self.irreps_node_attr)
+        #     print("Convolution.irreps_node_input (out)",self.irreps_node_input)
         self.lin1 = FullyConnectedTensorProduct(self.irreps_node_input, self.irreps_node_attr, self.irreps_node_input)
 
         irreps_mid = []
