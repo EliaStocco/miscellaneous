@@ -59,9 +59,11 @@ def prepare_dataset(ref_index:int,\
             instructions = {
                 "properties" : find_files_by_pattern (folder,"properties",1), # "{:s}/i-pi.properties.out".format(folder),\
                 "positions":infile,
-                "cells":infile,
+                # "cells":infile,
                 "types":infile
                 }
+            if pbc :
+                instructions["cells"] = infile
             if "F" in output : 
                 instructions["forces"] = find_files_by_pattern (folder,"forces",1) # "{:s}/i-pi.forces_0.xyz".format(folder)
         data = MicroState(instructions)
