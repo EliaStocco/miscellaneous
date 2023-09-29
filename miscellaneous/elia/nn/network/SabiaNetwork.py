@@ -7,6 +7,7 @@ import torch_geometric
 from torch_geometric.nn import radius_graph
 from torch_geometric.data import Data
 from .MessagePassing import MessagePassing
+from miscellaneous.elia.nn.dataset import compute_edge_vec
 import warnings
 from typing import Dict, Union
 from typing import TypeVar
@@ -30,25 +31,25 @@ class SabiaNetwork(torch.nn.Module):
     # irreps_in : o3.Irreps
     # irreps_out : o3.Irreps
 
-    def __init__(self,
-        irreps_in,
-        irreps_out,
-        max_radius,
-        num_neighbors,
-        num_nodes,
-        irreps_node_attr="0e",
-        mul=10,
-        layers=1,
-        lmax=1,
-        number_of_basis=10,
-        p=["o","e"],
-        debug=False,
-        pool_nodes=True,
-        dropout_probability=0,
-        batchnorm=True,
-        # default_dtype=torch.float64,
-        **argv) -> None:
-        
+    def __init__(self:T,
+                irreps_in:str,
+                irreps_out:str,
+                max_radius:float,
+                num_neighbors:int,
+                num_nodes:int,
+                irreps_node_attr:str="0e",
+                mul:int=10,
+                layers:int=1,
+                lmax:int=1,
+                number_of_basis:int=10,
+                p:list=["o","e"],
+                debug:bool=False,
+                pool_nodes:bool=True,
+                dropout_probability:float=0,
+                batchnorm:bool=True,
+                pbc:bool=True,
+                **argv) -> None:
+                
         super().__init__(**argv)
 
         # self.default_dtype = default_dtype
@@ -59,24 +60,19 @@ class SabiaNetwork(torch.nn.Module):
         self.num_nodes = num_nodes
         self.pool_nodes = pool_nodes
         self.debug = debug
+        self.pbc = pbc
 
         # https://docs.e3nn.org/en/latest/guide/periodic_boundary_conditions.html
         if self.pool_nodes :
             self.num_nodes = 1
-
-        # if irreps_node_attr is None :
-        #     irreps_node_attr = irreps_in
-
         
-        if self.debug: print("irreps_in:",irreps_in)
-        if self.debug: print("irreps_out:",irreps_out)
+        # if self.debug: print("irreps_in:",irreps_in)
+        # if self.debug: print("irreps_out:",irreps_out)
 
         tmp = ["{:d}x{:d}{:s}".format(mul,l,pp) for l in range(lmax + 1) for pp in p]
         irreps_node_hidden = o3.Irreps("+".join(tmp))
-        #irreps_node_hidden = o3.Irreps([(mul, (l, pp)) for l in range(lmax + 1) for pp in p])
-        if self.debug: print("irreps_node_hidden:",tmp)
-        #irreps_node_hidden = o3.Irreps([(mul, (l, 1)) for l in range(lmax + 1) ])
-
+        # if self.debug: print("irreps_node_hidden:",tmp)
+        
         self.mp = MessagePassing(
             irreps_node_input=irreps_in,
             irreps_node_hidden=irreps_node_hidden,
@@ -130,12 +126,21 @@ class SabiaNetwork(torch.nn.Module):
             
             # We need to compute this in the computation graph to backprop to positions
             # We are computing the relative distances + unit cell shifts from periodic boundaries
-            edge_batch = batch[edge_src]
-            edge_vec = (data['pos'][edge_dst]
-                        - data['pos'][edge_src]
-                        + torch.einsum('ni,nij->nj',
-                                        data['edge_shift'].type(self.default_dtype ),
-                                    data['lattice'][edge_batch].type(self.default_dtype )))
+            edge_vec = compute_edge_vec(pos=data['pos'],
+                                        lattice=data['lattice'],       # None if pbc=False #if self.pbc else None,
+                                        edge_shift=data['edge_shift'], # None if pbc=False #if self.pbc else None,
+                                        edge_src=edge_src,
+                                        edge_dst=edge_dst,
+                                        pbc=self.pbc)
+            # edge_batch = batch[edge_src]
+            # if self.pbc : 
+            #     edge_vec = (data['pos'][edge_dst]
+            #                 - data['pos'][edge_src]
+            #                 + torch.einsum('ni,nij->nj',
+            #                             data['edge_shift'].type(self.default_dtype),
+            #                             data['lattice'][edge_batch].type(self.default_dtype)))
+            # else :
+            #     edge_vec = data['pos'][edge_dst] - data['pos'][edge_src]
 
         return batch, data['x'], edge_src, edge_dst, edge_vec
 

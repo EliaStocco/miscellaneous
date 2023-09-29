@@ -4,6 +4,8 @@ import importlib
 from ase.io import read 
 import numpy as np
 from prettytable import PrettyTable
+import subprocess
+from miscellaneous.elia.functions import add_default
 
 def count_parameters(model):
     table = PrettyTable(["Modules", "Parameters"])
@@ -99,3 +101,44 @@ def get_model(instructions,parameters:str):
     model._symbols = instructions["chemical-symbols"]
 
     return model
+
+def get_function(module,function):
+    # Step 4: Use importlib to import the module dynamically
+    module = importlib.import_module(module)
+
+    # Step 5: Call the function from the loaded module
+    function = getattr(module, function)
+    
+    return function
+
+def bash_as_function(script_path,opts=None):
+    """run a bash script by calling this function"""
+    default = {
+        "print" : False
+    }
+    opts = add_default(opts,default)
+    def wrapper():
+        try:
+            # Run the Bash script using subprocess
+            completed_process = subprocess.run(
+                ['bash', script_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                shell=False,  # Set this to True if you want to use shell features like piping
+                env=None,  # Use the current environment
+            )
+
+            # Check the return code to see if the script executed successfully
+            if completed_process.returncode == 0:
+                if opts["print"] : print("Script executed successfully.")
+                if opts["print"] : print("Script output:")
+                if opts["print"] : print(completed_process.stdout)
+            else:
+                if opts["print"] : print("Script encountered an error.")
+                if opts["print"] : print("Error output:")
+                if opts["print"] : print(completed_process.stderr)
+        except:
+            print("Error running script '{:s}'".format(script_path))            
+        return
+    return wrapper

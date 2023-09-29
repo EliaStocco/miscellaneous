@@ -12,16 +12,58 @@ import os
 import itertools
 import numpy as np
 import re
+import os
+# import fnmatch
 import contextlib
 import sys
 #from ipi.engine.properties import Properties
 from ipi.utils.units import unit_to_internal, unit_to_user
 
-__all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations',
-            'str2bool','get_one_file_in_folder','get_property_header','getproperty',
-            'vector_type', 'output_folder', 'save2xyz', 'print_cell', 'convert',
-            'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
-            'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector','remove_files_in_folder']
+# __all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations',
+#             'str2bool','get_one_file_in_folder','get_property_header','getproperty',
+#             'vector_type', 'output_folder', 'save2xyz', 'print_cell', 'convert',
+#             'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
+#             'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector','remove_files_in_folder',
+#             'get_line_with_pattern']
+
+def find_files_by_pattern(folder, pattern, expected_count=None,file_extension=None):
+    """
+    Find files in a folder that match a specified pattern and optional file extension.
+
+    Args:
+        folder (str): The path to the folder to search in.
+        pattern (str): The file pattern to match (e.g., "*.txt").
+        expected_count (int, optional): The expected number of matching files.
+            If provided, an error will be raised if the count doesn't match.
+        file_extension (str, optional): The file extension to restrict the search to.
+
+    Returns:
+        list: A list of matching file paths.
+
+    Raises:
+        ValueError: If the expected_count is provided and doesn't match the actual count.
+    """
+    files = os.listdir(folder)
+    matching_files = [None]*len(files)
+    n = 0
+    for filename in files :
+        if pattern in filename :
+            if file_extension is None or filename.endswith(file_extension):
+                matching_files[n] = filename
+                n += 1
+    
+    matching_files = matching_files[:n]
+
+    if expected_count is not None and len(matching_files) != expected_count:
+        raise ValueError(f"Expected {expected_count} files, but found {len(matching_files)}.")
+    
+    for n,file in enumerate(matching_files):
+        matching_files[n] = os.path.join(folder,file)
+
+    if expected_count is not None and expected_count == 1 :
+        matching_files = matching_files[0]
+
+    return matching_files
 
 def remove_files_in_folder(folder,extension):
 
@@ -465,3 +507,30 @@ def suppress_output(suppress=True):
                 sys.stdout = sys.__stdout__  # Restore the original stdout
     else:
         yield
+
+def get_line_with_pattern(file,pattern):
+    # Open the file and search for the line
+    try:
+        with open(file, 'r') as f:
+            for line in f:
+                if pattern in line:
+                    return line
+            else:
+                print("String '{:s}' not found in file '{:s}'".format(pattern,file))
+    except FileNotFoundError:
+        raise ValueError("File '{:s}' not found".format(file))
+    except :
+        raise ValueError("error in 'get_line_with_pattern'")
+
+def get_floats_from_line(line):
+    # Use regular expressions to find numbers in scientific or simple notation
+    pattern = "[-+]?\d*\.\d+(?:[eE][-+]?\d+)?|\b[-+]?\d+\b"
+    matches = re.findall(pattern, line)
+
+    output = list()
+
+    # Print the extracted numbers
+    for match in matches:
+        output.append(match)
+
+    return output

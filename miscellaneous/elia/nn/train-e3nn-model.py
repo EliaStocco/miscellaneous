@@ -56,7 +56,9 @@ default_values = {
         "batchnorm"      : True,
         "shift"          : None,
         "restart"        : False,
-        "recompute_loss" : False
+        "recompute_loss" : False,
+        "pbc"            : True,
+        "instructions"   : None
     }
 
 #####################
@@ -66,179 +68,157 @@ def get_args():
 
     parser = argparse.ArgumentParser(description=description)
 
-    # Argument for "input"
     parser.add_argument(
-        "-i", "--input", action="store", type=str, metavar="\bjson_file",
-        help="input json file", default=None
+        "-i", "--input", action="store", type=str, # metavar="\bjson_file",
+        # help="input json file", default=None
     )
 
-    # Argument for "input"
     parser.add_argument(
-        "--options", action="store", type=str, metavar="\boptions_file",
-        help="options json file", default=None
+        "--options", action="store", type=str, # metavar="\boptions_file",
+        # help="options json file", default=None
     )
 
-    # Argument for "mul"
     parser.add_argument(
-        "--mul", action="store", type=int, metavar="\bmultiplicity",
-        help="multiplicity for each node (default: 2)", default=default_values["mul"]
+        "--mul", action="store", type=int, # metavar="\bmultiplicity",
+        # help="multiplicity for each node (default: 2)", default=default_values["mul"]
     )
 
-    # Argument for "layers"
     parser.add_argument(
-        "--layers", action="store", type=int, metavar="\bn_layers",
-        help="number of layers (default: 6)", default=default_values["layers"]
+        "--layers", action="store", type=int, # metavar="\bn_layers",
+        # help="number of layers (default: 6)", default=default_values["layers"]
     )
 
-    # Argument for "lmax"
     parser.add_argument(
-        "--lmax", action="store", type=int, metavar="\blmax",
-        help="some description here (default: 2)", default=default_values["lmax"]
+        "--lmax", action="store", type=int, # metavar="\blmax",
+        # help="some description here (default: 2)", default=default_values["lmax"]
     )
 
-    # Argument for "name"
     parser.add_argument(
-        "--name", action="store", type=str, metavar="\bname",
-        help="some description here (default: 'untitled')", default=default_values["name"]
+        "--name", action="store", type=str, # metavar="\bname",
+        # help="some description here (default: 'untitled')", default=default_values["name"]
     )
 
-    # Argument for "reference"
     parser.add_argument(
-        "--reference", action="store",type=str2bool, metavar="\buse_ref",
-        help="some description here (default: True)",
+        "--reference", action="store",type=str2bool, # metavar="\buse_ref",
+        # help="some description here (default: True)",
         default=default_values["reference"]
     )
 
-    # # Argument for "reference"
-    # parser.add_argument(
-    #     "--phases", action="store",type=str2bool, metavar="\buse_phases",
-    #     help="some description here (default: True)",
-    #     default=default_values["phases"]
-    # )
-
-    # Argument for "output"
     parser.add_argument(
-        "--output", action="store", type=str, metavar="\boutput_folder",
-        help="some description here (default: 'D')", default=default_values["output"]
+        "--output", action="store", type=str, # metavar="\boutput_folder",
+        # help="some description here (default: 'D')", default=default_values["output"]
     )
 
-    # Argument for "max_radius"
     parser.add_argument(
-        "--max_radius", action="store", type=float, metavar="\bmax_radius",
-        help="some description here (default: 6.0)", default=default_values["max_radius"]
+        "--max_radius", action="store", type=float, # metavar="\bmax_radius",
+        # help="some description here (default: 6.0)", default=default_values["max_radius"]
     )
 
-    # Argument for "folder"
     parser.add_argument(
-        "--folder", action="store", type=str, metavar="\bdata_folder",
-        help="some description here (default: 'LiNbO3')", default=default_values["folder"]
+        "--folder", action="store", type=str, # metavar="\bdata_folder",
+        # help="some description here (default: 'LiNbO3')", default=default_values["folder"]
     )
 
-    # Argument for "output_folder"
     parser.add_argument(
-        "--output_folder", action="store", type=str, metavar="\boutput_folder",
-        help="some description here (default: 'LiNbO3/results')", default=default_values["output_folder"]
+        "--output_folder", action="store", type=str, # metavar="\boutput_folder",
+        # help="some description here (default: 'LiNbO3/results')", default=default_values["output_folder"]
     )
 
-    # Argument for "ref_index"
     parser.add_argument(
-        "--ref_index", action="store", type=int, metavar="\bref_index",
-        help="some description here (default: 0)", default=default_values["ref_index"]
+        "--ref_index", action="store", type=int, # metavar="\bref_index",
+        # help="some description here (default: 0)", default=default_values["ref_index"]
     )
 
-    # Argument for "Natoms"
     parser.add_argument(
-        "--Natoms", action="store", type=int, metavar="\bNatoms",
-        help="some description here (default: 30)", default=default_values["Natoms"]
+        "--Natoms", action="store", type=int, # metavar="\bNatoms",
+        # help="some description here (default: 30)", default=default_values["Natoms"]
     )
 
-    # Argument for "random"
     parser.add_argument(
-        "--random", action="store",type=str2bool, metavar="\brandom",
-        help="some description here (default: True)",
+        "--random", action="store",type=str2bool, # metavar="\brandom",
+        # help="some description here (default: True)",
         default=default_values["random"]
     )
 
-    # Argument for "epochs"
     parser.add_argument(
-        "--epochs", action="store", type=int, metavar="\bepochs",
-        help="some description here (default: 10000)", default=default_values["epochs"]
+        "--epochs", action="store", type=int, # metavar="\bepochs",
+        # help="some description here (default: 10000)", default=default_values["epochs"]
     )
 
-    # Argument for "bs"
     parser.add_argument(
-        "--bs", action="store", type=int, nargs="+", metavar="\bbatch_sizes",
-        help="some description here (default: [1])", default=default_values["bs"]
+        "--bs", action="store", type=int, nargs="+", # metavar="\bbatch_sizes",
+        # help="some description here (default: [1])", default=default_values["bs"]
     )
 
-    # Argument for "lr"
     parser.add_argument(
-        "--lr", action="store", type=float, nargs="+", metavar="\blearning_rate",
-        help="some description here (default: [1e-3])", default=default_values["lr"]
+        "--lr", action="store", type=float, nargs="+", # metavar="\blearning_rate",
+        # help="some description here (default: [1e-3])", default=default_values["lr"]
     )
 
-    # Argument for "reference"
     parser.add_argument(
-        "--grid", action="store",type=str2bool, metavar="\bas_grid",
-        help="some description here (default: True)",
+        "--grid", action="store",type=str2bool, # metavar="\bas_grid",
+        # help="some description here (default: True)",
         default=default_values["grid"]
     )
 
-    # Argument for "reference"
     parser.add_argument(
-        "--trial", action="store",type=int, metavar="\bn_trial",
-        help="some description here (default: True)",
+        "--trial", action="store",type=int, # metavar="\bn_trial",
+        # help="some description here (default: True)",
         default=default_values["trial"]
     )
 
-    # Argument for "max_time"
     parser.add_argument(
-        "--max_time", action="store",type=int, metavar="\bmax_time",
-        help="some description here (default: True)",
+        "--max_time", action="store",type=int, # metavar="\bmax_time",
+        # help="some description here (default: True)",
         default=default_values["max_time"]
     )
 
-    # Argument for "task_time"
     parser.add_argument(
-        "--task_time", action="store",type=int, metavar="\btask_time",
-        help="some description here (default: True)",
+        "--task_time", action="store",type=int, # metavar="\btask_time",
+        # help="some description here (default: True)",
         default=default_values["task_time"]
     )
 
-    # Argument for "dropout"
     parser.add_argument(
-        "--dropout", action="store",type=float, metavar="\bdropout_prob",
-        help="some description here (default: True)",
+        "--dropout", action="store",type=float, # metavar="\bdropout_prob",
+        # help="some description here (default: True)",
         default=default_values["dropout"]
     )
 
-    # Argument for "dropout"
     parser.add_argument(
-        "--batchnorm", action="store",type=str2bool, metavar="\buse_batch_norm",
-        help="some description here (default: True)",
+        "--batchnorm", action="store",type=str2bool, # metavar="\buse_batch_norm",
+        # help="some description here (default: True)",
         default=default_values["batchnorm"]
     )
 
-    # Argument for "shift"
     parser.add_argument(
-        "--shift", action="store", type=int, nargs="+", metavar="\bpahses_shift",
-        help="some description here (default: [1])", default=default_values["shift"]
+        "--shift", action="store", type=int, nargs="+", # metavar="\bpahses_shift",
+        # help="some description here (default: [1])", default=default_values["shift"]
     )
 
-    # Argument for "restart"
     parser.add_argument(
-        "--restart", action="store",type=str2bool, metavar="\brestart",
-        help="some description here (default: True)",
+        "--restart", action="store",type=str2bool, # metavar="\brestart",
+        # help="some description here (default: True)",
         default=default_values["restart"]
     )
 
-    # Argument for "restart"
     parser.add_argument(
-        "--recompute_loss", action="store",type=str2bool, metavar="\brecompute_loss",
-        help="some description here (default: True)",
+        "--recompute_loss", action="store",type=str2bool, # metavar="\brecompute_loss",
+        # help="some description here (default: True)",
         default=default_values["recompute_loss"]
     )
 
+    parser.add_argument(
+        "--pbc", action="store",type=str2bool, # metavar="\bpbc",
+        # help="some description here (default: True)",
+        default=default_values["pbc"]
+    )
+
+    parser.add_argument(
+        "--instructions", action="store",type=dict, # metavar="\bpbc",
+        # help="some description here (default: True)",
+        default=default_values["instructions"]
+    )
     return parser.parse_args()
 
 #####################
@@ -297,19 +277,7 @@ def main():
         torch.manual_seed(0)
         random.seed(0)
         np.random.seed(0)
-
-    ##########################################
-    #
-    if parameters["output"] in ["E","EF"]:
-        variable = "energy"
-        variables = ["potential"]
-    elif parameters["output"] == "D":
-        variable = "dipole"
-        variables = ["dipole"]
-    else :
-        variable = None
-        variables = ["potential","dipole"]
-    
+   
     ##########################################
     # preparing dataset
     opts = {
@@ -319,13 +287,15 @@ def main():
         "build":{
             "restart":False
         },
-        "shift": parameters["shift"]
+        "shift": parameters["shift"],
+        "instructions" : parameters["instructions"]
     }
     datasets, data, pos, example, shift = prepare_dataset(ref_index=parameters["ref_index"],\
                                                   max_radius=parameters["max_radius"],\
                                                   reference=parameters["reference"],\
                                                   output=parameters["output"],\
-                                                  variables=variables,\
+                                                  pbc=parameters["pbc"],\
+                                                  # variables=variables,\
                                                   folder=parameters["folder"],\
                                                   # phases=parameters["phases"],\
                                                   opts=opts)#,\

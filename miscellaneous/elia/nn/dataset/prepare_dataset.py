@@ -6,7 +6,7 @@ from copy import copy
 from ase import Atoms
 from miscellaneous.elia.nn.dataset import make_dataset, make_dataset_delta, make_dataset_phases
 from miscellaneous.elia.classes import MicroState
-from miscellaneous.elia.functions import add_default
+from miscellaneous.elia.functions import add_default, find_files_by_pattern
 
 # ELIA: modify 'same_lattice' to false
 same_lattice = True
@@ -14,17 +14,14 @@ same_lattice = True
 def prepare_dataset(ref_index:int,\
                     max_radius:float,\
                     output:str,\
+                    pbc:bool,\
                     reference:bool,\
-                    variables:list,\
-                    folder:str="data",\
-                    opts:dict=None,\
+                    folder:str,\
+                    opts:dict,\
                     requires_grad:bool=False):
-                    #phases:bool=False):
     
     # Attention:
     # Please keep 'requires_grad' = False
-    if opts is None :
-        opts = {}
     default = {
                 "prepare":{
                     "restart": False,
@@ -43,6 +40,7 @@ def prepare_dataset(ref_index:int,\
                     "test":100,
                 },
                 "shift" : None,
+                "instructions" : None
             }
 
     opts = add_default(opts,default)
@@ -55,12 +53,17 @@ def prepare_dataset(ref_index:int,\
     savefile = "{:s}/microstate.pickle".format(folder)
 
     if not READ or not os.path.exists(savefile) or RESTART :
-        infile = "{:s}/i-pi.positions_0.xyz".format(folder)
-        instructions = {"properties" : "{:s}/i-pi.properties.out".format(folder),\
-                "positions":infile,\
-                "cells":infile,\
-                "types":infile,\
-                "forces":"{:s}/i-pi.forces_0.xyz".format(folder)}
+        instructions = opts["instructions"]
+        if instructions is None :
+            infile = find_files_by_pattern (folder,"positions",1) # "{:s}/i-pi.positions_0.xyz".format(folder)
+            instructions = {
+                "properties" : find_files_by_pattern (folder,"properties",1), # "{:s}/i-pi.properties.out".format(folder),\
+                "positions":infile,
+                "cells":infile,
+                "types":infile
+                }
+            if "F" in output : 
+                instructions["forces"] = find_files_by_pattern (folder,"forces",1) # "{:s}/i-pi.forces_0.xyz".format(folder)
         data = MicroState(instructions)
     else :
         data = MicroState.load(savefile)
@@ -72,15 +75,28 @@ def prepare_dataset(ref_index:int,\
     ##########################################
     # fix polarization
     if "D" in output :
-        data.fix_polarization(same_lattice=same_lattice,inplace=True)
-        _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
-        # shift = [0,0,0]
-        if "dipole" in data.properties :
-            del data.properties["dipole"]
+        if pbc :
+            # This has to be modified
+            data.fix_polarization(same_lattice=same_lattice,inplace=True)
+            _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
+            # shift = [0,0,0]
+            if "dipole" in data.properties :
+                del data.properties["dipole"]
+                data.get_dipole(same_lattice=same_lattice,inplace=True)
+        else :
+            if "dipole" not in data.properties :
+                data.get_dipole(same_lattice=same_lattice,inplace=True)
 
     ##########################################
     # show time-series
     if False :
+        if output in ["E","EF"]:
+            variables = ["potential"]
+        elif parameters["output"] == "D":
+            variables = ["dipole"]
+        else :
+            variables = ["potential","dipole"]
+    
         f = "{:s}/time-series".format(folder)
         if not os.path.exists(f):
             os.mkdir(f)
@@ -119,10 +135,11 @@ def prepare_dataset(ref_index:int,\
         else :
             if reference :
                 dataset, pos = make_dataset_delta(  ref_index = ref_index,
-                                                            data = data,
-                                                            max_radius = max_radius,\
-                                                            output=output,\
-                                                            requires_grad = requires_grad)
+                                                    data = data,
+                                                    max_radius = max_radius,
+                                                    output=output,
+                                                    pbc = pbc,
+                                                    requires_grad = requires_grad)
             # elif phases :
             #     dataset = make_dataset_phases(  data = data,
             #                                     max_radius = max_radius,\
@@ -131,9 +148,10 @@ def prepare_dataset(ref_index:int,\
             #     # dipole = torch.full((3,),torch.nan)
             #     pos = torch.full((3,),torch.nan)
             else :
-                dataset = make_dataset( data=data,\
-                                        max_radius=max_radius,\
-                                        output=output,\
+                dataset = make_dataset( data=data,
+                                        max_radius=max_radius,
+                                        output=output,
+                                        pbc = pbc ,
                                         requires_grad=requires_grad)
                 # dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
