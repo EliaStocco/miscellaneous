@@ -57,7 +57,7 @@ default_values = {
         "shift"          : None,
         "restart"        : False,
         "recompute_loss" : False,
-        "pbc"            : True,
+        "pbc"            : False,
         "instructions"   : None
     }
 
@@ -225,7 +225,7 @@ def get_args():
 
 def check_parameters(parameters):
     
-    str2bool_keys = ["reference","random","grid"] # "phases"
+    str2bool_keys = ["reference","random","grid","pbc","recompute_loss"] # "phases"
     for k in str2bool_keys : 
         parameters[k] = str2bool(parameters[k])
     
@@ -311,7 +311,7 @@ def main():
     ##########################################
     # visualize dataset
     if False :
-        visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images".format(folder))
+        visualize_datasets(datasets=datasets,variable="phases",folder="{:s}/images".format(parameters["folder"]))
 
     ##########################################
     # normalizing dataset
