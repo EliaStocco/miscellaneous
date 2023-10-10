@@ -5,6 +5,7 @@ import numpy as np
 
 def plot_learning_curves(train_loss,val_loss,file,title=None,opts=None,train_loss2=None):
     if opts is None:
+        opts = {}
         opts["N"] = 1
     N = len(train_loss)
     if N % opts["N"] != 0 :
