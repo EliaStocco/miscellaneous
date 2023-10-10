@@ -16,11 +16,11 @@ from miscellaneous.elia.nn.plot import plot_learning_curves
 
 __all__ = ["train"]
 
-yval_real = None 
-all_dataloader_val   = None
+# yval_real = None 
+# all_dataloader_val   = None
 
-ytrain_real = None
-all_dataloader_train = None
+# ytrain_real = None
+# all_dataloader_train = None
 
 def train(model:torch.nn.Module,\
           train_dataset:list,\
@@ -257,15 +257,15 @@ def train(model:torch.nn.Module,\
     # pd.DataFrame({ "train":copy(tmp),"val":copy(tmp),"epoch":copy(tmp)})
     # del tmp
 
-    global yval_real, all_dataloader_val
+    # global yval_real, all_dataloader_val
     # compute the real values of the validation dataset only once
     if yval_real is None or not opts["keep_dataset"]:
         print("\tCompute validation dataset output (this will save time in the future)")
         yval_real   = get_all(val_dataset)
         all_dataloader_val   = get_all_dataloader(val_dataset)
 
-    global ytrain_real, all_dataloader_train
-    if ytrain_real is None or not opts["keep_dataset"]:
+    # global ytrain_real, all_dataloader_train
+    if ytrain_real is None or not opts["keep_dataset"] and opts["recompute_loss"]:
         print("\tCompute training dataset output (this will save time in the future)")
         ytrain_real = get_all(train_dataset)
         all_dataloader_train = get_all_dataloader(train_dataset)
@@ -358,11 +358,13 @@ def train(model:torch.nn.Module,\
 
         if os.path.exists("EXIT"):
             info = "exit file detected"
+            print("\n\t'EXIT' file detected")
             break
 
         if os.path.exists("EXIT-TASK"):
             os.remove("EXIT-TASK")
             info = "exit-task file detected"
+            print("\n\t'EXIT-TASK' file detected")
             break
 
         ##########################################
