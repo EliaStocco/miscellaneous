@@ -18,6 +18,7 @@ import contextlib
 import sys
 #from ipi.engine.properties import Properties
 from ipi.utils.units import unit_to_internal, unit_to_user
+from scipy.ndimage import gaussian_filter1d, generic_filter
 
 # __all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations',
 #             'str2bool','get_one_file_in_folder','get_property_header','getproperty',
@@ -25,6 +26,59 @@ from ipi.utils.units import unit_to_internal, unit_to_user
 #             'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
 #             'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector','remove_files_in_folder',
 #             'get_line_with_pattern']
+
+# @np.vectorize(signature="'(i),(),()->()'")
+def sigma_out_of_target(array, target, sigma):
+    """
+    Compute the 'a' and 'b' arrays by measuring how far the smoothed 'array' is
+    from the 'target' in terms of standard deviations ('sigma').
+
+    Parameters:
+    - array: The input array of data.
+    - target: The target array or value.
+    - sigma: The standard deviation for smoothing.
+
+    Returns:
+    - a: Array 'a' representing how far 'array' is from 'target' in terms of standard deviations.
+    - b: Array 'b' representing how far the smoothed 'array' is from 'target' in terms of standard deviations.
+    """
+    # Apply Gaussian smoothing to the input array
+    shape = array.shape
+    N = array.shape[1]
+
+    smooth = np.full(shape,np.nan)    
+    for n in range(N):
+        smooth[:,n] = gaussian_filter1d(array[:,n], sigma[n], axis=0)
+
+    # Calculate the Euclidean distance between the smoothed array and the input array
+    delta = np.abs(smooth - array)
+
+    # Apply Gaussian smoothing to the delta values
+    std = np.full(shape,np.nan)
+    for n in range(N):
+        std[:,n] = generic_filter(delta[:,n],lambda x : np.std(x),size=int(sigma[n]),mode='constant') 
+        # gaussian_filter1d(delta[:,n], sigma[n], axis=0)
+
+    # Calculate 'a' and 'b' arrays representing how far 'array' and 'smooth' are from 'target' in terms of standard deviations
+    a = np.full(shape,np.nan)
+    b = np.full(shape,np.nan)
+    for n in range(N):
+        a[:,n] = (array[:,n] - target[n]) / std[:,n]
+        b[:,n] = (smooth[:,n] - target[n]) / std[:,n]
+
+    return a, b
+
+
+
+
+def str_to_bool(s):
+    s = s.lower()  # Convert the string to lowercase for case-insensitive matching
+    if s in ("1", "true", "yes", "on"):
+        return True
+    elif s in ("0", "false", "no", "off"):
+        return False
+    else:
+        raise ValueError(f"Invalid boolean string: {s}")
 
 def find_files_by_pattern(folder, pattern, expected_count=None,file_extension=None):
     """
@@ -85,7 +139,7 @@ def remove_files_in_folder(folder,extension):
     return 
 
 
-def plot_bisector(ax):
+def plot_bisector(ax,shiftx=0,shifty=0):
 	xlim = ax.get_xlim()
 	ylim = ax.get_ylim()
 	
@@ -95,7 +149,7 @@ def plot_bisector(ax):
 	y2 = max(xlim[1],ylim[1])
 	bis = np.linspace(x1,y2,1000)
 	
-	ax.plot(bis,bis,color="black",alpha=0.5,linestyle="dashed")
+	ax.plot(bis+shiftx,bis+shifty,color="black",alpha=0.5,linestyle="dashed")
 	
 	ax.set_xlim(*xlim)
 	ax.set_ylim(*ylim)
