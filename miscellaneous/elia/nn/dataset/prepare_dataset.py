@@ -82,10 +82,11 @@ def prepare_dataset(ref_index:int,\
             data.fix_polarization(same_lattice=same_lattice,inplace=True)
             _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
             # shift = [0,0,0]
-            if "dipole" in data.properties :
-                del data.properties["dipole"]
-                data.get_dipole(same_lattice=same_lattice,inplace=True)
+            # if "dipole" in data.properties :
+            #     del data.properties["dipole"]
+            data.get_dipole(same_lattice=same_lattice,inplace=True,recompute=True)
         else :
+            shift = [0,0,0]
             if "dipole" not in data.properties :
                 data.get_dipole(same_lattice=same_lattice,inplace=True)
 
@@ -94,8 +95,8 @@ def prepare_dataset(ref_index:int,\
     if False :
         if output in ["E","EF"]:
             variables = ["potential"]
-        elif parameters["output"] == "D":
-            variables = ["dipole"]
+        elif output == "D":
+            variables = ["dipole","phases"]
         else :
             variables = ["potential","dipole"]
     
@@ -221,10 +222,13 @@ def prepare_dataset(ref_index:int,\
                 "all"    : not_shuffled}
     
     pos  = train_dataset[0].pos.numpy()
-    cell = train_dataset[0].lattice[0].numpy()
     symbols = data.types[0]
 
-    # check that the 'cell' format is okay
-    example = Atoms(positions=pos,cell=cell.T,symbols=symbols)
+    if pbc :
+        cell = train_dataset[0].lattice[0].numpy()
+        # check that the 'cell' format is okay
+        example = Atoms(positions=pos,cell=cell.T,symbols=symbols)
+    else :
+        example = Atoms(positions=pos,symbols=symbols)
 
     return datasets, data, pos, example, shift

@@ -62,7 +62,7 @@ def make_dataset_delta(ref_index: int = 0, **argv):
 #----------------------------------------------------------------#
 
 # Function to create a datapoint with a reference added
-def make_datapoint_delta(dipole: torch.tensor, pos: torch.tensor, **argv):
+def make_datapoint_delta(dipole: torch.tensor, pos: torch.tensor, **argv)->Data:
     """
     Creates a datapoint with a reference added.
 

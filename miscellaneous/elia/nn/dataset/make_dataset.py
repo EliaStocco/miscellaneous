@@ -36,7 +36,7 @@ def my_neighbor_list(lattice,pos,max_radius,pbc):
         edge_src, edge_dst, edge_shift = nl("ijS",atoms)
     else :
         atoms = Atoms(positions=pos,pbc=False)
-        edge_src, edge_dst, edge_shift = nl("ij",atoms)
+        edge_src, edge_dst = nl("ij",atoms)
         edge_shift = None
 
     # edge_src, edge_dst, edge_shift = neighbor_list( quantities="ijS",
@@ -213,7 +213,7 @@ def make_dataset(data:MicroState,
 
 #----------------------------------------------------------------#
 
-def make_datapoint(lattice, positions, symbols, max_radius, default_dtype=torch.float64,**argv)->Data:
+def make_datapoint(lattice, positions, symbols, max_radius, default_dtype, pbc, **argv)->Data:
 
     # lattice has to be in 'ase' format:
     # | a_1x a_1y a_1z |
@@ -221,7 +221,7 @@ def make_datapoint(lattice, positions, symbols, max_radius, default_dtype=torch.
     # | a_3x a_3y a_3z |
 
     pos, lattice, x, edge_vec, edge_index, edge_shift = \
-        preprocess(lattice, positions, symbols, max_radius, default_dtype,**argv)
+        preprocess(lattice, positions, symbols, max_radius, default_dtype,pbc,**argv)
     
     return Data(
             pos=pos,
