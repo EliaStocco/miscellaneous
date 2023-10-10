@@ -15,6 +15,7 @@ import pandas as pd
 import re
 import ipi.utils.mathtools as mt
 from copy import deepcopy
+from miscellaneous.elia.functions import add_default
 
 __all__ = ["MicroState"]
 
@@ -84,6 +85,7 @@ class MicroState:
         attribute_names += [ "eigvals", "dynmat", "eigvec", "modes", "ortho_modes", "masses" ]
         attribute_names += [ "Nmodes", "Nconf" ]
         attribute_names += [ "energy", "Aamplitudes", "Bamplitudes", "properties" ]
+        attribute_names += [ "bec" ]
 
         for name in attribute_names:
             if not hasattr(self,name):
@@ -163,9 +165,9 @@ class MicroState:
         if "masses" in toread:
     
             if not hasattr(instructions, 'masses') or instructions.masses is None :
-                if not os.path.isdir(instructions.modes):
+                if not os.path.isdir(instructions.vib):
                     raise ValueError("'--modes' should be a folder")            
-                file = get_one_file_in_folder(folder=instructions.modes,ext=".masses")
+                file = get_one_file_in_folder(folder=instructions.vib,ext=".masses")
                 
             else :
                 file = instructions.masses
@@ -232,13 +234,19 @@ class MicroState:
         if "cells" in toread :
             print("{:s}reading cells (for each configuration) from file '{:s}'".format(MicroStatePrivate.tab,instructions.cells))
 
-            comments = read_comments_xyz(instructions.cells)
-            cells = [ abcABC.search(comment) for comment in comments ]
-            self.cell = np.zeros((len(cells),3,3))
-            for n,cell in enumerate(cells):
-                a, b, c = [float(x) for x in cell.group(1).split()[:3]]
-                alpha, beta, gamma = [float(x) * deg2rad for x in cell.group(1).split()[3:6]]
-                self.cell[n] = mt.abc2h(a, b, c, alpha, beta, gamma)
+            try : 
+                comments = read_comments_xyz(instructions.cells)
+                cells = [ abcABC.search(comment) for comment in comments ]
+                self.cells = np.zeros((len(cells),3,3))
+                for n,cell in enumerate(cells):
+                    a, b, c = [float(x) for x in cell.group(1).split()[:3]]
+                    alpha, beta, gamma = [float(x) * deg2rad for x in cell.group(1).split()[3:6]]
+                    self.cells[n] = mt.abc2h(a, b, c, alpha, beta, gamma)
+            except:
+                atoms = io.read(instructions.cells,index=":")
+                self.cells = np.zeros((len(atoms),3,3))
+                for n,cell in enumerate(self.cells):
+                    self.cells[n] = np.asarray(atoms[n].cell).T
 
             
         if "atoms" in toread:
@@ -250,7 +258,8 @@ class MicroState:
             if self.positions is None :
                 raise ValueError("'positions' not defined")
             if self.relaxed is None:
-                raise ValueError("'relaxed' not defined")            
+                raise ValueError("'relaxed' not defined")   
+            # print("\n\tComputing displacements")         
             self.displacements = np.asarray(self.positions) - np.asarray(self.relaxed)
 
 
@@ -290,11 +299,11 @@ class MicroState:
 
         if "ortho_modes" in toread:   
 
-            if not os.path.isdir(instructions.modes):
+            if not os.path.isdir(instructions.vib):
                 raise ValueError("'--modes' should be a folder")
 
-            print("{:s}searching for '*.mode' file in folder '{:s}'".format(MicroStatePrivate.tab,instructions.modes))            
-            file = get_one_file_in_folder(folder=instructions.modes,ext=".mode")
+            print("{:s}searching for '*.mode' file in folder '{:s}'".format(MicroStatePrivate.tab,instructions.vib))            
+            file = get_one_file_in_folder(folder=instructions.vib,ext=".mode")
             print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
             modes = np.loadtxt(file)
             if self.Nmodes is None :
@@ -308,10 +317,10 @@ class MicroState:
 
         if "eigvec" in toread:
 
-            if not os.path.isdir(instructions.modes):
+            if not os.path.isdir(instructions.vib):
                 raise ValueError("'--modes' should be a folder")
             
-            file = get_one_file_in_folder(folder=instructions.modes,ext=".eigvec")
+            file = get_one_file_in_folder(folder=instructions.vib,ext=".eigvec")
             print("{:s}reading eigenvectors from file '{:s}'".format(MicroStatePrivate.tab,file))
             eigvec = np.loadtxt(file)
             if self.Nmodes is None :
@@ -348,10 +357,10 @@ class MicroState:
         # I read the full hessian
         if "hess" in toread:
         
-            if not os.path.isdir(instructions.modes):
+            if not os.path.isdir(instructions.vib):
                     raise ValueError("'--modes' should be a folder")   
                 
-            file = get_one_file_in_folder(folder=instructions.modes,ext="_full.hess")
+            file = get_one_file_in_folder(folder=instructions.vib,ext="_full.hess")
             print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
             hess = np.loadtxt(file)
             if self.Nmodes is None :
@@ -364,10 +373,10 @@ class MicroState:
         # # pay attention: I never use it, so it has still to be debugged
         # if "full_hess" in toread:
 
-        #     if not os.path.isdir(instructions.modes):
+        #     if not os.path.isdir(instructions.vib):
         #             raise ValueError("'--modes' should be a folder")   
             
-        #     file = get_one_file_in_folder(folder=instructions.modes,ext="_full.hess")
+        #     file = get_one_file_in_folder(folder=instructions.vib,ext="_full.hess")
         #     print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
         #     full_hess = np.loadtxt(file)
         #     if self.Nmodes is not None :
@@ -380,10 +389,10 @@ class MicroState:
 
         if "eigvals" in toread:
 
-            if not os.path.isdir(instructions.modes):
+            if not os.path.isdir(instructions.vib):
                     raise ValueError("'--modes' should be a folder")   
             
-            file = get_one_file_in_folder(folder=instructions.modes,ext=".eigval")
+            file = get_one_file_in_folder(folder=instructions.vib,ext=".eigval")
             print("{:s}reading vibrational modes from file '{:s}'".format(MicroStatePrivate.tab,file))
             eigvals = np.loadtxt(file)
             if self.Nmodes is not None :
@@ -398,10 +407,10 @@ class MicroState:
             
         if "dynmat" in toread:
 
-            if not os.path.isdir(instructions.modes):
+            if not os.path.isdir(instructions.vib):
                     raise ValueError("'--modes' should be a folder")   
             
-            file = get_one_file_in_folder(folder=instructions.modes,ext=".dynmat")
+            file = get_one_file_in_folder(folder=instructions.vib,ext=".dynmat")
             print("{:s}reading the dynamical matrix from file '{:s}'".format(MicroStatePrivate.tab,file))
             dynmat = np.loadtxt(file)
             if self.Nmodes is None :
@@ -412,12 +421,12 @@ class MicroState:
                
         # if MicroStatePrivate.check :
         #     print("\n{:s}Let's do a little test".format(MicroStatePrivate.tab))
-        #     # mode      = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".mode"))
-        #     # dynmat    = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".dynmat"))
-        #     # full_hess = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext="_full.hess"))
-        #     # eigvals    = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".eigvals"))
-        #     # eigvec    = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".eigvec"))
-        #     # hess      = np.loadtxt(get_one_file_in_folder(folder=instructions.modes,ext=".hess"))
+        #     # mode      = np.loadtxt(get_one_file_in_folder(folder=instructions.vib,ext=".mode"))
+        #     # dynmat    = np.loadtxt(get_one_file_in_folder(folder=instructions.vib,ext=".dynmat"))
+        #     # full_hess = np.loadtxt(get_one_file_in_folder(folder=instructions.vib,ext="_full.hess"))
+        #     # eigvals    = np.loadtxt(get_one_file_in_folder(folder=instructions.vib,ext=".eigvals"))
+        #     # eigvec    = np.loadtxt(get_one_file_in_folder(folder=instructions.vib,ext=".eigvec"))
+        #     # hess      = np.loadtxt(get_one_file_in_folder(folder=instructions.vib,ext=".hess"))
             
         #     if np.all(a is not None for a in [self.dynmat,self.eigvec,self.eigvals]):
         #         print("{:s}checking that D@V = E@V".format(MicroStatePrivate.tab))
@@ -483,6 +492,9 @@ class MicroState:
             self.properties  = p
             self.units = u
             
+        
+        if 'bec' in toread :
+            self.bec = np.loadtxt(instructions.bec)
 
         for name in attribute_names:
             if getattr(self, name) is None:
@@ -629,7 +641,7 @@ class MicroState:
                  "positions":positions }
 
     # @reloading
-    def project_on_vibrational_modes(self,deltaR=None,v=None,inplace=True):
+    def project_on_vibrational_modes(self,deltaR=None,v=None,inplace=True,Ndof=3,skip=True):
 
         if deltaR is None :
             deltaR = self.displacements
@@ -674,10 +686,17 @@ class MicroState:
         else :
             proj_vel = np.zeros(proj_displ.shape)
 
+        if skip :
+            proj_vel   = proj_vel  [:,Ndof:]
+            proj_displ = proj_displ[:,Ndof:]
+            w2 = self.eigvals[Ndof:]
+        else :
+            w2 = self.eigvals
+        
         A2 = ( np.square(proj_displ) + np.square(proj_vel) )
-        energy = ( self.eigvals * A2 / 2.0 ) # w^2 A^2 / 2
+        energy = ( w2 * A2 / 2.0 ) # w^2 A^2 / 2
         #energy [ energy == np.inf ] = np.nan
-        normalized_energy = ( ( self.Nmodes - 3 ) * energy.T / energy.sum(axis=1).T ).T
+        normalized_energy = ( ( self.Nmodes - Ndof ) * energy.T / energy.sum(axis=1).T ).T
         Aamplitudes = np.sqrt(A2)
 
         # print(norm(proj_displ-c))
@@ -691,18 +710,23 @@ class MicroState:
         # self.energy = self.occupations = self.phases = self.Aamplitudes = self.Bamplitudes = None 
     
         # energy = Es.T
-        occupations = energy / np.sqrt( self.eigvals) # - 0.5 # hbar = 1 in a.u.
+        occupations = energy / np.sqrt( w2 ) # - 0.5 # hbar = 1 in a.u.
         # A  = np.sqrt( 2 * Es.T / self.eigvals  )
         # print(norm(A-Aamplitudes))
-
-        Bamplitudes = self.A2B(A=Aamplitudes)
+        if skip :
+            tmp = np.zeros((Aamplitudes.shape[0],self.Nmodes))
+            tmp[:,Ndof:] = Aamplitudes
+            Bamplitudes = self.A2B(A=tmp)
+            Bamplitudes = Bamplitudes[:,Ndof:]
+        else :
+            Bamplitudes = self.A2B(A=Aamplitudes)
         
         if hasattr(self,"properties") and "time" in self.properties:
             time = convert(self.properties["time"],"time",_from=self.units["time"],_to="atomic_unit")
         else :
             time = np.zeros(len(Bamplitudes))
-        phases = np.arctan2(-proj_vel,proj_displ) - np.outer(np.sqrt( self.eigvals) , time).T
-        phases = np.unwrap(phases,discont=0.0,period=2*np.pi)
+        phases = np.arctan2(-proj_vel,proj_displ) - np.outer(np.sqrt( w2 ) , time).T
+        # phases = np.unwrap(phases,discont=0.0,period=2*np.pi)
 
         out = {"energy": energy,\
                "norm-energy": normalized_energy,\
@@ -1117,6 +1141,18 @@ class MicroState:
             return self.properties[what]
         else :
             return self.properties[what] * factor
+
+    def get(self,what,unit=None,opts=None):
+        default = {
+            "print" : True
+        }
+        opts = add_default(opts,default)
+        if unit is None :
+            unit = self.units[what]
+        if opts["print"] : 
+            print("\treturning property '{:s}' in '{:s}'".format(what,unit))
+        out = self.convert_property(what=what,unit=unit,inplace=False)
+        return out
         
     def remove_data(self,time_end,time_start=0,unit="atomic_unit"):
 
@@ -1158,7 +1194,7 @@ class MicroState:
         
         return der
 
-    def add_property(self,name,array,overwrite=False):
+    def add_property(self,name,array,unit,overwrite=False):
         if len(self) != 0:
             if len(self) != len(array):
                 raise ValueError("array with wrong length")
@@ -1169,6 +1205,7 @@ class MicroState:
             else :
                 print("Warning: to overwrite '{:s}' set 'overwrite' = True ".format(name))
         self.properties[name] = array
+        self.units[unit] = unit
         pass
 
     def __len__(self):
@@ -1211,8 +1248,12 @@ class MicroState:
         if recompute or not hasattr(self,"ase"):
             out = [None]*self.Nconf
             N = np.arange(len(out))
-            for n,t,p,c in zip(N,self.types,self.positions,self.cell):
-                out[n] = Atoms(symbols=t, positions=p.reshape(-1,3), cell=c.T, pbc=True,**argv)
+            if hasattr(self,"cells"):
+                for n,t,p,c in zip(N,self.types,self.positions,self.cells):
+                    out[n] = Atoms(symbols=t, positions=p.reshape(-1,3), cell=c.T, pbc=True,**argv)
+            else :
+                for n,t,p in zip(N,self.types,self.positions):
+                    out[n] = Atoms(symbols=t, positions=p.reshape(-1,3),pbc=False,**argv)
 
         if inplace and out is not None:
             self.ase = out
@@ -1222,11 +1263,11 @@ class MicroState:
         return out
 
     # @reloading
-    @staticmethod
-    def save(obj,file)->None:
+    # @staticmethod
+    def save(self,file)->None:
         print("Saving object to file '{:s}'".format(file))
         with open(file, 'wb') as f:
-            pickle.dump(obj,f)
+            pickle.dump(self,f)
         pass
 
     # @reloading
@@ -1350,17 +1391,18 @@ class MicroState:
 
             # from .functions import print_cell
             
-            lattice = deepcopy(self.cell[0])
+            lattice = deepcopy(self.cells[0])
             # print(print_cell(lattice))
 
             if array is None :
                 array = self.properties[what]
 
-            if unit is None :
+            if unit is None and what is not None:
                 unit = self.units[what]
 
-            factor = convert(1,_from=unit,_to="atomic_unit",family=family)
-            array *= factor 
+            if family is not None:
+                factor = convert(1,_from=unit,_to="atomic_unit",family=family)
+                array *= factor 
             
             # print(" array shape:",array.shape)
 
@@ -1375,7 +1417,9 @@ class MicroState:
                     p = p[0]
                 out[n,:] = p.reshape(pol.shape)
 
-            factor = convert(1,family=family,_from="atomic_unit",_to=unit)
+            factor = 1
+            if family is not None and unit is not None:
+                factor = convert(1,family=family,_from="atomic_unit",_to=unit)
             return out * factor
     
         else :
@@ -1388,7 +1432,7 @@ class MicroState:
         
         if same_lattice:
 
-            lattice = self.cell[0]
+            lattice = self.cells[0]
             if only_first :
                 volume = np.linalg.det(lattice)
             else:
@@ -1401,7 +1445,7 @@ class MicroState:
             #length = np.zeros((len(polarization),3))
 
             for n in range(len(self)):
-                lattice = self.cell[n]
+                lattice = self.cells[n]
                 volume[n] = np.linalg.det(lattice)
                 #length[n] = np.linalg.norm(lattice,axis=0)
 
@@ -1414,7 +1458,7 @@ class MicroState:
             
         if same_lattice:
 
-            lattice = self.cell[0]
+            lattice = self.cells[0]
             if only_first :
                 length = np.linalg.norm(lattice,axis=0)
             else :
@@ -1426,7 +1470,7 @@ class MicroState:
             length = np.zeros((len(self),3))
 
             for n in range(len(self)):
-                lattice = self.cell[n]
+                lattice = self.cells[n]
                 #volume[n] = np.linalg.det(lattice)
                 length[n] = np.linalg.norm(lattice,axis=0)
 
@@ -1479,6 +1523,12 @@ class MicroState:
             self.properties["dipole"] = dipole
 
         return dipole
+    
+    def get_dipole_quantum(self,same_lattice=True,only_first=True):
+        polarization_quantum = self.get_polarization_quantum(same_lattice,only_first)
+        volume = self.get_volume(same_lattice,only_first)
+        return polarization_quantum * volume
+
 
     def get_polarization_quantum(self,same_lattice=True,only_first=True):
 
@@ -1644,127 +1694,161 @@ class MicroState:
         return self.numbers
 
 
-def main():
+    def IR(self,ofile=None,plotfile=None,tol=1e-7):
 
-    from miscellaneous.elia.classes import MicroState
-    from miscellaneous.elia.functions import segment
-    import matplotlib.pyplot as plt
-    from itertools import product    
-    import pandas as pd
-    from ase.io import read
+        Z = self.bec.reshape((-1,3))
 
-    inverted = read("inverted.xyz").positions
-    standard = read("standard.xyz").positions
-    symbols = read("standard.xyz").get_chemical_symbols()
-    print("inverted:\n",inverted,"\n")
-    print("standard:\n",standard)
+        if self.modes.shape[0]  != len(Z):
+            raise ValueError("Vibrational modes and Born Effective Charges shapes do not match")
 
-    N = 50
-    sequence = segment(standard,inverted,N)
+        w = np.sqrt(self.eigvals)
+        if len(w) != len(self.modes):
+            raise ValueError("Vibrational modes and eigenvalues shapes do not match")
+        
+        valid_eigenstate = w > tol
+                
+        # derivative of the cartesian coordinates w.r.t. normal modes
+        dRdQ = self.modes #np.linalg.inv(data.modes)
+        dP_dQ = (Z.T @ dRdQ).T
 
-    #sequence = np.asarray([ i.positions for i in read("sequence.xyz",":")])
-    # standard = sequence[0]
-    # inverted = sequence[-1]
+        dP_dQ[~valid_eigenstate,:] = 0 
 
+        # IR activities
+        # row: MD step
+        # col: mode 
+        IR = np.square(dP_dQ.sum(axis=1)) # sum over cartesian components
 
-    data = MicroState()
-    data.save2xyz(what=sequence,file="test.xyz",atoms=symbols)
+        # print IR intesity to file
+        if ofile is not None :
+            print("\tSaving IR intesities to file '{:s}'".format(ofile))
+        
+            df = pd.DataFrame() # columns=["w [THz]","IR [a.u.]"])
 
+            factor = convert(1,family="frequency",_from="atomic_unit",_to="thz")
+            df["w [a.u.]"]  = w
+            df["w [THz]"]   = w * factor # data.w / 0.00015198298
+            df["IR [a.u.]"] = IR
 
-def _main():
+            df["w [THz]"]  = df["w [THz]"].fillna(0)
+            df["w [a.u.]"] = df["w [a.u.]"].fillna(0)
+            
+            df.to_csv(ofile,index=False,float_format="%22.12f")
 
+        # produce plot of the IR intesities
+        if plotfile is not None :
+            print("\tPlotting IR intesity to file '{:s}'".format(plotfile))
+            
+            fig, ax = plt.subplots(figsize=(12,6))
 
-    xyz = 0
+            factor = convert(1,family="frequency",_from="atomic_unit",_to="thz")
+            x = w * factor
+            y = IR #[options.number,:]
 
-    fig,ax = plt.subplots()
+            ii = [ not np.isnan(i) for i in x ]
+            x = x[ii]
+            y = y[ii]
 
-    instructions = {"properties" : "not-gauge-fixed/i-pi.properties.out",\
-               "velocities":"not-gauge-fixed/i-pi.velocities_0.xyz",\
-               "cells" : "not-gauge-fixed/i-pi.positions_0.xyz"}
-    self = MicroState(instructions)
-    self.show()
-    self.show_properties()
-    #pol = self.fix_polarization()
-    phases = self.get_phases()
+            ax.bar(x,y,color="blue",width=2e-1)
+            ax.yaxis.grid(True)
+            ax.xaxis.grid(True)
+            ax.set_ylabel('IR intensity (a.u.)')
+            ax.set_xlabel('frequency (THz)')
 
-    y = phases[:,xyz]
-    ax.scatter(np.arange(len(y)),y,color="blue",label="not fixed gauge",s=0.1)
+            plt.tight_layout()
+            print("\tsaving plot to file '{:s}'".format(plotfile))
+            plt.savefig(plotfile)
+        
+        out = {
+            "IR" : IR,
+            "dPxdQ" : dP_dQ[:,0],
+            "dPydQ" : dP_dQ[:,1],
+            "dPzdQ" : dP_dQ[:,2],
+        }
 
-    xlims = ax.get_xlim()
+        return out 
 
+    def Efield_from_xml(self,file):
 
-    # ax.scatter(np.diff(np.linalg.norm(self.velocities,axis=1)),np.diff(np.linalg.norm(phases,axis=1)),color="red",label="new",s=0.1)
+        import xml.etree.ElementTree as xmlet
+        from ipi.engine.ensembles import ElectricField
 
-    # fig,ax = plt.subplots()
+        data = xmlet.parse(file).getroot()
 
-    instructions = {"properties" : "gauge-fixed/i-pi.properties.out",\
-               "velocities":"gauge-fixed/i-pi.velocities_0.xyz",\
-               "cells" : "gauge-fixed/i-pi.positions_0.xyz"}
-    self = MicroState(instructions)
-    self.show()
-    self.show_properties()
-    #pol, quantum, phases, old_phases = self.fix_polarization()
-    phases = self.get_phases()
+        ensemble = None
+        for element in data.iter():
+            if element.tag == "ensemble":
+                ensemble = element
+                break
 
-    
-    #x = np.arange(len(pol)-1)
+        data     = {}
+        keys     = ["Eamp",          "Efreq",    "Ephase",   "Epeak","Esigma"]
+        families = ["electric-field","frequency","undefined","time", "time"  ]
+        
+        for key,family in zip(keys,families):
 
-    y = phases[:,xyz]
-    ax.scatter(np.arange(len(y)),y,color="red",label="fixed gauge",s=0.1)
+            data[key] = None
+            
+            element = ensemble.find(key)
 
+            if element is not None:
+                #value = ast.literal_eval(element.text)
+                text =  element.text
+                try :
+                    value = text.split('[')[1].split(']')[0].split(',')
+                    value = [ float(i) for i in value ]
+                    if len(value) == 1:
+                        value = float(value)
+                    else :
+                        value = np.asarray(value)
+                except :
+                    value = float(text)
+                
+                try :
+                    unit = element.attrib["units"]
+                    if unit is None :
+                        unit = "atomic_unit"
+                except:
+                    unit = "atomic_unit"
 
-    ax.set_xlim(*xlims)
+                value = convert(value,family,unit,"atomic_unit")
+                data[key] = value
 
+        # get the ElectricField object
+        Ef = ElectricField( Eamp=data["Eamp"],\
+                            Ephase=data["Ephase"],\
+                            Efreq=data["Efreq"],\
+                            Epeak=data["Epeak"],\
+                            Esigma=data["Esigma"])
+        
+        # "Efield": {
+        #     "dimension": "atomic_unit",
+        #     "help": "The external applied electric field (cartesian axes).",
+        #     "size": 3,
+        #     "func": (lambda: dd(self.ensemble.eda).Efield(self.ensemble.time)),
+        # },
+        # "TderEfield": {
+        #     "dimension": "atomic_unit",
+        #     "help": "The time derivative of the external applied electric field (cartesian axes).",
+        #     "size": 3,
+        #     "func": (lambda: dd(self.ensemble.eda.Electric_Field).TderEfield(self.ensemble.time)),
+        # },
+        # "Efieldmod": {
+        #     "dimension": "atomic_unit",
+        #     "help": "The modulus of the external applied electric field.",
+        #     "func": (lambda: norm(dd(self.ensemble.eda).Efield(self.ensemble.time))),
+        # },
+        # "Eenvelope": {
+        #     "dimension": "atomic_unit",
+        #     "help": "The (gaussian) envelope function of the external applied electric field.",
+        #     "func": (lambda: dd(self.ensemble.eda.Electric_Field).Eenvelope(self.ensemble.time) ),
+        # },
 
+        time = self.get("time","atomic_unit")
+        E = Ef._get_Efield(time)
+        f = Ef._get_Eenvelope(time) # * np.linalg.norm(data["Eamp"])
+        
+        self.add_property(name="Efield",array=E,unit="atomic_unit")
+        self.add_property(name="Efieldmod",array=np.linalg.norm(E,axis=1),unit="atomic_unit")
+        self.add_property(name="Eenvelope",array=f,unit="atomic_unit")
 
-    # y = old_phases[:,xyz]
-    # ax.plot(np.arange(len(y)),y,color="blue",label="old")
-    m = phases[0,xyz]
-    ylims = ax.get_ylim()
-    xlims = ax.get_xlim()
-    for i in range(-10,10):
-        plt.hlines(m+i,xlims[0],xlims[1],color="black",linestyle="dashed",alpha=0.5)
-    ax.set_ylim(ylims)
-
-    plt.legend()
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
-
-    print("\n\tJob done :)\n")
-
-# if __name__ == "__main__":
-#     main()
-
-
-# def _main():
-
-#     instructions = {"modes":"vib","relaxed":"start.xyz","types":"start.xyz"}
-#     what = "vib"
-#     toread = ["relaxed","types"]
-#     data = MicroState(instructions=instructions,toread=toread,what=what)
-
-#     df = data.vibrational_analysis_summary()
-#     print(df)
-
-#     x = 2.0
-#     displ_P  = np.linspace(-x,x,11)
-#     displ_IR = np.linspace(-x,x,11)
-
-#     from itertools import product    
-#     import pandas as pd
-#     displ = np.asarray(list(product(displ_P, displ_IR)))
-#     df = pd.DataFrame(columns=["P","IR"],index=np.arange(len(displ)))
-  
-#     positions = np.zeros((len(displ),*data.relaxed.reshape(-1,3).shape))
-#     for n,(a,b) in enumerate(displ):
-#         amplitudes = {8:a,26:b}    
-#         df.at[n,"P"] = a
-#         df.at[n,"IR"] = b
-#         positions[n] = data.displace_along_normal_mode(amplitudes)
-
-#     data.save2xyz(positions,file="sequence.xyz",atoms=data.types[0])
-#     df.to_csv("info.csv",index=False)
-
-
-#     print("\n\tJob done :)\n")
+        return 

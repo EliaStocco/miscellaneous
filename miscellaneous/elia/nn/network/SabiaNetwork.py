@@ -118,7 +118,7 @@ class SabiaNetwork(torch.nn.Module):
             edge_src = edge_index[0]
             edge_dst = edge_index[1]
 
-        if "edge_vec" in data and ( data["pos"].requires_grad and data["edge_vec"].requires_grad ):
+        if "edge_vec" in data and ( data["pos"].requires_grad == data["edge_vec"].requires_grad ):
             edge_vec = data['edge_vec']
         
         else :
@@ -127,8 +127,8 @@ class SabiaNetwork(torch.nn.Module):
             # We need to compute this in the computation graph to backprop to positions
             # We are computing the relative distances + unit cell shifts from periodic boundaries
             edge_vec = compute_edge_vec(pos=data['pos'],
-                                        lattice=data['lattice'],       # None if pbc=False #if self.pbc else None,
-                                        edge_shift=data['edge_shift'], # None if pbc=False #if self.pbc else None,
+                                        lattice=data['lattice']       if self.pbc else None,
+                                        edge_shift=data['edge_shift'] if self.pbc else None,
                                         edge_src=edge_src,
                                         edge_dst=edge_dst,
                                         pbc=self.pbc)
