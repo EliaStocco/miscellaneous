@@ -1,5 +1,6 @@
 import argparse
-import json5 as json
+# import json5 as json
+import json
 import os
 import torch
 import pandas as pd
@@ -66,13 +67,13 @@ def main():
     tmp = parameters["output_folder"], parameters["name"], args.bs, args.lr
     file = "{:s}/dataframes/{:s}.bs={:d}.lr={:s}.csv".format(*tmp)
     if not os.path.exists(file):
-        raise ValueError("fifolderle does not exist")
+        raise ValueError("file does not exist")
     loss = pd.read_csv(file)
 
     epoch = loss["val"].argmin()
 
     tmp = parameters["output_folder"], parameters["name"], args.bs, args.lr
-    par_folder = "{:s}/parameters/{:s}.bs={:d}.lr={:s}/".format(*tmp)
+    par_folder = "{:s}/parameters/{:s}.bs={:d}.lr={:s}".format(*tmp)
     par_files = os.listdir(par_folder)
     best_parameters = None
     best_epoch = 0
@@ -83,8 +84,8 @@ def main():
             best_parameters = file
             best_epoch = tmp
 
-    best_parameters = "{:s}/{:s}".format(par_folder,best_parameters)
-    print("\n\tbest file: {:s}\n".format(best_parameters))
+    best_parameters = os.path.normpath("{:s}/{:s}".format(par_folder,best_parameters))
+    print("\n\tlowest loss file: {:s}\n".format(best_parameters))
 
     #####################
     # get model
@@ -126,6 +127,7 @@ def main():
         raise ValueError("not implemented yet")
 
     #####################
+    print("\tComputing the predictions for the datasets ...")
     pp_folder = "post-processing"
 
     pred = deepcopy(real)
@@ -145,6 +147,7 @@ def main():
 
     #####################
     # plot correlation
+    print("\tComputing the correlations ...")
     fig, axs = plt.subplots(ncols=3,figsize=(15,5))
     for n,name in enumerate(datasets.keys()):
         for xyz,c,l in zip(np.arange(ncomp),colors,labels):
@@ -168,16 +171,18 @@ def main():
 
     #####################
     # compute loss
+    print("\tComputing the loss for the datasets ...")
     loss_func = model.loss()
     
-    loss = pd.DataFrame(columns=["train","test","val"],index=["loss"])
+    loss = pd.DataFrame(columns=["train","test","val"],index=["loss","RMSE","MSE"])
     for name in ["train","test","val"] :
         x = torch.from_numpy(pred[name])
         y = torch.from_numpy(real[name])
         loss.at["loss",name] = float(loss_func(x,y))
+        loss.at["MSE",name]  = np.sqrt(loss.at["loss",name])
         #info.at["corr"] = pearsonr(pred[name],real[name]).correlation
 
-    loss_file = "{:s}/loss.csv".format(pp_folder)
+    loss_file = "{:s}/stats.csv".format(pp_folder)
     loss.to_csv(loss_file,index=False)
 
     #####################
@@ -194,17 +199,19 @@ def main():
 
     #####################
     # save output
+    outfile = "post-processing.json"
+    print("\tWriting summary information to '{:s}'".format(outfile))
     output = {
-        "parameters" : best_parameters,
+        "parameters" : os.path.abspath(best_parameters),
         "folder"     : pp_folder,
-        "loss"       : loss_file,
+        "stats"      : loss_file,
         "corr"       : corr_file,
     }
 
-    with open("post-processing.json", "w") as json_file:
+    with open(outfile, "w") as json_file:
         json.dump(output, json_file, indent=4)
 
-    print("\nJob done :)")
+    print("\n\tJob done :)")
 
 #####################
 
