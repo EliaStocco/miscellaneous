@@ -6,6 +6,7 @@ import numpy as np
 from prettytable import PrettyTable
 import subprocess
 from miscellaneous.elia.functions import add_default
+import warnings
 
 def count_parameters(model):
     table = PrettyTable(["Modules", "Parameters"])
@@ -48,7 +49,7 @@ def get_class(module_name, class_name):
     except Exception as e:
         raise ValueError(f"An error occurred: {e}")
     
-def get_model(instructions,parameters:str):
+def get_model(instructions,parameters:str)->torch.nn.Module:
 
     if type(instructions) == str :
 
@@ -64,7 +65,10 @@ def get_model(instructions,parameters:str):
     mod    = instructions['module']
 
     # get the class to be instantiated
-    class_obj = get_class(mod,cls)
+    # Call the function and suppress the warning
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore") #, category=UserWarning)
+        class_obj = get_class(mod,cls)
     
     # instantiate class
     #try :
