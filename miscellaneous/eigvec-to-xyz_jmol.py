@@ -27,7 +27,7 @@ else:
           "We stop here.")
     sys.exit(-1)
 
-atoms = read(xyzname, format='xyz')
+atoms = read(xyzname) #, format='xyz')
 vecmat = np.loadtxt(vecname)
 freqs = np.loadtxt(valname)
 freqs = np.sqrt(freqs) * 219474.63  # atomic frequency to invcm
