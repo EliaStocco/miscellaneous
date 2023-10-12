@@ -63,13 +63,13 @@ def main():
 
     # initialize SOAP
     soap = SOAP(
-        global_species=numbers, 
+        global_species=numbers,
         expansion_by_species_method='user defined',
-        **SOAP_HYPERS            
+        **SOAP_HYPERS
     )
     print("done")
 
-    X = None 
+    X = None
     print("\tComputing SOAP features ... ")
     for i, frame in enumerate(tqdm(frames)):
         # normalize cell for librascal input
@@ -94,7 +94,7 @@ def main():
 
     #
     if args.number is None :
-        n_FPS = min(100,len(frames)) # number of structures to select 
+        n_FPS = min(100,len(frames)) # number of structures to select
     else :
         n_FPS = args.number
     struct_idx = FPS(n_to_select=n_FPS, progress_bar = True, initialize = 'random').fit(X.T).selected_idx_
@@ -110,7 +110,7 @@ def main():
     print("done")
 
     print("\n\tJob done :)\n")
-    
+
     return
 
     # Visualizing using the principal componenets of the selected dataset and the original dataset using the chemiscope
@@ -170,4 +170,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
