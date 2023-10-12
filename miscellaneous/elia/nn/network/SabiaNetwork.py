@@ -91,7 +91,8 @@ class SabiaNetwork(torch.nn.Module):
 
         # batch normalization to normalize output
         self._bn = BatchNorm(irreps=self.mp.irreps_out,affine=True)
-
+        # self.factor = torch.nn.Parameter(torch.tensor(1.0))
+        
         self.irreps_in  = self.mp.irreps_in
         self.irreps_out = self.mp.irreps_out
 
@@ -175,5 +176,6 @@ class SabiaNetwork(torch.nn.Module):
         # else:
         #     y = node_outputs
 
+        # return node_outputs * self.factor
         return self._bn(node_outputs)
         

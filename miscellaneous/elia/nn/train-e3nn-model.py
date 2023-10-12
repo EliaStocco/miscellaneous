@@ -58,7 +58,8 @@ default_values = {
         "restart"        : False,
         "recompute_loss" : False,
         "pbc"            : False,
-        "instructions"   : None
+        "instructions"   : None,
+        "debug" : False,
     }
 
 #####################
@@ -85,7 +86,7 @@ def get_args():
 
     parser.add_argument(
         "--layers", action="store", type=int, # metavar="\bn_layers",
-        # help="number of layers (default: 6)", default=default_values["layers"]
+        # help=""debug"number of layers (default: 6)", default=default_values["layers"]
     )
 
     parser.add_argument(
@@ -219,13 +220,19 @@ def get_args():
         # help="some description here (default: True)",
         default=default_values["instructions"]
     )
+
+    parser.add_argument(
+        "--debug", action="store",type=str2bool, # metavar="\bpbc",
+        # help="some description here (default: True)",
+        default=default_values["debug"]
+    )
     return parser.parse_args()
 
 #####################
 
 def check_parameters(parameters):
     
-    str2bool_keys = ["reference","random","grid","pbc","recompute_loss"] # "phases"
+    str2bool_keys = ["reference","random","grid","pbc","recompute_loss","debug"] # "phases"
     for k in str2bool_keys : 
         parameters[k] = str2bool(parameters[k])
     
@@ -367,14 +374,14 @@ def main():
     # # You can also read this post: 
     # # https://stats.stackexchange.com/questions/352036/what-should-i-do-when-my-neural-network-doesnt-learn
 
-    if False :
+    if parameters["debug"] :
         print("\n\tModifying datasets for debugging")
         train_dataset = datasets["train"]
         val_dataset   = datasets["val"]
         test_dataset  = datasets["test"]
         
-        train_dataset = train_dataset[0:10] 
-        val_dataset   = val_dataset  [0:10] 
+        train_dataset = train_dataset[0:1] 
+        val_dataset   = val_dataset  [0:1] 
 
         print("\n\tDatasets summary:")
         print("\t\ttrain:",len(train_dataset))
