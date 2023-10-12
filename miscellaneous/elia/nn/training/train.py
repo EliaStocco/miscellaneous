@@ -27,8 +27,8 @@ def train(model:torch.nn.Module,\
           val_dataset:list,\
           parameters:dict,\
           hyperparameters:dict=None,\
-          get_pred:callable=None,\
-          get_real:callable=None,\
+        #   get_pred:callable=None,\
+        #   get_real:callable=None,\
           make_dataloader:callable=None,\
           correlation:callable=None,\
           output=None,\
@@ -81,6 +81,8 @@ def train(model:torch.nn.Module,\
    
     start_task_time = time.time()
 
+    model.eval()
+
     print("\nTraining:")
     print("\tPreparing training")
 
@@ -96,11 +98,11 @@ def train(model:torch.nn.Module,\
                 "save":{"parameters":1}} # ,"networks-temp":-1
     opts = add_default(opts,default)
 
-    # set default values
-    if get_pred is None :
-        get_pred = lambda f,x : f(x).flatten()   
-    if get_real is None :
-        get_real = lambda x : x.yreal
+    # # set default values
+    # if get_pred is None :
+    #     get_pred = lambda f,x : f(x).flatten()   
+    # if get_real is None :
+    #     get_real = lambda x : x.yreal
     if make_dataloader is None:
         make_dataloader = \
             lambda dataset,batch_size,shuffle=opts["dataloader"]["shuffle"]: \
@@ -225,7 +227,7 @@ def train(model:torch.nn.Module,\
             torch.Tensor: Real values of the entire dataset.
         """
         all_dataloader = get_all_dataloader(dataset)
-        return get_real(all_dataloader)
+        return model.get_real(all_dataloader)
 
     
     # prepare the dataloaders for the train and validation datasets
@@ -251,7 +253,7 @@ def train(model:torch.nn.Module,\
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
 
     # dataframe
-    arrays = pd.DataFrame(np.nan,columns=["epoch","train","val"],index=np.arange(n_epochs))
+    arrays = pd.DataFrame(np.nan,columns=["epoch","train","val","std"],index=np.arange(n_epochs))
     if opts["recompute_loss"] :
         arrays["train-2"] = None
     # pd.DataFrame({ "train":copy(tmp),"val":copy(tmp),"epoch":copy(tmp)})
@@ -259,12 +261,14 @@ def train(model:torch.nn.Module,\
 
     # global yval_real, all_dataloader_val
     # compute the real values of the validation dataset only once
+    yval_real = None
     if yval_real is None or not opts["keep_dataset"]:
         print("\tCompute validation dataset output (this will save time in the future)")
         yval_real   = get_all(val_dataset)
         all_dataloader_val   = get_all_dataloader(val_dataset)
 
     # global ytrain_real, all_dataloader_train
+    ytrain_real = None
     if ytrain_real is None or not opts["keep_dataset"] and opts["recompute_loss"]:
         print("\tCompute training dataset output (this will save time in the future)")
         ytrain_real = get_all(train_dataset)
@@ -380,10 +384,10 @@ def train(model:torch.nn.Module,\
                 model.train(mode=True)
 
                 # predict the value for the input X
-                y_pred = get_pred(X=X) #get_pred(model=model,X=X)
+                y_pred = model.get_pred(X=X) #get_pred(model=model,X=X)
                 
                 # true value for the value X
-                y_real = get_real(X=X)
+                y_real = model.get_real(X=X)
                 
                 # compute the loss function
                 loss = loss_fn(y_pred,y_real)
@@ -452,15 +456,16 @@ def train(model:torch.nn.Module,\
 
                 # compute the loss function
                 # predict the value for the validation dataset
-                yval_pred = get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
+                yval_pred = model.get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
                 arrays.at[epoch,"val"] = float(loss_fn(yval_pred,yval_real)) # / parameters["Natoms"]
 
                 # set arrays
                 if opts["recompute_loss"] :
-                    ytrain_pred = get_pred(all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
+                    ytrain_pred = model.get_pred(all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
                     arrays.at[epoch,"train-2"] = float(loss_fn(ytrain_pred,ytrain_real))  #/parameters["Natoms"]
 
                 arrays.at[epoch,"train"] = np.mean(train_loss_one_epoch)
+                arrays.at[epoch,"std"]   = np.std(train_loss_one_epoch)
 
                 if arrays.at[epoch,"train"] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
                     info = "try again"
