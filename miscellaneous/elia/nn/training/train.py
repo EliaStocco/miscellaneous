@@ -81,8 +81,6 @@ def train(model:torch.nn.Module,\
    
     start_task_time = time.time()
 
-    model.eval()
-
     print("\nTraining:")
     print("\tPreparing training")
 
@@ -241,6 +239,7 @@ def train(model:torch.nn.Module,\
     print("\t        batch size:",batch_size)
     print("\t  n. of iterations:",batches_per_epoch)
     print("\ttrain dataset size:",len(train_dataset))
+    print("\t  val dataset size:",len(val_dataset))
     print("\n")
     
     # deepcopy the model into a temporary variable
@@ -253,9 +252,10 @@ def train(model:torch.nn.Module,\
     train_loss_one_epoch = np.full(batches_per_epoch,np.nan)
 
     # dataframe
-    arrays = pd.DataFrame(np.nan,columns=["epoch","train","val","std"],index=np.arange(n_epochs))
+    arrays = pd.DataFrame(np.nan,columns=["epoch","train","val","std","ratio"],index=np.arange(n_epochs))
     if opts["recompute_loss"] :
         arrays["train-2"] = None
+        arrays["ratio-2"] = None
     # pd.DataFrame({ "train":copy(tmp),"val":copy(tmp),"epoch":copy(tmp)})
     # del tmp
 
@@ -323,6 +323,7 @@ def train(model:torch.nn.Module,\
             tmp = pd.read_csv(savefiles["dataframes"])
             if not opts["recompute_loss"] and "train-2" in tmp:
                 arrays["train-2"] = None
+                arrays["ratio-2"] = None
             arrays.iloc[:len(tmp)] = copy(tmp)
             del tmp
         if os.path.exists(savefiles["correlations"]):
@@ -331,7 +332,8 @@ def train(model:torch.nn.Module,\
             del tmp
 
         if opts["recompute_loss"] and "train-2" not in arrays:
-            arrays["train-2"] = None        
+            arrays["train-2"] = None     
+            arrays["ratio-2"] = None        
 
     def save_checkpoint():
         torch.save({
@@ -419,7 +421,7 @@ def train(model:torch.nn.Module,\
             # I am not using 'with torch.no_grad()' anymore because 
             # maybe it inferferes with the calculation of the forces
             # model.eval()
-            with torch.no_grad():
+            if True : # with torch.no_grad():
 
                 model.eval()
 
@@ -454,18 +456,20 @@ def train(model:torch.nn.Module,\
                             raise ValueError("error with 'state_dict'")
                         
 
+                arrays.at[epoch,"train"] = np.mean(train_loss_one_epoch)
+                arrays.at[epoch,"std"]   = np.std(train_loss_one_epoch)
+
                 # compute the loss function
                 # predict the value for the validation dataset
                 yval_pred = model.get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
                 arrays.at[epoch,"val"] = float(loss_fn(yval_pred,yval_real)) # / parameters["Natoms"]
+                arrays.at[epoch,"ratio"] = arrays.at[epoch,"train"] / arrays.at[epoch,"val"]
 
                 # set arrays
                 if opts["recompute_loss"] :
                     ytrain_pred = model.get_pred(all_dataloader_train) # get_pred(model=model,X=all_dataloader_train)
                     arrays.at[epoch,"train-2"] = float(loss_fn(ytrain_pred,ytrain_real))  #/parameters["Natoms"]
-
-                arrays.at[epoch,"train"] = np.mean(train_loss_one_epoch)
-                arrays.at[epoch,"std"]   = np.std(train_loss_one_epoch)
+                    arrays.at[epoch,"ratio-2"] = arrays.at[epoch,"train-2"] / arrays.at[epoch,"val"]
 
                 if arrays.at[epoch,"train"] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
                     info = "try again"
@@ -493,12 +497,13 @@ def train(model:torch.nn.Module,\
                 # produce learning curve plot
                 if epoch >= 1:
                     # savefile =  "{:s}/{:s}.pdf".format(folders["images"],name)
-                    plot_learning_curves(   train_loss = arrays.loc[:epoch,"train"],\
-                                            val_loss = arrays.loc[:epoch,"val"],\
-                                            file=savefiles["images"],\
-                                            title=name if name != "untitled" else None,\
-                                            opts=opts["plot"]["learning-curve"],\
-                                            train_loss2 = arrays.loc[:epoch,"train-2"] if "train-2" in arrays else None )
+                    plot_learning_curves(   # train_loss = arrays.loc[:epoch,"train"],\
+                                            # val_loss = arrays.loc[:epoch,"val"],\
+                                            arrays = arrays,
+                                            file=savefiles["images"],
+                                            title=name if name != "untitled" else None,
+                                            opts=opts["plot"]["learning-curve"] )
+                                            # train_loss2 = arrays.loc[:epoch,"train-2"] if "train-2" in arrays else None )
 
                 # print progress
                 if True: #correlation is None :

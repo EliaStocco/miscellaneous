@@ -22,27 +22,34 @@ def get_args():
 
     # Argument for "input"
     parser.add_argument(
-        "--training", action="store", type=str,
+        "-t","--training", action="store", type=str,
         help="training input file", default="input.json"
     )
 
     # Argument for "instructions"
     parser.add_argument(
-        "--instructions", action="store", type=str,
+        "-i","--instructions", action="store", type=str,
         help="model input file", default="instructions.json"
     )
 
     # Argument for "instructions"
     parser.add_argument(
-        "--bs", action="store", type=int,
+        "-bs","--batch_size", action="store", type=int,
         help="batch size"
     )
 
     # Argument for "instructions"
     parser.add_argument(
-        "--lr", action="store", type=str,
+        "-lr","--learning_rate", action="store", type=float,
         help="learning rate"
     )
+
+    # Argument for "instructions"
+    parser.add_argument(
+        "-b","--best_only", action="store", type=bool,
+        help="search the best file only"
+    )
+
 
     return parser.parse_args()
 
@@ -64,16 +71,16 @@ def main():
 
     #####################
     # find bets parameters
-    tmp = parameters["output_folder"], parameters["name"], args.bs, args.lr
-    file = "{:s}/dataframes/{:s}.bs={:d}.lr={:s}.csv".format(*tmp)
+    tmp = parameters["output_folder"], parameters["name"], args.batch_size, args.learning_rate
+    file = "{:s}/dataframes/{:s}.bs={:d}.lr={:.1e}.csv".format(*tmp)
     if not os.path.exists(file):
-        raise ValueError("file does not exist")
+        raise ValueError("file '{:s}' does not exist".format(file))
     loss = pd.read_csv(file)
 
     epoch = loss["val"].argmin()
 
-    tmp = parameters["output_folder"], parameters["name"], args.bs, args.lr
-    par_folder = "{:s}/parameters/{:s}.bs={:d}.lr={:s}".format(*tmp)
+    tmp = parameters["output_folder"], parameters["name"], args.batch_size, args.learning_rate
+    par_folder = "{:s}/parameters/{:s}.bs={:d}.lr={:.1e}".format(*tmp)
     par_files = os.listdir(par_folder)
     best_parameters = None
     best_epoch = 0
@@ -86,6 +93,10 @@ def main():
 
     best_parameters = os.path.normpath("{:s}/{:s}".format(par_folder,best_parameters))
     print("\n\tlowest loss file: {:s}\n".format(best_parameters))
+
+    if args.best_only :
+        print("\tJob done :)")
+        return
 
     #####################
     # get model
@@ -183,7 +194,7 @@ def main():
         #info.at["corr"] = pearsonr(pred[name],real[name]).correlation
 
     loss_file = "{:s}/stats.csv".format(pp_folder)
-    loss.to_csv(loss_file,index=False)
+    loss.to_csv(loss_file,index=True)
 
     #####################
     # compute correlation    

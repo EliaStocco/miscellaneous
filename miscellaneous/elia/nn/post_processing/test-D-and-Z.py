@@ -15,28 +15,33 @@ def get_args():
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument(
-        "--instructions", action="store", type=str,
+        "-i","--instructions", action="store", type=str,
         help="model input file", default="instructions.json"
     )
 
     parser.add_argument(
-        "--parameters", action="store", type=str,
+        "-p","--parameters", action="store", type=str,
         help="(torch) parameters file", default="parameters.pth",
     )
 
     parser.add_argument(
-        "--positions", action="store", type=str,
+        "-q","--positions", action="store", type=str,
         help="positions file (in a.u.)"
     )
 
     parser.add_argument(
-        "--cell", action="store", type=str, 
+        "-c","--cell", action="store", type=str, 
         help="cell file (in a.u.)", default=None
     )
 
     parser.add_argument(
-        "--output", action="store", type=str,
+        "-o","--output", action="store", type=str,
         help="prefix for the output files", default="test"
+    )
+
+    parser.add_argument(
+        "-f","--format", action="store", type=str,
+        help="format", default='%-.10f'
     )
 
     return parser.parse_args()
@@ -55,9 +60,9 @@ def main():
 
     #####################
     # load the model
-    print("\tLoading the model ... ",end="")
+    # print("\tLoading the model ... ",end="")
     model = get_model(args.instructions,args.parameters)
-    print("done")
+    # print("done")
 
     ######################
     # read the positions
@@ -79,28 +84,33 @@ def main():
     print("\tComputing predicted values ... ",end="")
     N = len(data.positions)
     D = np.full((N,3),np.nan)
-    Z = np.full((N,len(data.positions[0])*3),np.nan)
+    Z = np.full((N,len(data.positions[0]),3),np.nan)
 
     for n,(pos,cell) in enumerate(zip(data.positions,data.cells)):
         d,z,x = model.get_value_and_jac(pos=pos.reshape((-1,3)),cell=cell)
-        D[n,:] = d.detach().numpy().flatten()
-        Z[n,:] = z.detach().numpy().flatten()
+        D[n] = d.detach().numpy()#.flatten()
+        Z[n] = z.detach().numpy()#.flatten()
 
     print("done")
 
     ######################
-    print("\tSaving dipole to file '{:s}' ... ",end="")
     file = os.path.normpath( "{:s}.dipole.txt".format(args.output))
-    np.savetxt(file,D,delimiter='\t', fmt='%.10e')
+    print("\tSaving dipole to file '{:s}' ... ".format(file),end="")
+    with open(file,'w') as f:
+        for n in range(N):
+            np.savetxt(f,D[n],delimiter='\t', fmt=args.format)
     print("done")
 
     ######################
-    print("\tSaving BECs to file '{:s}' ... ",end="")
     file = os.path.normpath("{:s}.bec.txt".format(args.output))
-    np.savetxt(file,Z,delimiter='\t', fmt='%.10e')
+    print("\tSaving BECs to file '{:s}' ... ".format(file),end="")
+    with open(file,'w') as f:
+        for n in range(N):
+            np.savetxt(file,Z[n],delimiter='\t', fmt=args.format)
+            f.write("\n")
     print("done")
 
-    print("\n\tJob done :)")
+    print("\n\tJob done :)\n")
 
 #####################
 

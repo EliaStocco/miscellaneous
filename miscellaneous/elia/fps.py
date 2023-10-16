@@ -19,11 +19,12 @@ def main():
     # Define the command-line argument parser with a description
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i" , "--input"        , action="store", type=str , help="input file")
-    parser.add_argument("-o" , "--output"       , action="store", type=str , help="output file")
-    parser.add_argument("-if", "--input_format" , action="store", type=str , help="input file format (default: 'None')" , default=None)
-    parser.add_argument("-of", "--output_format", action="store", type=str , help="output file format (default: 'None')", default=None)
-    parser.add_argument("-n" , "--number"       , action="store", type=int , help="number of desired structure (default: '100')", default=None)
+    parser.add_argument("-i" , "--input"         , action="store", type=str , help="input file")
+    parser.add_argument("-o" , "--output"        , action="store", type=str , help="output file with the selected structures ")
+    parser.add_argument("-oi", "--output_indices", action="store", type=str , help="output file with indices of the selected structures (default: 'indices.txt')",default='indices.txt')
+    parser.add_argument("-if", "--input_format"  , action="store", type=str , help="input file format (default: 'None')" , default=None)
+    parser.add_argument("-of", "--output_format" , action="store", type=str , help="output file format (default: 'None')", default=None)
+    parser.add_argument("-n" , "--number"        , action="store", type=int , help="number of desired structure (default: '100')", default=None)
 
     # Print the script's description
     print("\n\t{:s}".format(description))
@@ -104,10 +105,22 @@ def main():
     print(f"\tOriginal: {X.shape} ---> FPS: {X_fps.shape}")
 
     # Saving the fps selected structure
-    print("\tSaving FPS selected structures to file '{:s}' ... ".format(args.output),end="")
-    frames_fps = [frames[i] for i in struct_idx]
-    write(args.output, frames_fps, format=args.output_format)
-    print("done")
+    if args.output is not None :
+        print("\tSaving FPS selected structures to file '{:s}' ... ".format(args.output),end="")
+        frames_fps = [frames[i] for i in struct_idx]
+        write(args.output, frames_fps, format=args.output_format)
+        print("done")
+    else :
+        print("\tOutput file (-o/--output) for the selected structures not specified: they will not be saved to file")
+
+    # Saving the fps selected structure
+    if args.output_indices :
+        print("\tSaving indices of selected structures to file '{:s}' ... ".format(args.output_indices),end="")
+        indices = np.asarray([ int(i) for i in struct_idx],dtype=int)
+        np.savetxt(args.output_indices,indices,fmt='%d')
+        print("done")
+    else :
+        print("\tOutput file (-oi/--output_indices) for the indeces of the selected structures not specified: they will not be saved to file")
 
     print("\n\tJob done :)\n")
 

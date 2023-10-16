@@ -11,11 +11,11 @@ import torch
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 
-from training import hyper_train_at_fixed_model
-from plot import visualize_datasets
-from dataset import prepare_dataset
-from functions import get_data_from_dataset
-from network import SabiaNetworkManager
+from miscellaneous.elia.nn.training import hyper_train_at_fixed_model
+from miscellaneous.elia.nn.plot import visualize_datasets
+from miscellaneous.elia.nn.dataset import prepare_dataset
+from miscellaneous.elia.nn.functions import get_data_from_dataset
+from miscellaneous.elia.nn.network import SabiaNetworkManager
 from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
 
 #----------------------------------------------------------------#
@@ -36,7 +36,7 @@ default_values = {
         "layers"         : 6,
         "lmax"           : 2,
         "name"           : "untitled",
-        "reference"      : True,
+        "reference"      : False,
         # "phases"         : False,
         "output"         : "D",
         "max_radius"     : 6.0,
@@ -60,6 +60,7 @@ default_values = {
         "pbc"            : False,
         "instructions"   : None,
         "debug" : False,
+        "indices" : None
     }
 
 #####################
@@ -226,6 +227,9 @@ def get_args():
         # help="some description here (default: True)",
         default=default_values["debug"]
     )
+
+    parser.add_argument("--indices", action="store", type=str, default=default_values["indices"])
+
     return parser.parse_args()
 
 #####################
@@ -302,6 +306,7 @@ def main():
                                                   reference=parameters["reference"],\
                                                   output=parameters["output"],\
                                                   pbc=parameters["pbc"],\
+                                                  indices = parameters["indices"],\
                                                   # variables=variables,\
                                                   folder=parameters["folder"],\
                                                   # phases=parameters["phases"],\
@@ -380,10 +385,14 @@ def main():
         val_dataset   = datasets["val"]
         test_dataset  = datasets["test"]
         
-        train_dataset = train_dataset[0:1] 
-        val_dataset   = val_dataset  [0:1] 
+        if "n_debug" in parameters :
+            train_dataset = train_dataset[0:parameters["n_debug"]["train"]] 
+            val_dataset   = val_dataset  [0:parameters["n_debug"]["val"]] 
+        else :
+            train_dataset = train_dataset[0:1] 
+            val_dataset   = val_dataset  [0:1] 
 
-        print("\n\tDatasets summary:")
+        print("\tDatasets summary:")
         print("\t\ttrain:",len(train_dataset))
         print("\t\t  val:",len(val_dataset))
         print("\t\t test:",len(test_dataset))
@@ -435,7 +444,8 @@ def main():
         "layers":parameters["layers"],
         "lmax":parameters["lmax"],
         "dropout_probability" : parameters["dropout"],
-        "batchnorm" : parameters["batchnorm"]
+        "batchnorm" : parameters["batchnorm"],
+        "pbc" : parameters["pbc"]
     }
 
     #####################
@@ -457,12 +467,13 @@ def main():
 
     net = SabiaNetworkManager(**kwargs)
     print(net)
-    N = 0 
-    for i in net.parameters():
-        if len(i.shape) != 0 :
-            N += len(i)
-        else :
-            N += 1
+    N = net.n_parameters()
+    # N = 0 
+    # for i in net.parameters():
+    #     if len(i.shape) != 0 :
+    #         N += len(i)
+    #     else :
+    #         N += 1
     print("Tot. number of parameters: ",N)
     
     ##########################################
@@ -482,15 +493,15 @@ def main():
     opts = {
             #"name" : parameters["name"],
             "plot":{
-                "learning-curve" : {"N":50},
+                "learning-curve" : {"N":10},
                 "correlation" : {"N":-1}
             },
             "thr":{
                 "exit":100
             },
             "save":{
-                "parameters":10,
-                "checkpoint":10,
+                "parameters":1,
+                "checkpoint":1,
             },
             "start_time"     : start_time,
             'keep_dataset'   : True,

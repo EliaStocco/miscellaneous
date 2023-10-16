@@ -37,7 +37,7 @@ instructions = {
 
 print("\tReading data from input file '{:s}' ... ".format(args.input), end=end)
 with suppress_output(not args.debug):
-    atoms = read(args.input,format=args.input_format)
+    atoms = read(args.input,format=args.input_format,index=":")
 if not args.debug:
     print("done")
 
@@ -46,7 +46,11 @@ if args.output_unit is not None :
         args.input_unit = "atomic_unit"
     print("\tConverting positions from '{:s}' to {:s} ... ".format(args.input_unit,args.output_unit), end=end)
     factor = convert(what=1,family="length",_to=args.output_unit,_from=args.input_unit)
-    atoms.positions *= factor
+    if type(atoms) == list :
+        for n in range(len(atoms)):
+            atoms[n].positions *= factor
+    else :
+        atoms.positions *= factor
     print("done")
 
 # Write the data to the specified output file with the specified format

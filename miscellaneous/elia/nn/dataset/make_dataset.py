@@ -132,6 +132,7 @@ def make_dataset(data:MicroState,
                  max_radius:float,
                  output:str,
                  pbc:bool,
+                 indices:list=None,
                  default_dtype=torch.float64,
                  requires_grad:bool=True):#,\
                  #output_method:callable=None):
@@ -143,6 +144,10 @@ def make_dataset(data:MicroState,
     #     # ELIA: modify 'same_lattice' to 'false'
     #     output_method = lambda : data.get_dipole(same_lattice=True)
 
+    if indices is not None :
+        indices = np.loadtxt(indices).astype(int)
+        indices = list(indices)
+        data = data.subsample(indices)
 
     systems = data.to_ase()
 

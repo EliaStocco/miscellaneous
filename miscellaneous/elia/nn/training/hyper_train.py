@@ -6,7 +6,9 @@ import os
 from .train import train
 from miscellaneous.elia.functions import add_default
 from itertools import product
+from numba import njit, prange
 
+# @njit(parallel=True)
 def hyper_train_at_fixed_model( net:torch.nn.Module,\
                                 all_bs:list,\
                                 all_lr:list,\
@@ -53,12 +55,12 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
     ##########################################
     # preparing cycle over hyper-parameters
     if parameters["grid"] :
-        hyper_pars = product(all_bs, all_lr)
+        hyper_pars = list(product(all_bs, all_lr))
         Ntot = len(all_bs)*len(all_lr)
     else :
         if len(all_bs) != len(all_lr) :
             raise ValueError("batch sizes and learning rates should have the same lenght when 'grid'=True")
-        hyper_pars = zip(all_bs, all_lr)
+        hyper_pars = list(zip(all_bs, all_lr))
         Ntot = len(all_bs)
 
     #Ntot = len(hyper_pars)
@@ -74,26 +76,96 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
         parameters["task_time"] = ( parameters["max_time"] - 60 ) / Ntot
   
 
-    ##########################################
-    # training function
-    def run(n,bs,lr):
+    # ##########################################
+    # # training function
+    # def run(n,bs,lr):
 
+    #     info = "all good"
+
+    #     df.at[n,"bs"] = bs
+    #     df.at[n,"lr"] = lr
+
+    #     if parameters["trial"] is not None :
+    #         df[n,"trial"] = n_trial
+    #         df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}.trial={:d}".format(parameters["name"],bs,lr,n_trial)
+    #     else :
+    #         df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}".format(parameters["name"],bs,lr)
+        
+    #     print("#########################\n")
+    #     print("bs={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(bs,lr,n+1,Ntot))
+
+    #     #print("\n\trebuilding network...\n")
+    #     net = deepcopy(init_model)
+        
+    #     hyperparameters = {
+    #         'bs': bs,
+    #         'n_epochs'  : epochs.at[bs,lr],
+    #         'optimizer' : "Adam",
+    #         'lr'        : lr,
+    #         'loss'      : loss 
+    #     }
+
+    #     #print("\n\ttraining network...\n")
+    #     count_try = 0
+    #     while (info == "try again" and count_try < opts["max_try"]) or count_try == 0 :
+
+    #         if info == "try again":
+    #             print("\nLet's try again\n")
+
+    #         model, arrays, corr, info = \
+    #             train(  model=net,
+    #                     train_dataset=train_dataset,
+    #                     val_dataset=val_dataset,
+    #                     hyperparameters=hyperparameters,
+    #                     # get_pred=net.get_pred,
+    #                     # get_real=net.get_real, #lambda X: net.get_real(X=X,output=net.output),
+    #                     output=parameters["output_folder"],
+    #                     # correlation = net.correlation,
+    #                     name=df.at[n,"file"],
+    #                     opts=opts,
+    #                     parameters=parameters)
+    #         count_try += 1
+
+    #     if info == "try again":
+    #         print("\nAborted training. Let's go on!\n") 
+
+    #     df.at[n,"file"] = df.at[n,"file"] + ".pdf"
+    #     n += 1
+
+    #     df[:n].to_csv("temp-info.csv",index=False)
+
+    #     return info
+    
+    ##########################################
+    # looping over all hyper-parameters
+    n = 0 
+    init_model = copy(net) 
+    for n in prange(len(hyper_pars)) :
+        bs,lr = hyper_pars[n]
+        # if parameters["trial"] is not None : 
+        #     for n_trial in parameters["trial"] : 
+        #         info = run(n,bs,lr)
+        #         n += 1
+        #         if info == "exit file detected":
+        #             break
+        # else :       
+        # info = run(n,bs,lr)
         info = "all good"
 
         df.at[n,"bs"] = bs
         df.at[n,"lr"] = lr
 
-        if parameters["trial"] is not None :
-            df[n,"trial"] = n_trial
-            df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}.trial={:d}".format(parameters["name"],bs,lr,n_trial)
-        else :
-            df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}".format(parameters["name"],bs,lr)
+        # if parameters["trial"] is not None :
+        #     df[n,"trial"] = n_trial
+        #     df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}.trial={:d}".format(parameters["name"],bs,lr,n_trial)
+        # else :
+        df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}".format(parameters["name"],bs,lr)
         
         print("#########################\n")
         print("bs={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(bs,lr,n+1,Ntot))
 
         #print("\n\trebuilding network...\n")
-        net = deepcopy(init_model)
+        net = copy(init_model)
         
         hyperparameters = {
             'bs': bs,
@@ -132,22 +204,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
 
         df[:n].to_csv("temp-info.csv",index=False)
 
-        return info
-    
-    ##########################################
-    # looping over all hyper-parameters
-    n = 0 
-    init_model = deepcopy(net) 
-    for bs,lr in hyper_pars :
-        if parameters["trial"] is not None : 
-            for n_trial in parameters["trial"] : 
-                info = run(n,bs,lr)
-                n += 1
-                if info == "exit file detected":
-                    break
-        else :       
-            info = run(n,bs,lr)
-            n += 1
+        n += 1
         if info == "exit file detected":
             break
 

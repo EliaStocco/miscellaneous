@@ -152,7 +152,7 @@ class MessagePassing(torch.nn.Module):
             )
             irreps_node = gate.irreps_out
             if batchnorm :
-                bn = BatchNorm(irreps=conv.irreps_out,affine=True)
+                bn = BatchNorm(irreps=conv.irreps_out)
                 tmp = Compose(conv, bn)
                 self.layers.append(Compose(tmp, gate))
             else :
@@ -170,15 +170,18 @@ class MessagePassing(torch.nn.Module):
 
         if dropout_probability < 0 :
             raise ValueError("'dropout_probability' should be >= zero")
+        
+        elif dropout_probability > 0 :
+            self.dropout = torch.nn.ModuleList()
+            for lay in self.layers :
+                try :
+                    self.dropout.append(Dropout(irreps=lay.irreps_out,p=dropout_probability))
+                except:
+                    self.dropout.append(Dropout(irreps=lay.second._irreps_out,p=dropout_probability))
 
-        self.dropout = torch.nn.ModuleList()
-        for lay in self.layers :
-            try :
-                self.dropout.append(Dropout(irreps=lay.irreps_out,p=dropout_probability))
-            except:
-                self.dropout.append(Dropout(irreps=lay.second._irreps_out,p=dropout_probability))
-
-        self.dropout_probability = dropout_probability
+            self.dropout_probability = dropout_probability
+        else :
+            self.dropout = None
 
         
         # if batchnorm:
@@ -190,11 +193,11 @@ class MessagePassing(torch.nn.Module):
 
     def forward(self:T, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
 
-        for lay,drop in zip(self.layers,self.dropout):
+        for n,lay in enumerate(self.layers):
             node_features = lay(node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars)
 
             # Apply dropout
-            if self.dropout_probability > 0 :
-                node_features = drop(node_features)
+            if self.dropout is not None :
+                node_features = self.dropout[n](node_features)
 
         return node_features

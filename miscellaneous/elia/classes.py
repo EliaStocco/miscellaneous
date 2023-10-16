@@ -14,7 +14,7 @@ import pandas as pd
 #from reloading import reloading
 import re
 import ipi.utils.mathtools as mt
-from copy import deepcopy
+from copy import deepcopy, copy
 from miscellaneous.elia.functions import add_default
 
 __all__ = ["MicroState"]
@@ -1261,6 +1261,25 @@ class MicroState:
             out = self.ase
 
         return out
+    
+    def subsample(self,indices:list):
+
+        data = copy(self)
+        for k in data.properties.keys():
+            data.properties[k] = data.properties[k][indices]
+
+        traj = ["positions","velocities","forces","momenta","cells","Eforces","displacements"]
+        for k in traj:
+            if hasattr(data,k):
+                new = getattr(data,k)[indices]
+                setattr(data,k,new) 
+    
+        data.Nconf = len(data)
+    
+        return data
+
+        
+
 
     # @reloading
     # @staticmethod

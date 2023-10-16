@@ -18,6 +18,7 @@ def prepare_dataset(ref_index:int,\
                     reference:bool,\
                     folder:str,\
                     opts:dict,\
+                    indices:str,\
                     requires_grad:bool=False):
     
     # Attention:
@@ -142,6 +143,7 @@ def prepare_dataset(ref_index:int,\
                                                     max_radius = max_radius,
                                                     output=output,
                                                     pbc = pbc,
+                                                    indices = indices,
                                                     requires_grad = requires_grad)
             # elif phases :
             #     dataset = make_dataset_phases(  data = data,
@@ -155,6 +157,7 @@ def prepare_dataset(ref_index:int,\
                                         max_radius=max_radius,
                                         output=output,
                                         pbc = pbc ,
+                                        indices = indices,
                                         requires_grad=requires_grad)
                 # dipole = torch.full((3,),torch.nan)
                 pos = torch.full((3,),torch.nan)
