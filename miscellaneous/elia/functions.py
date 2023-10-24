@@ -250,11 +250,15 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
     
-def get_one_file_in_folder(folder,ext):
+def get_one_file_in_folder(folder,ext,pattern=None):
     files = list()
     for file in os.listdir(folder):
         if file.endswith(ext):
-            files.append(os.path.join(folder, file))
+            if pattern is None :
+                files.append(os.path.join(folder, file))
+            elif pattern in file:
+                files.append(os.path.join(folder, file))
+            
     if len(files) == 0 :
         raise ValueError("no '*{:s}' files found".format(ext))
     elif len(files) > 1 :
