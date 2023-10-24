@@ -122,6 +122,11 @@ class MicroState:
                         #"dynmat",\
                         "properties"]
             
+        if todo == "IR" :
+            toread += [ "modes","eigvec","ortho_modes","masses","eigvals",\
+                        "bec"]
+            
+            
         if todo == "plot-vib-modes-energy" :
             toread += [ "eigvals",\
                         "eigvec",\
@@ -493,8 +498,9 @@ class MicroState:
             self.units = u
             
         
-        if 'bec' in toread :
+        if "bec" in toread :
             self.bec = np.loadtxt(instructions.bec)
+            self.bec = self.bec.reshape((self.Nconf,len(self.positions[0]),3))
 
         for name in attribute_names:
             if getattr(self, name) is None:
@@ -1713,18 +1719,22 @@ class MicroState:
         return self.numbers
 
 
-    def IR(self,ofile=None,plotfile=None,tol=1e-7):
+    def IR(self,ofile=None,plotfile=None,tol=None):
 
-        Z = self.bec.reshape((-1,3))
+        Z = self.bec #.reshape((-1,3))
 
         if self.modes.shape[0]  != len(Z):
             raise ValueError("Vibrational modes and Born Effective Charges shapes do not match")
 
+        
         w = np.sqrt(self.eigvals)
         if len(w) != len(self.modes):
             raise ValueError("Vibrational modes and eigenvalues shapes do not match")
-        
-        valid_eigenstate = w > tol
+            
+        if tol is not None :
+            valid_eigenstate = w > tol
+        else :
+            valid_eigenstate = np.full(self.modes.shape[0],True)
                 
         # derivative of the cartesian coordinates w.r.t. normal modes
         dRdQ = self.modes #np.linalg.inv(data.modes)
@@ -1735,7 +1745,8 @@ class MicroState:
         # IR activities
         # row: MD step
         # col: mode 
-        IR = np.square(dP_dQ.sum(axis=1)) # sum over cartesian components
+        # IR = np.square(dP_dQ.sum(axis=1)) # sum over cartesian components
+        IR = np.linalg.norm(dP_dQ,axis=1)
 
         # print IR intesity to file
         if ofile is not None :
@@ -1747,6 +1758,10 @@ class MicroState:
             df["w [a.u.]"]  = w
             df["w [THz]"]   = w * factor # data.w / 0.00015198298
             df["IR [a.u.]"] = IR
+
+            df["dPxdQ [a.u.]"] = dP_dQ[:,0]
+            df["dPydQ [a.u.]"] = dP_dQ[:,1]
+            df["dPzdQ [a.u.]"] = dP_dQ[:,2]
 
             df["w [THz]"]  = df["w [THz]"].fillna(0)
             df["w [a.u.]"] = df["w [a.u.]"].fillna(0)
@@ -1863,11 +1878,127 @@ class MicroState:
         # },
 
         time = self.get("time","atomic_unit")
-        E = Ef._get_Efield(time)
-        f = Ef._get_Eenvelope(time) # * np.linalg.norm(data["Eamp"])
+        E    = Ef._get_Efield(time)
+        f    = Ef._get_Eenvelope(time) # * np.linalg.norm(data["Eamp"])
+        f2   = Ef._get_Eenvelope(time) * np.linalg.norm(data["Eamp"])
         
         self.add_property(name="Efield",array=E,unit="atomic_unit")
         self.add_property(name="Efieldmod",array=np.linalg.norm(E,axis=1),unit="atomic_unit")
         self.add_property(name="Eenvelope",array=f,unit="atomic_unit")
+        self.add_property(name="Eenvelope-2",array=f2,unit="atomic_unit")
 
         return 
+    
+    def eckart(self,index):
+        from miscellaneous.elia.eckart import EckartFrame
+        m = self.masses.reshape((-1,3))[:,0]
+        print("\tsetting the 'EckartFrame' object with the following masses (a.u.): ",m)
+        eck = EckartFrame(m)
+        N    = len(self.positions)
+        x    = self.positions.reshape((N,-1,3))
+        xref = self.positions[index].reshape((-1,3))
+        print("\taligning the positions along the Eckart frame of the {:d}th configuration".format(index))
+        newx, shift, rotmat = eck.align(x,xref)
+        # save the shift and rotmat ... maybe they will be useful 
+        # self.eckart_shift  = shift
+        rotmat = np.asarray([ r.T for r in rotmat ])
+        return newx.reshape((N,-1)), shift, rotmat
+
+    
+    def dipole_model(self,index,frame="global"):
+        if frame == "eckart" :
+            newx, _ , _  = self.eckart(index)            
+            # save old positions
+            oldpos = copy(self.positions)
+            # set the rotated positions
+            self.positions = copy(newx)
+            # compute the model in the Eckart frame
+            model = self.dipole_model(index,frame="global")
+            # re-set the positions to the original values
+            self.positions = oldpos
+            # return the model
+            return model
+
+        elif frame == "global" :
+            bec = self.bec[index]
+            d0  = self.properties["dipole"][index]
+            R0  = self.positions[index].reshape((-1,3))
+            model  = np.full((len(self),3),np.nan)
+            for n in range(len(self)):
+                R = self.positions[n].reshape((-1,3))
+                model[n,:] = bec.T @ (R - R0).flatten() + d0
+            return model
+        
+        else :
+            raise ValueError("'frame' can be only 'eckart' or 'global' (dafault).")
+        
+    def diff_bec(self,index,frame="global"):
+
+        Natoms = self.positions[0].reshape((-1,3)).shape[0]
+
+        newbec = np.asarray(shape=self.bec.shape)
+        if frame == "eckart":
+            all_Z = self.bec[n].reshape((Natoms,3,3))
+            new_Z = np.asarray(shape=all_Z.shape)
+            _, _, rotmat = self.eckart(index)
+
+            for n in range(self.Nconf):
+                R  = rotmat[n]
+                Rt = R.T
+                for a in range(Natoms):
+                    Z =  all_Z[n,a].T
+                    new_Z[n,:,:] = R @ Z @ Rt
+            newbec[n] = new_Z.reshape(self.bec[n].shape)
+
+            # save old BECs
+            oldbec = copy(self.bec)
+            # set the rotated positions
+            self.bec = new_Z.reshape()
+            # compute the model in the Eckart frame
+            model = self.dipole_model(index,frame="global")
+            # re-set the positions to the original values
+            self.positions = oldpos
+
+
+
+
+
+
+
+        elif frame == "global" :
+
+            dZ = self.bec - self.bec[index]
+            dZtot = dZ.reshape((len(self),-1)).copy()
+            dZtot = np.sqrt(np.square(dZtot).sum(axis=1))/Natoms
+
+            dZon = dZ.reshape((dZ.shape[0],-1,3,3)).copy()
+            mask = ~np.eye(3, dtype=bool)
+            for i in range(dZon.shape[0]):
+                for j in range(dZon.shape[1]):
+                    dZon[i,j][mask] = 0
+            tmp = np.zeros((dZon.shape[0],dZon.shape[1],3))
+            for i in range(dZon.shape[0]):
+                for j in range(dZon.shape[1]):
+                    tmp[i,j] =  np.diagonal(dZon[i,j])
+            dZon = tmp.reshape((len(self),-1))
+            dZon = np.sqrt(np.square(dZon).sum(axis=1))/Natoms
+
+
+            dZoff = dZ.reshape((dZ.shape[0],-1,3,3)).copy()
+            for i in range(dZoff.shape[0]):
+                for j in range(dZoff.shape[1]):
+                    np.fill_diagonal(dZoff[i,j],0)
+            tmp = np.zeros((dZoff.shape[0],dZoff.shape[1],6))
+            mask = ~np.eye(3, dtype=bool)
+            for i in range(dZoff.shape[0]):
+                for j in range(dZoff.shape[1]):
+                    tmp[i,j] =  dZoff[i,j][mask]
+            dZoff = tmp.reshape((len(self),-1))
+            dZoff = np.sqrt(np.square(dZoff).sum(axis=1))/Natoms
+
+            return dZtot, dZon, dZoff
+        
+        else :
+            raise ValueError("'frame' can be only 'eckart' or 'global' (dafault).")
+
+
