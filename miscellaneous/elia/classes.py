@@ -1644,7 +1644,7 @@ class MicroState:
             phases = self.properties["phases"]
 
         for xyz in range(3):
-            phases[:,xyz] = np.unwrap(2*np.pi*phases[:,xyz])/2*np.pi # period=1.0,discont=0
+            phases[:,xyz] = np.unwrap(2*np.pi*phases[:,xyz])/(2*np.pi) # period=1.0,discont=0
 
         if inplace :
             self.properties["phases"] = phases
@@ -1722,7 +1722,7 @@ class MicroState:
         return self.get_dipole(recompute=True,inplace=inplace)
 
     def fix_polarization(self,
-                         unit=None,
+                         # unit=None,
                          same_lattice=True,
                          inplace=False,
                          recompute=False):
@@ -1735,8 +1735,8 @@ class MicroState:
         """
 
         array = self.properties["polarization"]
-        if unit is None :
-            unit = self.units["polarization"]
+        # if unit is None :
+        #     unit = self.units["polarization"]
 
         if "phases" not in self.properties or recompute:
             phases = self.get_phases(array=array,same_lattice=same_lattice,fix=True,inplace=inplace)
