@@ -78,6 +78,7 @@ def prepare_dataset(ref_index:int,\
     ##########################################
     # fix polarization
     if "D" in output :
+        shift = [0,0,0]
         if "dipole" not in data.properties :
             data.get_dipole(same_lattice=same_lattice,inplace=True)
 
