@@ -13,11 +13,11 @@
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-from ipi.engine.ensembles import ElectricField
+from ipi.engine.eda import ElectricField
 import xml.etree.ElementTree as xmlet
 import os
 #import ast 
-from .functions import convert
+from miscellaneous.elia.functions import convert
 
 def plt_clean():
     ###

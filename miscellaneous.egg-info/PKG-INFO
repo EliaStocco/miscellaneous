@@ -1,12 +1,12 @@
-Metadata-Version: 1.0
+Metadata-Version: 2.1
 Name: miscellaneous
 Version: 0.0.0
 Summary: Some scripts
-Home-page: UNKNOWN
 Author: Elia Stocco
-Author-email: UNKNOWN
-License: UNKNOWN
-Description: # miscellaneous
-        Here I propose to gather useful scripts doing nontrivial tasks which other people might have a need for.
-        
-Platform: UNKNOWN
+
+# miscellaneous
+Here I propose to gather useful scripts doing nontrivial tasks which other people might have a need for.
+
+# To Do 
+- fix all the `ELIA: modify 'same_lattice' to 'false'` comments
+- modify `get_real` and add `y` to each datapoint, so it's faster to access the "real" value in the loss function

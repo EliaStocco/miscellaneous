@@ -24,6 +24,7 @@ __all__ = ["MicroState"]
 
 deg2rad = np.pi / 180.0
 abcABC = re.compile(r"CELL[\(\[\{]abcABC[\)\]\}]: ([-+0-9\.Ee ]*)\s*")
+abcABCunits = r'\{([^}]+)\}'
 
 # reloading: https://towardsdatascience.com/introducing-reloading-never-re-run-your-python-code-again-to-print-more-details-374bee33473d
 
@@ -154,6 +155,8 @@ class MicroState:
         #                 #
         ###################
 
+        self.units = dict()
+
         if "relaxed" in toread:
             ###
             # reading original position
@@ -197,7 +200,9 @@ class MicroState:
 
         if "positions" in toread:
 
-            print("{:s}reading positions from file '{:s}'".format(MicroStatePrivate.tab,instructions.positions))
+            file = instructions.positions
+
+            print("{:s}reading positions from file '{:s}'".format(MicroStatePrivate.tab,file))
             positions0 = io.read(instructions.positions,index=":")
             
             tmp = positions0[0]
@@ -218,13 +223,23 @@ class MicroState:
             self.positions = np.asarray(positions)
             self.Nconf = Nconf
 
-            if "types" in toread:
-                print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,instructions.types))
-                self.types = [ system.get_chemical_symbols() for system in positions0 ]
-                self.numbers = [ system.numbers for system in positions0 ]
+            # assume they are all the same 
+            # extract unit of the positions
+            comments = read_comments_xyz(instructions.positions)
+            matches = re.findall(abcABCunits,comments[0])
+            if len(matches) != 2 :
+                raise ValueError("Hey man! We have a problem here :(")
+            self.units["positions"] = matches[0]
+
+            # if "types" in toread:
+            print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,file))
+            self.types = [ system.get_chemical_symbols() for system in positions0 ]
+            self.numbers = [ system.numbers for system in positions0 ]
 
             del positions
             del positions0
+
+
 
         # if "types" in toread:
 
@@ -236,17 +251,23 @@ class MicroState:
         #     self.numbers = [ system.numbers for system in positions ]
 
 
-        if "cells" in toread :
-            print("{:s}reading cells (for each configuration) from file '{:s}'".format(MicroStatePrivate.tab,instructions.cells))
+        # if "cells" in toread :
+            print("{:s}reading cells (for each configuration) from file '{:s}'".format(MicroStatePrivate.tab,file))
 
             try : 
-                comments = read_comments_xyz(instructions.cells)
+                # comments = read_comments_xyz(instructions.cells)
                 cells = [ abcABC.search(comment) for comment in comments ]
                 self.cells = np.zeros((len(cells),3,3))
                 for n,cell in enumerate(cells):
                     a, b, c = [float(x) for x in cell.group(1).split()[:3]]
                     alpha, beta, gamma = [float(x) * deg2rad for x in cell.group(1).split()[3:6]]
                     self.cells[n] = mt.abc2h(a, b, c, alpha, beta, gamma)
+                # assume they are all the same 
+                # extract unit of the cells
+                # matches = abcABCunits.search(comments[0])
+                # if len(matches) != 2 :
+                #     raise ValueError("Hey man! We have a problem here :(")
+                self.units["cells"] = matches[1]
             except:
                 atoms = io.read(instructions.cells,index=":")
                 self.cells = np.zeros((len(atoms),3,3))
@@ -495,7 +516,7 @@ class MicroState:
             p,u = getproperty(instructions.properties,header)
             self.header  = get_property_header(instructions.properties,search=False)
             self.properties  = p
-            self.units = u
+            self.units.update(u)
             
         
         if "bec" in toread :
@@ -846,7 +867,7 @@ class MicroState:
             print("Warning: 'time' not present in 'properties'")
             time = None
 
-        quantity = self.properties[what]
+        quantity = self.properties[what].copy()
         if len(quantity.shape) == 2:
             dim = quantity.shape[1]
         else :
@@ -1351,6 +1372,9 @@ class MicroState:
         # I should do 
         #   return ( inv @ array.T ).T
         # but it is equal to array @ matrix.T
+        if array is None :
+            return matrixT
+        
         out = array @ matrixT
         if get_matrix:
             return out, matrixT
@@ -1395,7 +1419,10 @@ class MicroState:
             for i in range(3):
                 matrixT[:,i] /= length[i]
             matrixT = matrixT.T
-
+            
+        if array is None :
+            return matrixT
+        
         out = array @ matrixT
         if get_matrix:
             return out, matrixT
@@ -1403,6 +1430,15 @@ class MicroState:
             return out
         
         # return array @ matrixT
+
+    def matrix(self,basis):
+        if basis == "l2c":
+            return self._lattice2cart(array=None,lattice=self.cells[0]).T
+        elif basis == "c2l" :
+            return self._cart2lattice(array=None,lattice=self.cells[0]).T
+        else :
+            return None
+            
     
     def cart2lattice(self,**argv):
         return self.trasform_basis(func=MicroState._cart2lattice,**argv)
@@ -1410,7 +1446,7 @@ class MicroState:
     def lattice2cart(self,**argv):
         return self.trasform_basis(func=MicroState._lattice2cart,**argv)
     
-    def trasform_basis(self,func,what=None,array=None,unit=None,family=None,same_lattice=True,reshape=None):
+    def trasform_basis(self,func,what=None,array=None,same_lattice=True,reshape=None):
 
         if same_lattice:
 
@@ -1422,12 +1458,12 @@ class MicroState:
             if array is None :
                 array = self.properties[what]
 
-            if unit is None and what is not None:
-                unit = self.units[what]
+            # if unit is None and what is not None:
+            #     unit = self.units[what]
 
-            if family is not None:
-                factor = convert(1,_from=unit,_to="atomic_unit",family=family)
-                array *= factor 
+            # if family is not None:
+            #     factor = convert(1,_from=unit,_to="atomic_unit",family=family)
+            #     array *= factor 
             
             # print(" array shape:",array.shape)
 
@@ -1442,10 +1478,10 @@ class MicroState:
                     p = p[0]
                 out[n,:] = p.reshape(pol.shape)
 
-            factor = 1
-            if family is not None and unit is not None:
-                factor = convert(1,family=family,_from="atomic_unit",_to=unit)
-            return out * factor
+            # factor = 1
+            # if family is not None and unit is not None:
+            #     factor = convert(1,family=family,_from="atomic_unit",_to=unit)
+            return out # * factor
     
         else :
             raise ValueError("not implemented yet")
@@ -1501,19 +1537,19 @@ class MicroState:
 
         return length
 
-    def get_phases(self,array=None,unit="atomic_unit",same_lattice=True,inplace=True,fix=True,**argv):
+    def get_phases(self,array=None,same_lattice=True,inplace=True,fix=True,**argv):
         """Compute the phases of the polarization vectors"""
 
         # convert the polarization from cartesian di lattice coordinates
         if array is None:
             polarization = self.cart2lattice(what="polarization",\
-                                            family="polarization",\
+                                            # family="polarization",\
                                             same_lattice=same_lattice,\
                                             reshape=None)
         else :
             polarization = self.cart2lattice(array=array,\
-                                            unit=unit,\
-                                            family="polarization",\
+                                            # unit=unit,\
+                                            # family="polarization",\
                                             same_lattice=same_lattice,\
                                             reshape=None)
             
@@ -1535,6 +1571,13 @@ class MicroState:
         
         return phases
     
+    def _get_pol_from_dipole(self,same_lattice=True,inplace=True):
+        volume = self.get_volume(same_lattice=same_lattice,only_first=False)
+        polarization = self.properties["dipole"] / volume
+        if inplace:
+            self.properties["polarization"] = polarization
+        return polarization
+
     def get_dipole(self,same_lattice=True,inplace=True,recompute=False):
 
         if "dipole" in self.properties and not recompute:
@@ -1549,28 +1592,37 @@ class MicroState:
 
         return dipole
     
-    def get_dipole_quantum(self,same_lattice=True,only_first=True):
-        polarization_quantum = self.get_polarization_quantum(same_lattice,only_first)
+    def get_dipole_quantum(self,same_lattice=True,only_first=True,basis="cartesian"):
+        polarization_quantum = self.get_polarization_quantum(same_lattice,only_first,basis=basis)
         volume = self.get_volume(same_lattice,only_first)
         return polarization_quantum * volume
 
 
-    def get_polarization_quantum(self,same_lattice=True,only_first=True):
+    def get_polarization_quantum(self,same_lattice=True,only_first=True,basis="cartesian"):
 
         if only_first:
 
+            # [volume] = [cells]^3
             volume = self.get_volume(same_lattice=True,only_first=only_first)
+            # [length] = [positions]
             length = self.get_basisvectors_length(same_lattice=True,only_first=only_first)
 
             quantum = np.zeros(3)
-            quantum[:] = length[:]/volume          
-            quantum = self.lattice2cart(array=quantum.reshape((1,3)),\
-                                            family="polarization",\
-                                            unit=self.units["polarization"],\
-                                            same_lattice=True,\
-                                            reshape=None).flatten()
+            # [quantum] = [positions]/[cells]^3
+            quantum[:] = length[:]/volume      
+            if basis == "lattice" :
+                return quantum
+            elif basis == "cartesian" :    
+                return self.lattice2cart(array=quantum.reshape((1,3)),\
+                                                # family="lenght",\
+                                                # unit=self.units["polarization"],\
+                                                same_lattice=True,\
+                                                reshape=None).flatten()
+            else :
+                raise ValueError("we have another problem")
             
         else :
+            raise ValueError("we have another problem")
             volume = self.get_volume(same_lattice=same_lattice)
             length = self.get_basisvectors_length(same_lattice=same_lattice)
 
@@ -1580,8 +1632,8 @@ class MicroState:
 
 
             quantum = self.lattice2cart(array=quantum,\
-                                            family="polarization",\
-                                            unit=self.units["polarization"],\
+                                            # family="polarization",\
+                                            # unit=self.units["polarization"],\
                                             same_lattice=same_lattice,\
                                             reshape=None)
 
@@ -1592,7 +1644,7 @@ class MicroState:
             phases = self.properties["phases"]
 
         for xyz in range(3):
-            phases[:,xyz] = np.unwrap(phases[:,xyz],period=1.0,discont=np.inf)
+            phases[:,xyz] = np.unwrap(2*np.pi*phases[:,xyz])/2*np.pi # period=1.0,discont=0
 
         if inplace :
             self.properties["phases"] = phases
@@ -1600,12 +1652,11 @@ class MicroState:
         return phases
         
     def shift_phases(self,
-                    unit=None,
                     same_lattice=True,
                     shift=None,
                     inplace=False):
         
-        phases = self.get_phases(unit=unit,same_lattice=same_lattice,fix=True)
+        phases = self.get_phases(same_lattice=same_lattice,fix=True)
 
         if shift is None :
 
@@ -1636,7 +1687,7 @@ class MicroState:
 
         return phases, shift
 
-    def _get_pol_from_phases(self,phases,same_lattice,unit):
+    def _get_pol_from_phases(self,phases,same_lattice):
 
         volume = self.get_volume(same_lattice=same_lattice,only_first=False)
         length = self.get_basisvectors_length(same_lattice=same_lattice,only_first=False)
@@ -1645,30 +1696,30 @@ class MicroState:
             polarization[:,xyz] = phases[:,xyz]*length[:,xyz]/volume[:]
         
         polarization = self.lattice2cart(array=polarization,\
-                                         family="polarization",\
-                                         unit=unit,\
+                                         # family="polarization",\
+                                         # unit=unit,\
                                          same_lattice=same_lattice,\
                                          reshape=None)
-        
+
         return polarization
     
     def shift_polarization(self,
-                            unit=None,
                             same_lattice=True,
                             shift=None,
                             inplace=False):
         
-        if unit is None :
-            unit = self.units["polarization"]
-
-        phases, shift = self.shift_phases(unit=unit,same_lattice=same_lattice,inplace=inplace,shift=shift)
+        phases, shift = self.shift_phases(same_lattice=same_lattice,inplace=inplace,shift=shift)
         
-        polarization = self._get_pol_from_phases(phases,same_lattice=same_lattice,unit=unit)
+        polarization = self._get_pol_from_phases(phases,same_lattice=same_lattice)
 
         if inplace :
             self.properties["polarization"] = polarization
 
         return polarization, shift
+
+    def fix_dipole(self,inplace=False):
+        _ = self.fix_polarization(inplace=True)
+        return self.get_dipole(recompute=True,inplace=inplace)
 
     def fix_polarization(self,
                          unit=None,
@@ -1688,7 +1739,7 @@ class MicroState:
             unit = self.units["polarization"]
 
         if "phases" not in self.properties or recompute:
-            phases = self.get_phases(array=array,unit=unit,same_lattice=same_lattice,fix=True,inplace=inplace)
+            phases = self.get_phases(array=array,same_lattice=same_lattice,fix=True,inplace=inplace)
         else :
             phases = self.fix_phases()
 
@@ -1703,7 +1754,7 @@ class MicroState:
         #     phases[:,xyz] = np.unwrap(phases[:,xyz],discont=0.0,period=1.0)
             
         #
-        polarization = self._get_pol_from_phases(phases,same_lattice=same_lattice,unit=unit)
+        polarization = self._get_pol_from_phases(phases,same_lattice=same_lattice)
 
         if inplace :
             self.properties["polarization"] = polarization
@@ -1804,18 +1855,17 @@ class MicroState:
     def Efield_from_xml(self,file):
 
         import xml.etree.ElementTree as xmlet
-        from ipi.engine.ensembles import ElectricField
 
         data = xmlet.parse(file).getroot()
 
         ensemble = None
         for element in data.iter():
-            if element.tag == "ensemble":
+            if element.tag == "efield":
                 ensemble = element
                 break
 
         data     = {}
-        keys     = ["Eamp",          "Efreq",    "Ephase",   "Epeak","Esigma"]
+        keys     = ["amp",          "freq",    "phase",   "peak","sigma"]
         families = ["electric-field","frequency","undefined","time", "time"  ]
         
         for key,family in zip(keys,families):
@@ -1847,40 +1897,21 @@ class MicroState:
                 value = convert(value,family,unit,"atomic_unit")
                 data[key] = value
 
-        # get the ElectricField object
-        Ef = ElectricField( Eamp=data["Eamp"],\
-                            Ephase=data["Ephase"],\
-                            Efreq=data["Efreq"],\
-                            Epeak=data["Epeak"],\
-                            Esigma=data["Esigma"])
-        
-        # "Efield": {
-        #     "dimension": "atomic_unit",
-        #     "help": "The external applied electric field (cartesian axes).",
-        #     "size": 3,
-        #     "func": (lambda: dd(self.ensemble.eda).Efield(self.ensemble.time)),
-        # },
-        # "TderEfield": {
-        #     "dimension": "atomic_unit",
-        #     "help": "The time derivative of the external applied electric field (cartesian axes).",
-        #     "size": 3,
-        #     "func": (lambda: dd(self.ensemble.eda.Electric_Field).TderEfield(self.ensemble.time)),
-        # },
-        # "Efieldmod": {
-        #     "dimension": "atomic_unit",
-        #     "help": "The modulus of the external applied electric field.",
-        #     "func": (lambda: norm(dd(self.ensemble.eda).Efield(self.ensemble.time))),
-        # },
-        # "Eenvelope": {
-        #     "dimension": "atomic_unit",
-        #     "help": "The (gaussian) envelope function of the external applied electric field.",
-        #     "func": (lambda: dd(self.ensemble.eda.Electric_Field).Eenvelope(self.ensemble.time) ),
-        # },
-
+        data["amp"]   = 0.0    if data["amp"]   is None else data["amp"]
+        data["freq"]  = 0.0    if data["freq"]  is None else data["freq"]
+        data["phase"] = 0.0    if data["phase"] is None else data["phase"]
+        data["peak"]  = 0.0    if data["peak"]  is None else data["peak"]
+        data["sigma"] = np.inf if data["sigma"] is None else data["sigma"]
+    
         time = self.get("time","atomic_unit")
-        E    = Ef._get_Efield(time)
-        f    = Ef._get_Eenvelope(time) # * np.linalg.norm(data["Eamp"])
-        f2   = Ef._get_Eenvelope(time) * np.linalg.norm(data["Eamp"])
+
+        Ecos = lambda t: np.cos(data["freq"] * t + data["phase"])
+        Eenvelope = lambda t: np.exp(-0.5 * ((t - data["peak"]) / data["sigma"]) ** 2)
+        Efield = lambda t: np.outer( Ecos(time) * Eenvelope(time), data["amp"])
+
+        E    = Efield(time)
+        f    = Eenvelope(time) # * np.linalg.norm(data["Eamp"])
+        f2   = Eenvelope(time) * np.linalg.norm(data["amp"])
         
         self.add_property(name="Efield",array=E,unit="atomic_unit")
         self.add_property(name="Efieldmod",array=np.linalg.norm(E,axis=1),unit="atomic_unit")

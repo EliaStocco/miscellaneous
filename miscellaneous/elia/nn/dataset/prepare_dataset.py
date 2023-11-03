@@ -78,18 +78,23 @@ def prepare_dataset(ref_index:int,\
     ##########################################
     # fix polarization
     if "D" in output :
-        if pbc :
-            # This has to be modified
-            data.fix_polarization(same_lattice=same_lattice,inplace=True)
-            _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
-            # shift = [0,0,0]
-            # if "dipole" in data.properties :
-            #     del data.properties["dipole"]
-            data.get_dipole(same_lattice=same_lattice,inplace=True,recompute=True)
-        else :
-            shift = [0,0,0]
-            if "dipole" not in data.properties :
-                data.get_dipole(same_lattice=same_lattice,inplace=True)
+        if "dipole" not in data.properties :
+            data.get_dipole(same_lattice=same_lattice,inplace=True)
+
+        # if pbc :
+        #     # compute the polarization from the dipole
+        #     _ = data._get_pol_from_dipole(same_lattice=same_lattice,inplace=True)
+        #     # This has to be modified
+        #     data.fix_polarization(same_lattice=same_lattice,inplace=True)
+        #     _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
+        #     # shift = [0,0,0]
+        #     # if "dipole" in data.properties :
+        #     #     del data.properties["dipole"]
+        #     data.get_dipole(same_lattice=same_lattice,inplace=True,recompute=True)
+        # else :
+        #     shift = [0,0,0]
+        #     if "dipole" not in data.properties :
+        #         data.get_dipole(same_lattice=same_lattice,inplace=True)
 
     ##########################################
     # show time-series
