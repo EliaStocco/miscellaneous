@@ -98,10 +98,12 @@ class SabiaNetwork(torch.nn.Module):
 
         # batch normalization to normalize output
         # self._bn = BatchNorm(irreps=self.mp.irreps_out,affine=True)
-        self.factor = torch.nn.Parameter(torch.tensor(1.0))
+        self.factor = torch.nn.Parameter(torch.ones((1))) 
+        # torch.nn.Parameter(torch.ones((1))) 
+        # torch.nn.Parameter(torch.tensor(1.0))
         self.use_shift = use_shift
         if self.use_shift:
-            self.shift = torch.nn.Parameter(torch.zeros((3)))
+            self.shift = torch.nn.Parameter(torch.ones((3)))
 
         self.irreps_in = self.mp.irreps_in
         self.irreps_out = self.mp.irreps_out
@@ -190,16 +192,16 @@ class SabiaNetwork(torch.nn.Module):
 
         if self.pool_nodes:
             # Elia: understand what 'scatter' does
-            node_outputs = scatter(node_outputs, batch, dim=0).div(
+            y0 = scatter(node_outputs, batch, dim=0).div(
                 self.num_nodes**0.5
             )
-        # else:
-        #     y = node_outputs
+        else:
+            y0 = node_outputs
 
-        node_outputs *= self.factor
+        y = y0 * self.factor
 
         if self.use_shift:
-            node_outputs += self.shift
+            return y + self.shift
+        else :
+            return y
 
-        return node_outputs  # * self.factor + self.shift
-        # return self._bn(node_outputs)

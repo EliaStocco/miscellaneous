@@ -122,7 +122,7 @@ def train(model:torch.nn.Module,\
         name = "untitled"
 
     # output folders
-    folders = { "networks"        :"{:s}/networks".format(output),\
+    folders = { # "networks"        :"{:s}/networks".format(output),\
                 # "networks-temp"   :"{:s}/networks-temp".format(output),\
                 "parameters"      :"{:s}/parameters".format(output),\
                 # "parameters-temp" :"{:s}/parameters-temp".format(output),\
@@ -274,9 +274,9 @@ def train(model:torch.nn.Module,\
         ytrain_real = get_all(train_dataset)
         all_dataloader_train = get_all_dataloader(train_dataset)
 
-    savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
-    print("\tSaving 'model' with dummy parameters to file '{:s}'".format(savefile))
-    torch.save(model, savefile)    
+    # savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
+    # print("\tSaving 'model' with dummy parameters to file '{:s}'".format(savefile))
+    # torch.save(model, savefile)    
 
     # correlation
     corr = None
@@ -315,7 +315,7 @@ def train(model:torch.nn.Module,\
 
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        start_epoch = checkpoint['epoch']
+        start_epoch = checkpoint['epoch'] + 1
         # loss = checkpoint['loss']
 
         # read array and corr
@@ -334,17 +334,23 @@ def train(model:torch.nn.Module,\
         if opts["recompute_loss"] and "train-2" not in arrays:
             arrays["train-2"] = None     
             arrays["ratio-2"] = None        
+    elif not os.path.exists(checkpoint_file):
+        print("\tnot checkpoint file found")
+    elif opts["restart"] :
+        print("\trestart=True")
 
-    def save_checkpoint():
+    def save_checkpoint(file,epoch,model,optimizer):
+        print("\tsaving checkpoint to file '{:s}'".format(file))
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-        }, checkpoint_file)
+        }, file)
 
     ##########################################    
     # start the training procedure
     print("\n\t...and here we go!")
+    k = copy(start_epoch)
     for epoch in range(start_epoch,n_epochs):    
 
         if info != "all good":
@@ -415,9 +421,10 @@ def train(model:torch.nn.Module,\
                                     corr_train=corr["train"][epoch-1] if epoch != 0 else np.nan,
                                     val=val_loss[epoch-1] if epoch != 0 else np.nan,
                                     corr_val=corr["val"][epoch-1] if epoch != 0 else np.nan)
-                    
-            print("!! SHIFT:",model.shift.detach())
-            print("!! FACTOR:",model.factor.detach())
+            
+            if model.use_shift :
+                print("\t!! SHIFT:",model.shift.detach().numpy())
+                print("\t!! FACTOR:",model.factor.detach().numpy())
 
             # evaluate model on the test dataset
             # with torch.no_grad():
@@ -440,6 +447,7 @@ def train(model:torch.nn.Module,\
                 N = opts["save"]["parameters"]
                 if N != -1 and epoch % N == 0 :
                     savefile = "{:s}/epoch={:d}.pth".format(parameters_folder,epoch)
+                    print("\tSaving parameters to file '{:s}'".format(savefile))
                     torch.save(model.state_dict(), savefile)
 
                     if False : 
@@ -523,10 +531,11 @@ def train(model:torch.nn.Module,\
         # saving checkpoint to file
         N = opts["save"]["checkpoint"]
         if N != -1 and epoch % N == 0 :
-            save_checkpoint()
-        
+            save_checkpoint(checkpoint_file,epoch,model,optimizer)
+
+        k += 1    
     #
-    save_checkpoint()
+    save_checkpoint(checkpoint_file,k,model,optimizer)
     
     # Finished training 
     #print("\n\tTraining done!")
@@ -534,17 +543,18 @@ def train(model:torch.nn.Module,\
     # Saving some quantities to file
     if info == "all good":
         
-        # modify checkpoint filename
-        if os.path.exists(checkpoint_file):
-            new_file = "{:s}/finished-{:s}.pth".format(checkpoint_folder,name)
-            os.rename(checkpoint_file,new_file)
-        else :
-            save_checkpoint()
+        # # modify checkpoint filename
+        # if os.path.exists(checkpoint_file):
+        #     new_file = "{:s}/finished-{:s}.pth".format(checkpoint_folder,name)
+        #     os.rename(checkpoint_file,new_file)
+        # else :
+        #     save_checkpoint()
+        # save_checkpoint()
 
         # saving model to file
-        savefile = "{:s}/{:s}.torch".format(folders["networks"],name)
-        print("\tSaving 'model' to file '{:s}'".format(savefile))
-        torch.save(model, savefile)
+        # savefile = "{:s}/{:s}.torch".format(folders["networks"],name)
+        # print("\tSaving 'model' to file '{:s}'".format(savefile))
+        # torch.save(model, savefile)
 
         # # saving parameters to file
         # savefile = "{:s}/{:s}.torch".format(folders["parameters"],name)
@@ -554,11 +564,11 @@ def train(model:torch.nn.Module,\
         savefile = "{:s}/{:s}.pth".format(folders["parameters"],name)
         torch.save(model.state_dict(), savefile)
 
-        # removing initial model 
-        savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
-        if os.path.exists(savefile):
-            print("\tDeleting 'model' with dummy parameters: removing file '{:s}'".format(savefile))
-            os.remove(savefile)
+        # # removing initial model 
+        # savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)
+        # if os.path.exists(savefile):
+        #     print("\tDeleting 'model' with dummy parameters: removing file '{:s}'".format(savefile))
+        #     os.remove(savefile)
 
         # removing empty folders
         _folders = copy(folders)

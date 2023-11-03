@@ -278,8 +278,18 @@ def main():
         parameters = args_to_dict(args)
 
     ##########################################
+    # print description
+    print("\n\t{:s}".format(description))
+
+    ##########################################
     # check that the arguments are okay
     check_parameters(parameters)
+
+    ##########################################
+    # print parameters
+    print("\n\tParameters:")
+    for k in parameters.keys():
+        print("\t\t{:20s}: ".format(k),parameters[k])
 
     ##########################################
     if not parameters["random"] :
@@ -468,7 +478,7 @@ def main():
         json.dump(instructions, json_file, indent=4)
 
     net = SabiaNetworkManager(**kwargs)
-    print(net)
+    # print(net)
     N = net.n_parameters()
     # N = 0 
     # for i in net.parameters():
@@ -499,7 +509,7 @@ def main():
                 "correlation" : {"N":-1}
             },
             "thr":{
-                "exit":100
+                "exit":1e7
             },
             "save":{
                 "parameters":1,

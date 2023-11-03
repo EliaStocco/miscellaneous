@@ -32,10 +32,10 @@ def my_neighbor_list(lattice,pos,max_radius,pbc):
     if pbc :
         if isinstance(lattice, torch.Tensor):
             lattice = lattice.detach().numpy()
-        atoms = Atoms(positions=pos,cell=lattice,pbc=True)
+        atoms = Atoms(positions=pos,cell=lattice,pbc=[True]*3)
         edge_src, edge_dst, edge_shift = nl("ijS",atoms)
     else :
-        atoms = Atoms(positions=pos,pbc=False)
+        atoms = Atoms(positions=pos,pbc=[False]*3)
         edge_src, edge_dst = nl("ij",atoms)
         edge_shift = None
 
