@@ -40,7 +40,7 @@ def prepare_dataset(ref_index:int,\
                     "val":100,
                     "test":100,
                 },
-                "shift" : None,
+                # "shift" : None,
                 "instructions" : None
             }
 
@@ -78,7 +78,7 @@ def prepare_dataset(ref_index:int,\
     ##########################################
     # fix polarization
     if "D" in output :
-        shift = [0,0,0]
+        # shift = [0,0,0]
         if "dipole" not in data.properties :
             data.get_dipole(same_lattice=same_lattice,inplace=True)
 
@@ -240,4 +240,4 @@ def prepare_dataset(ref_index:int,\
     else :
         example = Atoms(positions=pos,symbols=symbols)
 
-    return datasets, data, pos, example, shift
+    return datasets, data, example

@@ -415,6 +415,9 @@ def train(model:torch.nn.Module,\
                                     corr_train=corr["train"][epoch-1] if epoch != 0 else np.nan,
                                     val=val_loss[epoch-1] if epoch != 0 else np.nan,
                                     corr_val=corr["val"][epoch-1] if epoch != 0 else np.nan)
+                    
+            print("!! SHIFT:",model.shift.detach())
+            print("!! FACTOR:",model.factor.detach())
 
             # evaluate model on the test dataset
             # with torch.no_grad():

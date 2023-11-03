@@ -54,7 +54,7 @@ default_values = {
         "task_time"      : -1,
         "dropout"        : 0.01,
         "batchnorm"      : True,
-        "shift"          : None,
+        "use_shift"      : None,
         "restart"        : False,
         "recompute_loss" : False,
         "pbc"            : False,
@@ -194,8 +194,9 @@ def get_args():
     )
 
     parser.add_argument(
-        "--shift", action="store", type=int, nargs="+", # metavar="\bpahses_shift",
-        # help="some description here (default: [1])", default=default_values["shift"]
+        "--use_shift", action="store", type=str2bool, # metavar="\bpahses_shift",
+        # help="some description here (default: [1])", 
+        default=default_values["use_shift"]
     )
 
     parser.add_argument(
@@ -298,10 +299,10 @@ def main():
         "build":{
             "restart":False
         },
-        "shift": parameters["shift"],
+        #"use_shift": parameters["shift"],
         "instructions" : parameters["instructions"]
     }
-    datasets, data, pos, example, shift = prepare_dataset(ref_index=parameters["ref_index"],\
+    datasets, data, example = prepare_dataset(ref_index=parameters["ref_index"],\
                                                   max_radius=parameters["max_radius"],\
                                                   reference=parameters["reference"],\
                                                   output=parameters["output"],\
@@ -422,11 +423,11 @@ def main():
 
     metadata_kwargs = {
         "output":parameters["output"],
-        "reference" : parameters["reference"],
+        # "reference" : parameters["reference"],
         # "phases" : parameters["phases"],
         # "normalization" : normalization_factors,
         # "dipole" : dipole.tolist(),
-        "pos" : pos.tolist(),  
+        # "pos" : pos.tolist(),  
         # "shift" : list(shift),
     }
 
@@ -445,7 +446,8 @@ def main():
         "lmax":parameters["lmax"],
         "dropout_probability" : parameters["dropout"],
         "batchnorm" : parameters["batchnorm"],
-        "pbc" : parameters["pbc"]
+        "pbc" : parameters["pbc"],
+        "use_shift" : parameters["use_shift"]
     }
 
     #####################
@@ -457,7 +459,7 @@ def main():
             "class":"SabiaNetworkManager",
             "module":"miscellaneous.elia.nn.network",
             "chemical-symbols" : example.get_chemical_symbols(),
-            "shift" : list(shift),
+            # "shift" : list(shift),
         }
     
     # del instructions["kwargs"]["normalization"]
