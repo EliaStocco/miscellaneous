@@ -222,7 +222,7 @@ def main():
     with open(outfile, "w") as json_file:
         json.dump(output, json_file, indent=4)
 
-    print("\n\tJob done :)")
+    print("\n\tJob done :)\n")
 
 #####################
 

@@ -2,7 +2,8 @@ import argparse
 import numpy as np
 import os
 import sys
-from miscellaneous.elia.classes import MicroState
+from ase.io import read
+# from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.nn.functions import get_model
 
 #####################
@@ -26,12 +27,7 @@ def get_args():
 
     parser.add_argument(
         "-q","--positions", action="store", type=str,
-        help="positions file (in a.u.)"
-    )
-
-    parser.add_argument(
-        "-c","--cell", action="store", type=str, 
-        help="cell file (in a.u.)", default=None
+        help="file with positions and cell (in a.u.)"
     )
 
     parser.add_argument(
@@ -64,50 +60,53 @@ def main():
     model = get_model(args.instructions,args.parameters)
     # print("done")
 
-    ######################
-    # read the positions
-    instructions = { "positions" : args.positions }
-    if model.pbc :
-        instructions["cells"] = args.cell if args.cell is not None else args.positions
+    # ######################
+    # # read the positions
+    # instructions = { "positions" : args.positions }
+    # if model.pbc :
+    #     instructions["cells"] = args.cell if args.cell is not None else args.positions
 
     # print("\n\tReading the positions and cell ... ",end="")
     original_stdout = sys.stdout
     with open('/dev/null', 'w') as devnull:
         sys.stdout = devnull  # Redirect stdout to discard output
-        data = MicroState(instructions=instructions)
+        # atoms = MicroState(instructions=instructions)
+        atoms = read(args.positions)
     sys.stdout = original_stdout
 
-    if not model.pbc :
-        data.cells = [None]*len(data.positions)    
+    # if not model.pbc :
+    #     atoms.cells = [None]*len(atoms.positions)    
 
     ######################
     print("\tComputing predicted values ... ",end="")
-    N = len(data.positions)
-    D = np.full((N,3),np.nan)
-    Z = np.full((N,len(data.positions[0]),3),np.nan)
+    # N = len(atoms)
+    D = np.full(3,np.nan)
+    Z = np.full((len(atoms.positions),3),np.nan)
 
-    for n,(pos,cell) in enumerate(zip(data.positions,data.cells)):
-        d,z,x = model.get_value_and_jac(pos=pos.reshape((-1,3)),cell=cell)
-        D[n] = d.detach().numpy()#.flatten()
-        Z[n] = z.detach().numpy()#.flatten()
+    # for n,(pos,cell) in enumerate(zip(atoms.positions,atoms.cells)):
+    pos = atoms.positions
+    cell = np.asarray(atoms.cell).T if model.pbc else None
+    d,z,x = model.get_value_and_jac(pos=pos.reshape((-1,3)),cell=cell)
+    D = d.detach().numpy()#.flatten()
+    Z = z.detach().numpy()#.flatten()
 
     print("done")
 
     ######################
     file = os.path.normpath( "{:s}.dipole.txt".format(args.output))
     print("\tSaving dipole to file '{:s}' ... ".format(file),end="")
-    with open(file,'w') as f:
-        for n in range(N):
-            np.savetxt(f,D[n],delimiter='\t', fmt=args.format)
+    # with open(file,'w') as f:
+    # for n in range(N):
+    np.savetxt(file,D,delimiter='\t', fmt=args.format)
     print("done")
 
     ######################
     file = os.path.normpath("{:s}.bec.txt".format(args.output))
     print("\tSaving BECs to file '{:s}' ... ".format(file),end="")
-    with open(file,'w') as f:
-        for n in range(N):
-            np.savetxt(file,Z[n],delimiter='\t', fmt=args.format)
-            f.write("\n")
+    # with open(file,'w') as f:
+    # for n in range(N):
+    np.savetxt(file,Z,delimiter='\t', fmt=args.format)
+    # f.write("\n")
     print("done")
 
     print("\n\tJob done :)\n")
