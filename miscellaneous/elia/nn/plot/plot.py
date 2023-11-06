@@ -44,7 +44,10 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
             ax.grid(True, which="both",ls="-")
             xlim = ax.get_xlim()
             ax.set_xlim(1,xlim[1])
-            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            ax.set_xticks([20, 200, 500])
+            # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+            # ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+
 
             # Create a twin axis on the right with a log scale
             if ratio is not None or ratio2 is not None :
