@@ -312,6 +312,8 @@ def main():
         #"use_shift": parameters["shift"],
         "instructions" : parameters["instructions"]
     }
+
+    # I should remove this function from the training procedure
     datasets, data, example = prepare_dataset(ref_index=parameters["ref_index"],\
                                                   max_radius=parameters["max_radius"],\
                                                   reference=parameters["reference"],\
@@ -431,19 +433,8 @@ def main():
     
     #####################
 
-    metadata_kwargs = {
+    kwargs = {
         "output":parameters["output"],
-        # "reference" : parameters["reference"],
-        # "phases" : parameters["phases"],
-        # "normalization" : normalization_factors,
-        # "dipole" : dipole.tolist(),
-        # "pos" : pos.tolist(),  
-        # "shift" : list(shift),
-    }
-
-    #####################
-
-    model_kwargs = {
         "irreps_in":irreps_in,                  # One hot scalars (L=0 and even parity) on each atom to represent atom type
         "irreps_out":irreps_out,                # vector (L=1 and odd parity) to output the polarization
         "max_radius":parameters["max_radius"],  # Cutoff radius for convolution
@@ -462,17 +453,13 @@ def main():
 
     #####################
 
-    kwargs = {**metadata_kwargs, **model_kwargs}
-
     instructions = {
             "kwargs":copy(kwargs),
             "class":"SabiaNetworkManager",
             "module":"miscellaneous.elia.nn.network",
             "chemical-symbols" : example.get_chemical_symbols(),
-            # "shift" : list(shift),
         }
     
-    # del instructions["kwargs"]["normalization"]
     with open("instructions.json", "w") as json_file:
         # The 'indent' parameter is optional for pretty formatting
         json.dump(instructions, json_file, indent=4)
@@ -480,12 +467,6 @@ def main():
     net = SabiaNetworkManager(**kwargs)
     # print(net)
     N = net.n_parameters()
-    # N = 0 
-    # for i in net.parameters():
-    #     if len(i.shape) != 0 :
-    #         N += len(i)
-    #     else :
-    #         N += 1
     print("Tot. number of parameters: ",N)
     
     ##########################################
@@ -503,7 +484,6 @@ def main():
     ##########################################
     # optional settings
     opts = {
-            #"name" : parameters["name"],
             "plot":{
                 "learning-curve" : {"N":10},
                 "correlation" : {"N":-1}

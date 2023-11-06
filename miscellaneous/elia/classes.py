@@ -1250,7 +1250,7 @@ class MicroState:
     # @reloading
     def vibrational_analysis_summary(self)->pd.DataFrame:
         """ summary of the vibrational analysis"""
-        print("Summary of the vibrational analysis:")
+        # print("Summary of the vibrational analysis:")
         #cols = [ "eigvals [a.u.]" , "w [a.u.]", "w [THz]", "w [cm^-1]", "T [a.u.]", "T [ps]","E [a.u.]", "n [a.u.]"]
         df = pd.DataFrame()
         eigvals = self.eigvals.copy()

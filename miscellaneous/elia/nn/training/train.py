@@ -256,6 +256,8 @@ def train(model:torch.nn.Module,\
     if opts["recompute_loss"] :
         arrays["train-2"] = None
         arrays["ratio-2"] = None
+    else :
+        arrays["ratio"] = None
     # pd.DataFrame({ "train":copy(tmp),"val":copy(tmp),"epoch":copy(tmp)})
     # del tmp
 
@@ -474,7 +476,8 @@ def train(model:torch.nn.Module,\
                 # predict the value for the validation dataset
                 yval_pred = model.get_pred(all_dataloader_val)# get_pred(model,all_dataloader_val)
                 arrays.at[epoch,"val"] = float(loss_fn(yval_pred,yval_real)) # / parameters["Natoms"]
-                arrays.at[epoch,"ratio"] = arrays.at[epoch,"train"] / arrays.at[epoch,"val"]
+                if not opts["recompute_loss"]:
+                    arrays.at[epoch,"ratio"] = arrays.at[epoch,"train"] / arrays.at[epoch,"val"]
 
                 # set arrays
                 if opts["recompute_loss"] :

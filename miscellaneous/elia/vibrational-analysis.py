@@ -13,7 +13,7 @@ def main():
 
     parser.add_argument("-w", "--what"     , action="store", type=str,help="what to do: 's' (summary), 'j' (jmol)", default="js")
     parser.add_argument("-v", "--vib"      , action="store", type=str,help="folder with *.phonon.* files", default=".")
-    parser.add_argument("-o", "--output"   , action="store", type=str,help="output prefix", default="output")
+    parser.add_argument("-o", "--output"   , action="store", type=str,help="output file prefix", default="output")
     parser.add_argument("-q", "--positions", action="store", type=str,help="positions file (angstrom)",default=None)
 
     args = parser.parse_args()
@@ -33,8 +33,8 @@ def main():
         df = data.vibrational_analysis_summary()
         # sprint(df)
 
-        file = os.path.normpath("{:s}.summary.csv".format(args.output))
-        df.to_csv(file,index=False,float_format="%15.6f",sep="\t",na_rep=np.nan)
+        file = os.path.normpath("{:s}.csv".format(args.output))
+        df.to_csv(file,index=False,float_format="%15.6f",sep=",",na_rep=np.nan)
     
     if 'j' in args.what:
         folder  = os.path.dirname(os.path.abspath(__file__))

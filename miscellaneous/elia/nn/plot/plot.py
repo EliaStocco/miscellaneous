@@ -50,14 +50,20 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
 
 
             # Create a twin axis on the right with a log scale
-            if ratio is not None or ratio2 is not None :
+            if ratio2 is not None or errors is not None or ratio is not None :
+
                 ax2 = ax.twinx()
 
-                # if ratio is not None :
-                #     ax2.plot(x, ratio, color="black", label="val/train",marker=".", linestyle="dotted",linewidth=0.7,markersize=2)
+                if errors is not None :
+                    ax2.plot(x,errors/train_loss,color="brown",label="$\\mu$-train/$\\sigma$-train",marker=".",linestyle="dotted",linewidth=0.7,markersize=2)
+
+                if ratio is not None :
+                    ax2.plot(x, ratio, color="purple", label="val/train",marker=".", linestyle="dotted",linewidth=0.7,markersize=2)
 
                 if ratio2 is not None :
                     ax2.plot(x, ratio2, color="black", label="train*/val",marker=".", linestyle="dotted",linewidth=0.7,markersize=2)
+                    
+                if ratio2 is not None or ratio is not None:
                     xlim = ax2.get_xlim()
                     ax2.hlines(y=1,xmin=xlim[0],xmax=xlim[1],linestyle="--",linewidth=0.7,alpha=0.5,color="black")
 
