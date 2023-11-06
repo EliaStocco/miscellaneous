@@ -228,8 +228,10 @@ class MicroState:
             comments = read_comments_xyz(instructions.positions)
             matches = re.findall(abcABCunits,comments[0])
             if len(matches) != 2 :
-                raise ValueError("Hey man! We have a problem here :(")
-            self.units["positions"] = matches[0]
+                print("Hey man! We have a problem here :(")
+                self.units["positions"] = "atomic_unit"
+            else :
+                self.units["positions"] = matches[0]
 
             # if "types" in toread:
             print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,file))
@@ -269,7 +271,7 @@ class MicroState:
                 #     raise ValueError("Hey man! We have a problem here :(")
                 self.units["cells"] = matches[1]
             except:
-                atoms = io.read(instructions.cells,index=":")
+                atoms = io.read(file,index=":")
                 self.cells = np.zeros((len(atoms),3,3))
                 for n,cell in enumerate(self.cells):
                     self.cells[n] = np.asarray(atoms[n].cell).T
