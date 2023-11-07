@@ -564,8 +564,8 @@ def train(model:torch.nn.Module,\
         # print("\tSaving parameters to file '{:s}'".format(savefile))
         # torch.save(model.(), savefile)
 
-        savefile = "{:s}/{:s}.pth".format(folders["parameters"],name)
-        torch.save(model.state_dict(), savefile)
+        # savefile = "{:s}/{:s}.pth".format(folders["parameters"],name)
+        # torch.save(model.state_dict(), savefile)
 
         # # removing initial model 
         # savefile = "{:s}/{:s}.init.torch".format(folders["networks"],name)

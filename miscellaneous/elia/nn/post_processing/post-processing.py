@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 # import json5 as json
 import json
@@ -32,6 +33,11 @@ def get_args():
         help="model input file", default="instructions.json"
     )
 
+    parser.add_argument(
+        "-f","--folder", action="store", type=str,
+        help="folder", default="."
+    )
+
     # Argument for "instructions"
     parser.add_argument(
         "-bs","--batch_size", action="store", type=int,
@@ -59,28 +65,22 @@ def main():
     # read input
     args = get_args()
 
-    with open(args.training, 'r') as file:
-        parameters = json.load(file)
-        if "trial" not in parameters:
-            parameters["trial"] = None
-        elif parameters["trial"] in ["None",0,1]:
-            parameters["trial"] = None        
-
-    # with open(args.instructions, 'r') as file:
-    #     instructions = json.load(file)
+    file = os.path.normpath("{:s}/{:s}".format(args.folder,args.training))
+    with open(file, 'r') as f:
+        parameters = json.load(f)
 
     #####################
     # find bets parameters
-    tmp = parameters["output_folder"], parameters["name"], args.batch_size, args.learning_rate
-    file = "{:s}/dataframes/{:s}.bs={:d}.lr={:.1e}.csv".format(*tmp)
+    tmp = args.folder, parameters["output_folder"], parameters["name"], args.batch_size, args.learning_rate
+    file = "{:s}/{:s}/dataframes/{:s}.bs={:d}.lr={:.1e}.csv".format(*tmp)
     if not os.path.exists(file):
         raise ValueError("file '{:s}' does not exist".format(file))
     loss = pd.read_csv(file)
 
     epoch = loss["val"].argmin()
 
-    tmp = parameters["output_folder"], parameters["name"], args.batch_size, args.learning_rate
-    par_folder = "{:s}/parameters/{:s}.bs={:d}.lr={:.1e}".format(*tmp)
+    tmp = args.folder, parameters["output_folder"], parameters["name"], args.batch_size, args.learning_rate
+    par_folder = os.path.normpath("{:s}/{:s}/parameters/{:s}.bs={:d}.lr={:.1e}".format(*tmp))
     par_files = os.listdir(par_folder)
     best_parameters = None
     best_epoch = 0
@@ -100,7 +100,8 @@ def main():
 
     #####################
     # get model
-    model = get_model(args.instructions,best_parameters)
+    file = os.path.normpath("{:s}/{:s}".format(args.folder,args.instructions))
+    model = get_model(file,best_parameters)
 
     #####################
     # get train dataset
@@ -108,7 +109,7 @@ def main():
     datasets = { "train":None, "val":None, "test":None }
 
     for name in ["train","val","test"]:
-        file = "{:s}/dataset.{:s}.torch".format(parameters["folder"],name)
+        file = os.path.normpath("{:s}/{:s}/dataset.{:s}.torch".format(args.folder,parameters["folder"],name))
         print("\t\t{:s}: {:s}".format(name,file))
         datasets[name] = torch.load(file)
 

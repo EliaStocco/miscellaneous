@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import numpy as np
 import os
@@ -8,7 +9,7 @@ from miscellaneous.elia.nn.functions import get_model
 
 #####################
 
-description = "Compute dipole and BEC tensors\n"
+description = "Compute dipole and BEC tensors for a given atomic structure.\n"
 
 def get_args():
     """Prepare parser of user input arguments."""
@@ -35,10 +36,10 @@ def get_args():
         help="prefix for the output files", default="test"
     )
 
-    parser.add_argument(
-        "-f","--format", action="store", type=str,
-        help="format", default='%-.10f'
-    )
+    # parser.add_argument(
+    #     "-f","--folder", action="store", type=str,
+    #     help="folder", default='%-.10f'
+    # )
 
     return parser.parse_args()
 
@@ -57,7 +58,9 @@ def main():
     #####################
     # load the model
     # print("\tLoading the model ... ",end="")
-    model = get_model(args.instructions,args.parameters)
+    file_in = os.path.normpath("{:s}".format(args.instructions))
+    file_pa = os.path.normpath("{:s}".format(args.parameters))
+    model = get_model(file_in,file_pa)
     # print("done")
 
     # ######################
@@ -97,7 +100,7 @@ def main():
     print("\tSaving dipole to file '{:s}' ... ".format(file),end="")
     # with open(file,'w') as f:
     # for n in range(N):
-    np.savetxt(file,D,delimiter='\t', fmt=args.format)
+    np.savetxt(file,D,delimiter='\t')
     print("done")
 
     ######################
@@ -105,7 +108,7 @@ def main():
     print("\tSaving BECs to file '{:s}' ... ".format(file),end="")
     # with open(file,'w') as f:
     # for n in range(N):
-    np.savetxt(file,Z,delimiter='\t', fmt=args.format)
+    np.savetxt(file,Z,delimiter='\t')
     # f.write("\n")
     print("done")
 
