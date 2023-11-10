@@ -1,20 +1,15 @@
 import time
 start_time = time.time()
-
 import numpy as np
 import random
 import json
 import argparse
 from copy import copy
-
 import torch
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
-
 from miscellaneous.elia.nn.training import hyper_train_at_fixed_model
-from miscellaneous.elia.nn.plot import visualize_datasets
 from miscellaneous.elia.nn.dataset import prepare_dataset
-from miscellaneous.elia.nn.functions import get_data_from_dataset
 from miscellaneous.elia.nn.network import SabiaNetworkManager
 from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
 
@@ -37,7 +32,6 @@ default_values = {
         "lmax"           : 2,
         "name"           : "untitled",
         "reference"      : False,
-        # "phases"         : False,
         "output"         : "D",
         "max_radius"     : 6.0,
         "folder"         : "LiNbO3",
@@ -49,7 +43,6 @@ default_values = {
         "bs"             : [1],
         "lr"             : [1e-3],
         "grid"           : True,
-        "trial"          : None,
         "max_time"       : -1,
         "task_time"      : -1,
         "dropout"        : 0.01,
@@ -59,8 +52,9 @@ default_values = {
         "recompute_loss" : False,
         "pbc"            : False,
         "instructions"   : None,
-        "debug" : False,
-        "indices" : None
+        "debug"          : False,
+        "indices"        : None,
+        "options"        : None,
     }
 
 #####################
@@ -70,166 +64,35 @@ def get_args():
 
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument(
-        "-i", "--input", action="store", type=str, # metavar="\bjson_file",
-        # help="input json file", default=None
-    )
-
-    parser.add_argument(
-        "--options", action="store", type=str, # metavar="\boptions_file",
-        # help="options json file", default=None
-    )
-
-    parser.add_argument(
-        "--mul", action="store", type=int, # metavar="\bmultiplicity",
-        # help="multiplicity for each node (default: 2)", default=default_values["mul"]
-    )
-
-    parser.add_argument(
-        "--layers", action="store", type=int, # metavar="\bn_layers",
-        # help=""debug"number of layers (default: 6)", default=default_values["layers"]
-    )
-
-    parser.add_argument(
-        "--lmax", action="store", type=int, # metavar="\blmax",
-        # help="some description here (default: 2)", default=default_values["lmax"]
-    )
-
-    parser.add_argument(
-        "--name", action="store", type=str, # metavar="\bname",
-        # help="some description here (default: 'untitled')", default=default_values["name"]
-    )
-
-    parser.add_argument(
-        "--reference", action="store",type=str2bool, # metavar="\buse_ref",
-        # help="some description here (default: True)",
-        default=default_values["reference"]
-    )
-
-    parser.add_argument(
-        "--output", action="store", type=str, # metavar="\boutput_folder",
-        # help="some description here (default: 'D')", default=default_values["output"]
-    )
-
-    parser.add_argument(
-        "--max_radius", action="store", type=float, # metavar="\bmax_radius",
-        # help="some description here (default: 6.0)", default=default_values["max_radius"]
-    )
-
-    parser.add_argument(
-        "--folder", action="store", type=str, # metavar="\bdata_folder",
-        # help="some description here (default: 'LiNbO3')", default=default_values["folder"]
-    )
-
-    parser.add_argument(
-        "--output_folder", action="store", type=str, # metavar="\boutput_folder",
-        # help="some description here (default: 'LiNbO3/results')", default=default_values["output_folder"]
-    )
-
-    parser.add_argument(
-        "--ref_index", action="store", type=int, # metavar="\bref_index",
-        # help="some description here (default: 0)", default=default_values["ref_index"]
-    )
-
-    parser.add_argument(
-        "--Natoms", action="store", type=int, # metavar="\bNatoms",
-        # help="some description here (default: 30)", default=default_values["Natoms"]
-    )
-
-    parser.add_argument(
-        "--random", action="store",type=str2bool, # metavar="\brandom",
-        # help="some description here (default: True)",
-        default=default_values["random"]
-    )
-
-    parser.add_argument(
-        "--epochs", action="store", type=int, # metavar="\bepochs",
-        # help="some description here (default: 10000)", default=default_values["epochs"]
-    )
-
-    parser.add_argument(
-        "--bs", action="store", type=int, nargs="+", # metavar="\bbatch_sizes",
-        # help="some description here (default: [1])", default=default_values["bs"]
-    )
-
-    parser.add_argument(
-        "--lr", action="store", type=float, nargs="+", # metavar="\blearning_rate",
-        # help="some description here (default: [1e-3])", default=default_values["lr"]
-    )
-
-    parser.add_argument(
-        "--grid", action="store",type=str2bool, # metavar="\bas_grid",
-        # help="some description here (default: True)",
-        default=default_values["grid"]
-    )
-
-    parser.add_argument(
-        "--trial", action="store",type=int, # metavar="\bn_trial",
-        # help="some description here (default: True)",
-        default=default_values["trial"]
-    )
-
-    parser.add_argument(
-        "--max_time", action="store",type=int, # metavar="\bmax_time",
-        # help="some description here (default: True)",
-        default=default_values["max_time"]
-    )
-
-    parser.add_argument(
-        "--task_time", action="store",type=int, # metavar="\btask_time",
-        # help="some description here (default: True)",
-        default=default_values["task_time"]
-    )
-
-    parser.add_argument(
-        "--dropout", action="store",type=float, # metavar="\bdropout_prob",
-        # help="some description here (default: True)",
-        default=default_values["dropout"]
-    )
-
-    parser.add_argument(
-        "--batchnorm", action="store",type=str2bool, # metavar="\buse_batch_norm",
-        # help="some description here (default: True)",
-        default=default_values["batchnorm"]
-    )
-
-    parser.add_argument(
-        "--use_shift", action="store", type=str2bool, # metavar="\bpahses_shift",
-        # help="some description here (default: [1])", 
-        default=default_values["use_shift"]
-    )
-
-    parser.add_argument(
-        "--restart", action="store",type=str2bool, # metavar="\brestart",
-        # help="some description here (default: True)",
-        default=default_values["restart"]
-    )
-
-    parser.add_argument(
-        "--recompute_loss", action="store",type=str2bool, # metavar="\brecompute_loss",
-        # help="some description here (default: True)",
-        default=default_values["recompute_loss"]
-    )
-
-    parser.add_argument(
-        "--pbc", action="store",type=str2bool, # metavar="\bpbc",
-        # help="some description here (default: True)",
-        default=default_values["pbc"]
-    )
-
-    parser.add_argument(
-        "--instructions", action="store",type=dict, # metavar="\bpbc",
-        # help="some description here (default: True)",
-        default=default_values["instructions"]
-    )
-
-    parser.add_argument(
-        "--debug", action="store",type=str2bool, # metavar="\bpbc",
-        # help="some description here (default: True)",
-        default=default_values["debug"]
-    )
-
-    parser.add_argument("--indices", action="store", type=str, default=default_values["indices"])
+    parser.add_argument("-i", "--input",    action="store", type=str)
+    parser.add_argument("--options",        action="store", type=str)
+    parser.add_argument("--mul",            action="store", type=int)
+    parser.add_argument("--layers",         action="store", type=int)
+    parser.add_argument("--lmax",           action="store", type=int)
+    parser.add_argument("--name",           action="store", type=str)
+    parser.add_argument("--reference",      action="store", type=str2bool,default=default_values["reference"])
+    parser.add_argument("--output",         action="store", type=str)
+    parser.add_argument("--max_radius",     action="store", type=float)
+    parser.add_argument("--folder",         action="store", type=str)
+    parser.add_argument("--output_folder",  action="store", type=str)
+    parser.add_argument("--ref_index",      action="store", type=int)
+    parser.add_argument("--Natoms",         action="store", type=int)
+    parser.add_argument("--random",         action="store", type=str2bool, default=default_values["random"])
+    parser.add_argument("--epochs",         action="store", type=int)
+    parser.add_argument("--bs",             action="store", type=int,      nargs="+")
+    parser.add_argument("--lr",             action="store", type=float,    nargs="+")
+    parser.add_argument("--grid",           action="store", type=str2bool, default=default_values["grid"])
+    parser.add_argument("--max_time",       action="store", type=int,      default=default_values["max_time"])
+    parser.add_argument("--task_time",      action="store", type=int,      default=default_values["task_time"])
+    parser.add_argument("--dropout",        action="store", type=float,    default=default_values["dropout"])
+    parser.add_argument("--batchnorm",      action="store", type=str2bool, default=default_values["batchnorm"])
+    parser.add_argument("--use_shift",      action="store", type=str2bool, default=default_values["use_shift"])
+    parser.add_argument("--restart",        action="store", type=str2bool, default=default_values["restart"])
+    parser.add_argument("--recompute_loss", action="store", type=str2bool, default=default_values["recompute_loss"])
+    parser.add_argument("--pbc",            action="store", type=str2bool, default=default_values["pbc"])
+    parser.add_argument("--instructions",   action="store", type=dict,     default=default_values["instructions"])
+    parser.add_argument("--debug",          action="store", type=str2bool, default=default_values["debug"])
+    parser.add_argument("--indices",        action="store", type=str,      default=default_values["indices"])
 
     return parser.parse_args()
 
@@ -247,20 +110,10 @@ def check_parameters(parameters):
     if parameters["max_time"] <= 0 :
         parameters["max_time"] = -1
 
-    # if parameters["reference"] and parameters["phases"]:
-    #     raise ValueError("You can use 'reference'=true or 'phases'=true, not both.")
-    
-    # if parameters["output"] != "D" and parameters["phases"]:
-    #     raise ValueError("You can use 'phases'=true only with 'output'='D'")
-
 #####################
 
-def main():
-
-    start_time 
-
-    ##########################################
-    # get user parameters
+def get_parameters():
+    """get user parameters"""
 
     args = get_args()
 
@@ -277,19 +130,27 @@ def main():
     else :
         parameters = args_to_dict(args)
 
+    # check that the arguments are okay
+    check_parameters(parameters)
+
+    # print parameters
+    print("\n\tParameters:")
+    for k in parameters.keys():
+        print("\t\t{:20s}: ".format(k),parameters[k])
+    
+    return parameters
+
+#####################
+
+def main():
+
     ##########################################
     # print description
     print("\n\t{:s}".format(description))
 
     ##########################################
-    # check that the arguments are okay
-    check_parameters(parameters)
-
-    ##########################################
-    # print parameters
-    print("\n\tParameters:")
-    for k in parameters.keys():
-        print("\t\t{:20s}: ".format(k),parameters[k])
+    # get user parameters
+    parameters = get_parameters()    
 
     ##########################################
     if not parameters["random"] :
@@ -314,17 +175,15 @@ def main():
     }
 
     # I should remove this function from the training procedure
-    datasets, data, example = prepare_dataset(ref_index=parameters["ref_index"],\
-                                                  max_radius=parameters["max_radius"],\
-                                                  reference=parameters["reference"],\
-                                                  output=parameters["output"],\
-                                                  pbc=parameters["pbc"],\
-                                                  indices = parameters["indices"],\
-                                                  # variables=variables,\
-                                                  folder=parameters["folder"],\
-                                                  # phases=parameters["phases"],\
-                                                  opts=opts)#,\
-                                                  #requires_grad=False)#parameters["output"]=="EF")
+    datasets, data, example = prepare_dataset(  ref_index  = parameters["ref_index"],
+                                                max_radius = parameters["max_radius"],
+                                                reference  = parameters["reference"],
+                                                output     = parameters["output"],
+                                                pbc        = parameters["pbc"],
+                                                indices    = parameters["indices"],
+                                                folder     = parameters["folder"],
+                                                opts       = opts
+                                            )
     
     # There is a bug:
     # if requires_grad=True and I build the dataset then at the second epoch the code crash with the following message:
@@ -332,56 +191,6 @@ def main():
     # they have already been freed). Saved intermediate values of the graph are freed when 
     # you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward 
     # through the graph a second time or if you need to access saved tensors after calling backward.
-
-    ##########################################
-    # visualize dataset
-    if False :
-        visualize_datasets(datasets=datasets,variable="phases",folder="{:s}/images".format(parameters["folder"]))
-
-    ##########################################
-    # normalizing dataset
-    if False :
-        normalization_factors = {
-            "dipole":{
-                "mean":0,
-                "std":1
-            },
-            "energy":{
-                "mean":0,
-                "std":1
-            }
-        }
-
-        if "D" in parameters["output"] :
-            dipole = get_data_from_dataset(datasets["all"],"dipole")
-            x = torch.mean(dipole,dim=0)
-            normalization_factors["dipole"] = {
-                "mean" :x.tolist(),
-                "std" :torch.norm(dipole-x,dim=1).mean().tolist()
-            }
-
-            print("\tmean: ",normalization_factors["dipole"]["mean"])
-            print("\t std: ",normalization_factors["dipole"]["std"])
-
-        elif "E" in parameters["output"] :
-            raise ValueError("not implemented yet")
-            # mean, std = compute_normalization_factors(datasets["train"],"energy")
-            # normalization_factors["energy"] = {"mean":mean,"std":std}
-
-        # normalization_factors, datasets = normalize_datasets(datasets)
-
-        match parameters["output"] :
-            case "D" :
-                normalization_factors = normalization_factors["dipole"]
-            case ["E","F"] :
-                normalization_factors = normalization_factors["energy"]
-            case _ :
-                raise ValueError("not implemented yet")
-
-    ##########################################
-    # visualize dataset
-    if False :
-        visualize_datasets(datasets=datasets,variable=variable,folder="{:s}/images-normalized".format(folder))
 
     ##########################################
     # test
@@ -434,38 +243,36 @@ def main():
     #####################
 
     kwargs = {
-        "output":parameters["output"],
-        "irreps_in":irreps_in,                  # One hot scalars (L=0 and even parity) on each atom to represent atom type
-        "irreps_out":irreps_out,                # vector (L=1 and odd parity) to output the polarization
-        "max_radius":parameters["max_radius"],  # Cutoff radius for convolution
-        "num_neighbors":2,                      # scaling factor based on the typical number of neighbors
-        "pool_nodes":True,                      # We pool nodes to predict total energy
-        "num_nodes":2,
-        "number_of_basis" : 10,
-        "mul":parameters["mul"],
-        "layers":parameters["layers"],
-        "lmax":parameters["lmax"],
+        "output"              : parameters["output"],
+        "irreps_in"           : irreps_in,                  
+        "irreps_out"          : irreps_out,                
+        "max_radius"          : parameters["max_radius"],  
+        "num_neighbors"       : 2,                      
+        "pool_nodes"          : True,                      
+        "num_nodes"           : 2,
+        "number_of_basis"     : 10,
+        "mul"                 : parameters["mul"],
+        "layers"              : parameters["layers"],
+        "lmax"                : parameters["lmax"],
         "dropout_probability" : parameters["dropout"],
-        "batchnorm" : parameters["batchnorm"],
-        "pbc" : parameters["pbc"],
-        "use_shift" : parameters["use_shift"]
+        "batchnorm"           : parameters["batchnorm"],
+        "pbc"                 : parameters["pbc"],
+        "use_shift"           : parameters["use_shift"]
     }
 
     #####################
 
     instructions = {
-            "kwargs":copy(kwargs),
-            "class":"SabiaNetworkManager",
-            "module":"miscellaneous.elia.nn.network",
+            "kwargs"           : copy(kwargs),
+            "class"            : "SabiaNetworkManager",
+            "module"           : "miscellaneous.elia.nn.network",
             "chemical-symbols" : example.get_chemical_symbols(),
         }
     
     with open("instructions.json", "w") as json_file:
-        # The 'indent' parameter is optional for pretty formatting
         json.dump(instructions, json_file, indent=4)
 
     net = SabiaNetworkManager(**kwargs)
-    # print(net)
     N = net.n_parameters()
     print("Tot. number of parameters: ",N)
     
@@ -501,10 +308,10 @@ def main():
             "recompute_loss" : parameters["recompute_loss"],
         }
 
-    if args.options is not None :
+    if parameters["options"] is not None :
         # read parameters from file
         try :
-            with open(args.options, 'r') as file:
+            with open(parameters["options"], 'r') as file:
                 options = json.load(file)
 
         except :
@@ -514,14 +321,15 @@ def main():
 
     ##########################################
     # hyper-train the model
-    hyper_train_at_fixed_model( net      = net,\
-                                all_bs   = parameters["bs"],\
-                                all_lr   = parameters["lr"],\
-                                epochs   = parameters["epochs"],\
-                                loss     = loss,\
-                                datasets = datasets,\
-                                opts     = opts,\
-                                parameters = parameters)
+    hyper_train_at_fixed_model( net        = net,
+                                all_bs     = parameters["bs"],
+                                all_lr     = parameters["lr"],
+                                epochs     = parameters["epochs"],
+                                loss       = loss,
+                                datasets   = datasets,
+                                opts       = opts,
+                                parameters = parameters
+                            )
 
     print("\nJob done :)")
 
