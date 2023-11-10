@@ -7,14 +7,9 @@ import os
 import torch
 import pandas as pd
 import numpy as np
-from scipy.stats import pearsonr
-from copy import deepcopy
 from ase.io import read
 import matplotlib.pyplot as plt
 from miscellaneous.elia.nn.functions.functions import get_model
-from miscellaneous.elia.functions import plot_bisector
-from miscellaneous.elia.nn.dataset import make_dataloader
-from matplotlib.ticker import MaxNLocator
 
 # from chart_studio.plotly import plotly as py
 # import chart_studio.tools as tls
@@ -74,7 +69,7 @@ def get_args():
         "--output",
         action="store",
         type=str,
-        help="output file",
+        help="output file prefix",
         default="output.pdf",
     )
 
@@ -93,14 +88,10 @@ def main():
     atoms = read(args.positions)
     BEC = np.loadtxt(args.BEC)
 
-    tmp = "./tmp/"
-    if not os.path.exists(tmp):
-        os.mkdir(tmp)
-
     tmp_files = {
-        "indeces": os.path.normpath("{:s}/indeces.csv".format(tmp)),
-        "Z": os.path.normpath("{:s}/Z".format(tmp)),
-        "norm": os.path.normpath("{:s}/norm.txt".format(tmp)),
+        "indeces": os.path.normpath("{:s}.indeces.csv".format(args.output)),
+        "Z": os.path.normpath("{:s}.Z".format(args.output)),
+        "norm": os.path.normpath("{:s}.norm.txt".format(args.output)),
     }
 
     # read
@@ -201,7 +192,7 @@ def main():
         plt.xscale("log")
         plt.tight_layout()
 
-        plt.savefig(args.output)
+        plt.savefig(os.path.normpath(args.output+".pdf"))
 
     print("\n\tJob done :)")
 
