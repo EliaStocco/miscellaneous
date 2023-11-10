@@ -1,6 +1,5 @@
 # from copy import copy
 import torch
-from torch.nn import MSELoss
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
@@ -8,18 +7,13 @@ import warnings
 import os
 import time
 from copy import copy
-from miscellaneous.elia.functions import (
-    add_default,
-    remove_empty_folder,
-    remove_files_in_folder,
-)
-from miscellaneous.elia.nn.plot import plot_learning_curves
-from miscellaneous.elia.nn.training.functions import (
-    save_checkpoint,
-    get_all_dataloader,
-    get_all,
-)
-
+from miscellaneous.elia.functions import add_default
+from miscellaneous.elia.functions import remove_empty_folder
+from miscellaneous.elia.functions import remove_files_in_folder
+from miscellaneous.elia.nn.plot   import plot_learning_curves
+from miscellaneous.elia.nn.training.functions import save_checkpoint
+from miscellaneous.elia.nn.training.functions import get_all_dataloader
+from miscellaneous.elia.nn.training.functions import get_all
 
 __all__ = ["train"]
 
@@ -40,11 +34,7 @@ def train(
     train_dataset: list,
     val_dataset: list,
     parameters: dict,
-    hyperparameters: dict = None,  #   get_pred:callable=None,\
-    #   get_real:callable=None,\
-    make_dataloader: callable = None,  # correlation:callable=None,\
-    output=None,
-    name=None,
+    make_dataloader: callable = None,
     opts=None,
 ):
     """
@@ -63,23 +53,8 @@ def train(
         parameters (dict):
             Dictionary containing various parameters for training.
 
-        hyperparameters (dict, optional):
-            Dictionary containing hyperparameters for training. Defaults to None.
-
-        get_pred (callable, optional):
-            A function that predicts the output given input data. Defaults to None.
-
-        get_real (callable, optional):
-            A function that extracts the real values from the data. Defaults to None.
-
         make_dataloader (callable, optional):
             A function that creates a data loader from a dataset. Defaults to None.
-
-        output (str, optional):
-            Folder name for saving training information. Defaults to None.
-
-        name (str, optional):
-            A filename to distinguish results from other hyperparameters. Defaults to None.
 
         opts (dict, optional):
             Additional options for training. Defaults to None.
@@ -89,25 +64,60 @@ def train(
             A tuple containing the trained model, dataframe, correlation, and information about the training.
     """
 
+    ##########################################
+    # time
     start_task_time = time.time()
 
-    print("\nTraining:")
-    print("\tPreparing training")
+    print("\n\tTraining\n")
+    # print("\tPreparing training")
 
     # information about the status of the training
     info = "all good"
 
     ##########################################
     default = {
-        "plot": {"learning-curve": {"N": 10}},
-        "dataloader": {"shuffle": False},
-        "thr": {"exit": 10000},
-        "disable": False,
-        "restart": False,
-        "recompute_loss": False,
-        "save": {"parameters": 1},
+        "plot" : {
+            "learning-curve": {
+                "N": 10
+            }
+        },
+        "dataloader" : {
+            "shuffle": False
+        },
+        "thr" : {
+            "exit": 10000
+        },
+        "disable"        : False,
+        "restart"        : False,
+        "recompute_loss" : False,
+        "save"           : {
+            "parameters" : 1
+        },
     }
     opts = add_default(opts, default)
+
+    ##########################################
+    # set the necessary default parameters
+    default = {
+        "scheduler" : "",   # None
+        "name"      : None, # it will be set later to "untitled", but a warning will be raised
+        "output"    : None, # it will be set later to "results",  but a warning will be raised
+        "bs"        : -1,
+        "n_epochs"  : 100,
+        "optimizer" : "adam",
+        "loss"      : "mse",
+        "lr"        : 1e-2,
+    }
+    parameters = add_default(parameters, default)
+
+    print("\tHyperparameters:")
+    for k in parameters.keys():
+        try :
+            print("\t\t{:20s}: ".format(k),parameters[k])
+        except:
+            if k == "loss":
+                if type(parameters["loss"]) == str:
+                    print("\tloss: ", parameters["loss"])
 
     ##########################################
     # default values
@@ -116,90 +126,76 @@ def train(
         make_dataloader = \
             lambda dataset, batch_size, shuffle=opts["dataloader"]["shuffle"]: \
                 _make_dataloader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-    if hyperparameters is None:
-        hyperparameters = dict()
 
     # output folder
-    if output is None:
+    if parameters["output"] is None:
         warnings.warn("'output' is None: specify a folder name to print some information to file.\n\
                       'results' will be set as default")
-        output = "results"
+        parameters["output"] = "results"
 
     # the name of the output files
-    if name is None:
-        warnings.warn("'name' is None: specify a filename to distinguish the results from other hyperparameters")
-        name = "untitled"
+    if parameters["name"] is None:
+        warnings.warn("'name' is None: specify a filename to distinguish the results from other parameters")
+        parameters["name"] = "untitled"
 
     ##########################################
     # output folders
     folders = {
-        "parameters": "{:s}/parameters".format(output),
-        "dataframes": "{:s}/dataframes".format(output),
-        "images": "{:s}/images".format(output),
-        "correlations": "{:s}/correlations".format(output),
+        "parameters"  : "{:s}/parameters".  format(parameters["output"]),
+        "dataframes"  : "{:s}/dataframes".  format(parameters["output"]),
+        "images"      : "{:s}/images".      format(parameters["output"]),
+        "correlations": "{:s}/correlations".format(parameters["output"]),
     }
 
     # create the output folders
-    for folder in [output, *folders.values()]:
+    for folder in [parameters["output"], *folders.values()]:
         if not os.path.exists(folder):
             print("\tCreating folder '{:s}'".format(folder))
             os.mkdir(folder)
 
     ##########################################
-    # hyperparameters
-    if "bs" not in hyperparameters:
-        hyperparameters["bs"] = 32
-    if "n_epochs" not in hyperparameters:
-        hyperparameters["n_epochs"] = 100
-    if "optimizer" not in hyperparameters:
-        hyperparameters["optimizer"] = "adam"
-    if "lr" not in hyperparameters:
-        hyperparameters["lr"] = 1e-2
-    if "loss" not in hyperparameters:
-        hyperparameters["loss"] = MSELoss()
-
-    print("\tHyperparameters:")
-    for k in hyperparameters.keys():
-        try :
-            print("\t\t{:20s}: ".format(k),hyperparameters[k])
-        except:
-            if k == "loss":
-                if type(hyperparameters["loss"]) == str:
-                    print("\tloss_fn: ", hyperparameters["loss"])
-
-    # print("\t\tbatch_size: ", hyperparameters["bs"])
-    # print("\t\tn_epochs: ", hyperparameters["n_epochs"])
-    # print("\t\toptimizer: ", hyperparameters["optimizer"])
-    # print("\t\tlr: ", hyperparameters["lr"])
-    # # I had some problems with the loss
-    # if type(hyperparameters["loss"]) == str:
-    #     print("\tloss_fn: ", hyperparameters["loss"])
-    # if "weight_decay" in hyperparameters:
-    #     print("\t\weight_decay: ", hyperparameters["weight_decay"])
-
-
-    # extract hyperparameters for the dict 'hyperparameters'
-    batch_size = int(hyperparameters["bs"])
-    n_epochs = int(hyperparameters["n_epochs"])
-    optimizer = parameters["optimizer"]
-    # lr = float(hyperparameters["lr"])
-    loss_fn = hyperparameters["loss"]
-
-    # set default values for some hyperparameters
-    if type(optimizer) == str: 
-        match optimizer.lower():
-            case "adam":
-                from torch.optim import Adam
-                optimizer = Adam(   params=model.parameters(), 
-                                    lr=hyperparameters["lr"])
-            case "adamw":
-                from torch.optim import AdamW
-                optimizer = AdamW(  params=model.parameters(), 
-                                    lr=hyperparameters["lr"],
-                                    weight_decay=parameters["weight_decay"])
+    # set the loss function
+    if type(parameters["loss"]) == str:
+        match parameters["loss"].lower():
+            case "mse":
+                from torch.nn import MSELoss
+                loss_fn = MSELoss()
+            case _:
+                raise ValueError("loss function not known")
+    else :
+        loss_fn = parameters["loss"]
+        print("\n\tprovided loss function will be supposed to be 'callable'")
 
     ##########################################
+    # set the optimizer
+    match parameters["optimizer"].lower():
+        case "adam":
+            from torch.optim import Adam
+            optimizer = Adam(   params=model.parameters(), 
+                                lr=parameters["lr"])
+        case "adamw":
+            from torch.optim import AdamW
+            optimizer = AdamW(  params=model.parameters(), 
+                                lr=parameters["lr"],
+                                weight_decay=parameters["weight_decay"])
+        case _:
+            raise ValueError("optimizer not known")
+            
+    ##########################################
+    # set the learning rate scheduler
+    match parameters["scheduler"].lower():
+        case "" :
+            scheduler = None
+        case "plateau":
+            from torch.optim.lr_scheduler import ReduceLROnPlateau
+            scheduler = ReduceLROnPlateau(optimizer,factor=parameters["scheduler-factor"])
+        case _:
+            raise ValueError("scheduler not known")
+        
+    ##########################################
     # prepare the dataloaders for the train and validation datasets
+    batch_size = int(parameters["bs"])
+    n_epochs = int(parameters["n_epochs"])
     dataloader_train = make_dataloader(train_dataset, batch_size)
     batches_per_epoch = len(dataloader_train)
     train_loss_one_epoch = np.full(batches_per_epoch, np.nan)
@@ -231,7 +227,7 @@ def train(
     global yval_real, all_dataloader_val
     yval_real = None
     if yval_real is None or not opts["keep_dataset"]:
-        print("\tCompute validation dataset output (this will save time in the future)")
+        print("\tcompute validation dataset output (this will save time in the future)")
         argv = {
             "dataset": val_dataset,
             "make_dataloader": make_dataloader,
@@ -242,7 +238,7 @@ def train(
     global ytrain_real, all_dataloader_train
     ytrain_real = None
     if ytrain_real is None or not opts["keep_dataset"] and opts["recompute_loss"]:
-        print("\tCompute training dataset output (this will save time in the future)")
+        print("\tcompute training dataset output (this will save time in the future)")
         argv = {
             "dataset": train_dataset,
             "make_dataloader": make_dataloader,
@@ -253,8 +249,8 @@ def train(
     ##########################################
     # prepare output files
     savefiles = {
-        "dataframes": "{:s}/{:s}.csv".format(folders["dataframes"], name),
-        "images": "{:s}/{:s}.pdf".format(folders["images"], name),
+        "dataframes": "{:s}/{:s}.csv".format(folders["dataframes"], parameters["name"]),
+        "images": "{:s}/{:s}.pdf".format(folders["images"], parameters["name"]),
     }
 
     ##########################################
@@ -267,14 +263,14 @@ def train(
     if not os.path.exists(checkpoint_folder):
         os.mkdir(checkpoint_folder)
 
-    parameters_folder = "{:s}/{:s}".format(folders["parameters"], name)
+    parameters_folder = "{:s}/{:s}".format(folders["parameters"], parameters["name"])
     if not os.path.exists(parameters_folder):
         os.mkdir(parameters_folder)
     elif parameters["restart"]:
         print("\tCleaning parameters folder '{:s}'".format(parameters_folder))
         remove_files_in_folder(parameters_folder, "pth")
 
-    checkpoint_file = "{:s}/{:s}.pth".format(checkpoint_folder, name)
+    checkpoint_file = "{:s}/{:s}.pth".format(checkpoint_folder, parameters["name"])
     if os.path.exists(checkpoint_file) and not opts["restart"]:
         print("\tReading checkpoint from file '{:s}'".format(checkpoint_file))
         checkpoint = torch.load(checkpoint_file)
@@ -305,11 +301,11 @@ def train(
     for k,i in optimizer.param_groups[0].items():
         if k == 'params' : 
             continue
-        print("\t\t",k,": ",i)
+        print("\t{:>15s}:".format(k),i)
 
     ##########################################
     # start the training procedure
-    print("\n\t...and here we go!")
+    print("\n\t...and here we go!\n")
     k = copy(start_epoch)
     for epoch in range(start_epoch, n_epochs):
 
@@ -388,10 +384,15 @@ def train(
 
             ##########################################
             # finished cyclying over mini-batches
+            model.eval()
 
-            if model.use_shift:
-                print("\t!! SHIFT:", model.shift.detach().numpy())
-                print("\t!! FACTOR:", model.factor.detach().numpy())
+            ##########################################
+            # print something to screen
+            if hasattr(model,"message"):
+                model.message()
+            # if model.use_shift:
+            #     print("\t!! SHIFT:", model.shift.detach().numpy())
+            #     print("\t!! FACTOR:", model.factor.detach().numpy())
 
             # evaluate model on the test dataset
             # with torch.no_grad():
@@ -400,13 +401,12 @@ def train(
             # model.eval()
             # if True:  # with torch.no_grad():
 
+            ##########################################
             # save learning rate
             dataframe.at[epoch,"lr"] = float(optimizer.param_groups[0]["lr"])
-
-            model.eval()
-
             dataframe.at[epoch, "epoch"] = epoch + 1
 
+            ##########################################
             # saving parameters to temporary file
             N = opts["save"]["parameters"]
             if N != -1 and epoch % N == 0:
@@ -417,15 +417,24 @@ def train(
             dataframe.at[epoch, "train"] = np.mean(train_loss_one_epoch)
             dataframe.at[epoch, "std"] = np.std(train_loss_one_epoch)
 
+            ##########################################
             # compute the loss function
             # predict the value for the validation dataset
             yval_pred = model.get_pred(all_dataloader_val)
-            dataframe.at[epoch, "val"] = float(loss_fn(yval_pred, yval_real))
+            val_loss = float(loss_fn(yval_pred, yval_real))
+            dataframe.at[epoch, "val"] = val_loss            
+
+            ##########################################
+            # scheduler
+            if scheduler is not None:
+                scheduler.step(val_loss)
+            
             if not opts["recompute_loss"]:
                 dataframe.at[epoch, "ratio"] = (
                     dataframe.at[epoch, "train"] / dataframe.at[epoch, "val"]
                 )
 
+            ##########################################
             # set dataframe
             if opts["recompute_loss"]:
                 ytrain_pred = model.get_pred(all_dataloader_train) 
@@ -438,15 +447,17 @@ def train(
 
             dataframe[: epoch + 1].to_csv(savefiles["dataframes"], index=False)
 
+            ##########################################
             # produce learning curve plot
             if epoch >= 1:                
                 plot_learning_curves(
                     arrays=dataframe,
                     file=savefiles["images"],
-                    title=name if name != "untitled" else None,
+                    title=parameters["name"] if parameters["name"] != "untitled" else None,
                     opts=opts["plot"]["learning-curve"],
                 )
             
+            ##########################################
             # print progress
             bar.set_postfix(
                 epoch=epoch,
@@ -454,6 +465,7 @@ def train(
                 val=dataframe.at[epoch, "val"],
             )
 
+        ##########################################
         # saving checkpoint to file
         N = opts["save"]["checkpoint"]
         if N != -1 and epoch % N == 0:

@@ -3,6 +3,7 @@ import pandas as pd
 from copy import copy
 import torch
 import os
+from typing import Union
 from .train import train
 from miscellaneous.elia.functions import add_default
 from itertools import product
@@ -11,7 +12,7 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                                 all_bs:list,\
                                 all_lr:list,\
                                 epochs,\
-                                loss:callable,\
+                                loss:Union[callable,str],\
                                 datasets:dict,\
                                 parameters:dict,\
                                 opts:dict=None):
@@ -71,19 +72,20 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
 
         df.at[n,"file"] = "{:s}.bs={:d}.lr={:.1e}".format(parameters["name"],bs,lr)
         
-        print("#########################\n")
-        print("bs={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(bs,lr,n+1,Ntot))
+        print("\n--------------------------------\n")
+        print("\tbs={:d}\t|\tlr={:.1e}\t|\tn={:d}/{:d}".format(bs,lr,n+1,Ntot))
 
         #print("\n\trebuilding network...\n")
         net = copy(init_model)
         
-        hyperparameters = {
-            "bs": bs,
-            "n_epochs"  : epochs.at[bs,lr],
-            # "optimizer" : parameters["optimizer"],
-            "lr"        : lr,
-            "loss"      : loss 
-        }
+        parameters.update({
+            "bs"       : bs,
+            "n_epochs" : epochs.at[bs,lr],
+            "name"     : df.at[n,"file"],
+            "lr"       : lr,
+            "loss"     : loss,
+            "output"   : parameters["output_folder"],
+        })
 
         count_try = 0
         while (info == "try again" and count_try < opts["max_try"]) or count_try == 0 :
@@ -95,11 +97,8 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
                 train(  model           = net,
                         train_dataset   = train_dataset,
                         val_dataset     = val_dataset,
-                        hyperparameters = hyperparameters,
-                        output          = parameters["output_folder"],
-                        name            = df.at[n,"file"],
+                        parameters      = parameters,
                         opts            = opts,
-                        parameters      = parameters
                     )
             count_try += 1
 

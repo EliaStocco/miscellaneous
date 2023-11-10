@@ -23,15 +23,6 @@ T = TypeVar("T", bound="SabiaNetwork")
 class SabiaNetwork(torch.nn.Module):
 
     default_dtype = torch.float64  #: torch.dtype
-    # lmax : int
-    # max_radius: float
-    # number_of_basis : int
-    # num_nodes : int
-    # pool_nodes : bool
-    # debug : bool
-    # mp : MessagePassing
-    # irreps_in : o3.Irreps
-    # irreps_out : o3.Irreps
 
     def __init__(
         self: T,

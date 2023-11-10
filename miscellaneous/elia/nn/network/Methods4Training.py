@@ -137,11 +137,6 @@ class EDFMethods4Training():
             return loss_scalar
         
         elif self.output == "D" :
-            # if Natoms > 1 :
-            #     def non_periodic_loss(x:torch.tensor,y:torch.tensor)->torch.Tensor:
-            #         return loss_vector(x,y) / Natoms
-            # else :
-            #     non_periodic_loss = loss_vector 
             if periodic :
                 def periodic_loss(x:torch.tensor,y:torch.tensor,\
                                   X:Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])->torch.Tensor:

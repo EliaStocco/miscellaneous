@@ -27,36 +27,38 @@ description = "train a 'e3nn' model"
 #####################
 
 default_values = {
-        "mul"            : 2,
-        "layers"         : 6,
-        "lmax"           : 2,
-        "name"           : "untitled",
-        "reference"      : False,
-        "output"         : "D",
-        "max_radius"     : 6.0,
-        "folder"         : "LiNbO3",
-        "output_folder"  : "LiNbO3/results",
-        "ref_index"      : 0 ,
-        "Natoms"         : None,
-        "random"         : False,
-        "epochs"         : 10000,
-        "bs"             : [1],
-        "lr"             : [1e-3],
-        "weight_decay"   : 1e-2,
-        "optimizer"      : "adam",
-        "grid"           : True,
-        "max_time"       : -1,
-        "task_time"      : -1,
-        "dropout"        : 0.01,
-        "batchnorm"      : True,
-        "use_shift"      : None,
-        "restart"        : False,
-        "recompute_loss" : False,
-        "pbc"            : False,
-        "instructions"   : None,
-        "debug"          : False,
-        "indices"        : None,
-        "options"        : None,
+        "mul"              : 2,
+        "layers"           : 6,
+        "lmax"             : 2,
+        "name"             : "untitled",
+        # "reference"        : False,
+        "output"           : "D",
+        "max_radius"       : 6.0,
+        "folder"           : "LiNbO3",
+        "output_folder"    : "LiNbO3/results",
+        # "ref_index"        : 0 ,
+        "Natoms"           : None,
+        "random"           : False,
+        "epochs"           : 10000,
+        "bs"               : [1],
+        "lr"               : [1e-3],
+        "weight_decay"     : 1e-2,
+        "optimizer"        : "adam",
+        "grid"             : True,
+        "max_time"         : -1,
+        "task_time"        : -1,
+        "dropout"          : 0.01,
+        "batchnorm"        : True,
+        "use_shift"        : None,
+        "restart"          : False,
+        "recompute_loss"   : False,
+        "pbc"              : False,
+        "instructions"     : None,
+        "debug"            : False,
+        "indices"          : None,
+        "options"          : None,
+        "scheduler"        : None,
+        "scheduler-factor" : 1e-2,
     }
 
 #####################
@@ -66,37 +68,39 @@ def get_args():
 
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument("-i", "--input",    action="store", type=str)
-    parser.add_argument("--options",        action="store", type=str)
-    parser.add_argument("--mul",            action="store", type=int)
-    parser.add_argument("--layers",         action="store", type=int)
-    parser.add_argument("--lmax",           action="store", type=int)
-    parser.add_argument("--name",           action="store", type=str)
-    parser.add_argument("--reference",      action="store", type=str2bool,default=default_values["reference"])
-    parser.add_argument("--output",         action="store", type=str)
-    parser.add_argument("--max_radius",     action="store", type=float)
-    parser.add_argument("--folder",         action="store", type=str)
-    parser.add_argument("--output_folder",  action="store", type=str)
-    parser.add_argument("--ref_index",      action="store", type=int)
-    parser.add_argument("--Natoms",         action="store", type=int)
-    parser.add_argument("--random",         action="store", type=str2bool, default=default_values["random"])
-    parser.add_argument("--epochs",         action="store", type=int)
-    parser.add_argument("--bs",             action="store", type=int,      nargs="+")
-    parser.add_argument("--lr",             action="store", type=float,    nargs="+")
-    parser.add_argument("--grid",           action="store", type=str2bool, default=default_values["grid"])
-    parser.add_argument("--max_time",       action="store", type=int,      default=default_values["max_time"])
-    parser.add_argument("--task_time",      action="store", type=int,      default=default_values["task_time"])
-    parser.add_argument("--dropout",        action="store", type=float,    default=default_values["dropout"])
-    parser.add_argument("--batchnorm",      action="store", type=str2bool, default=default_values["batchnorm"])
-    parser.add_argument("--use_shift",      action="store", type=str2bool, default=default_values["use_shift"])
-    parser.add_argument("--restart",        action="store", type=str2bool, default=default_values["restart"])
-    parser.add_argument("--recompute_loss", action="store", type=str2bool, default=default_values["recompute_loss"])
-    parser.add_argument("--pbc",            action="store", type=str2bool, default=default_values["pbc"])
-    parser.add_argument("--instructions",   action="store", type=dict,     default=default_values["instructions"])
-    parser.add_argument("--debug",          action="store", type=str2bool, default=default_values["debug"])
-    parser.add_argument("--indices",        action="store", type=str,      default=default_values["indices"])
-    parser.add_argument("--weight_decay",   action="store", type=str,      default=default_values["weight_decay"])
-    parser.add_argument("--optimizer",      action="store", type=str,      default=default_values["optimizer"])
+    parser.add_argument("-i", "--input",     action="store", type=str)
+    parser.add_argument("--options",         action="store", type=str)
+    parser.add_argument("--mul",             action="store", type=int)
+    parser.add_argument("--layers",          action="store", type=int)
+    parser.add_argument("--lmax",            action="store", type=int)
+    parser.add_argument("--name",            action="store", type=str)
+    # parser.add_argument("--reference",       action="store", type=str2bool,default=default_values["reference"])
+    parser.add_argument("--output",          action="store", type=str)
+    parser.add_argument("--max_radius",      action="store", type=float)
+    parser.add_argument("--folder",          action="store", type=str)
+    parser.add_argument("--output_folder",   action="store", type=str)
+    # parser.add_argument("--ref_index",       action="store", type=int)
+    parser.add_argument("--Natoms",          action="store", type=int)
+    parser.add_argument("--random",          action="store", type=str2bool, default=default_values["random"])
+    parser.add_argument("--epochs",          action="store", type=int)
+    parser.add_argument("--bs",              action="store", type=int,      nargs="+")
+    parser.add_argument("--lr",              action="store", type=float,    nargs="+")
+    parser.add_argument("--grid",            action="store", type=str2bool, default=default_values["grid"])
+    parser.add_argument("--max_time",        action="store", type=int,      default=default_values["max_time"])
+    parser.add_argument("--task_time",       action="store", type=int,      default=default_values["task_time"])
+    parser.add_argument("--dropout",         action="store", type=float,    default=default_values["dropout"])
+    parser.add_argument("--batchnorm",       action="store", type=str2bool, default=default_values["batchnorm"])
+    parser.add_argument("--use_shift",       action="store", type=str2bool, default=default_values["use_shift"])
+    parser.add_argument("--restart",         action="store", type=str2bool, default=default_values["restart"])
+    parser.add_argument("--recompute_loss",  action="store", type=str2bool, default=default_values["recompute_loss"])
+    parser.add_argument("--pbc",             action="store", type=str2bool, default=default_values["pbc"])
+    parser.add_argument("--instructions",    action="store", type=dict,     default=default_values["instructions"])
+    parser.add_argument("--debug",           action="store", type=str2bool, default=default_values["debug"])
+    parser.add_argument("--indices",         action="store", type=str,      default=default_values["indices"])
+    parser.add_argument("--weight_decay",    action="store", type=str,      default=default_values["weight_decay"])
+    parser.add_argument("--optimizer",       action="store", type=str,      default=default_values["optimizer"])
+    parser.add_argument("--scheduler",       action="store", type=str,      default=default_values["scheduler"])
+    parser.add_argument("--scheduler-factor",action="store", type=str,      default=default_values["scheduler-factor"])
 
     return parser.parse_args()
 
@@ -179,14 +183,14 @@ def main():
     }
 
     # I should remove this function from the training procedure
-    datasets, data, example = prepare_dataset(  ref_index  = parameters["ref_index"],
-                                                max_radius = parameters["max_radius"],
-                                                reference  = parameters["reference"],
-                                                output     = parameters["output"],
-                                                pbc        = parameters["pbc"],
-                                                indices    = parameters["indices"],
-                                                folder     = parameters["folder"],
-                                                opts       = opts
+    datasets, example = prepare_dataset(  # ref_index  = parameters["ref_index"],
+                                        max_radius = parameters["max_radius"],
+                                        # reference  = parameters["reference"],
+                                        output     = parameters["output"],
+                                        pbc        = parameters["pbc"],
+                                        indices    = parameters["indices"],
+                                        folder     = parameters["folder"],
+                                        opts       = opts
                                             )
     
     # There is a bug:
@@ -232,10 +236,11 @@ def main():
     ##########################################
     # construct the model
 
-    if parameters["reference"] :
-        irreps_in = "{:d}x0e+1x1o".format(len(data.all_types()))
-    else :
-        irreps_in = "{:d}x0e".format(len(data.all_types()))
+    # if parameters["reference"] :
+    #     irreps_in = "{:d}x0e+1x1o".format(len(data.all_types()))
+    # else :
+    types = np.unique(example.get_chemical_symbols())
+    irreps_in = "{:d}x0e".format(len(types))
 
     if parameters["output"] in ["E","EF"]:
         irreps_out = "1x0e"

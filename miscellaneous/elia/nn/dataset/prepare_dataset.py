@@ -11,11 +11,11 @@ from miscellaneous.elia.functions import add_default, find_files_by_pattern
 # ELIA: modify 'same_lattice' to false
 same_lattice = True
 
-def prepare_dataset(ref_index:int,\
+def prepare_dataset(# ref_index:int,\
                     max_radius:float,\
                     output:str,\
                     pbc:bool,\
-                    reference:bool,\
+                    # reference:bool,\
                     folder:str,\
                     opts:dict,\
                     indices:str,\
@@ -123,12 +123,12 @@ def prepare_dataset(ref_index:int,\
     RESTART = opts["build"]["restart"]
     READ = opts["build"]["read"]
     SAVE = opts["build"]["save"]
-    if reference :
-        name = "dataset-delta"
-    # elif phases :
-    #     name = "dataset-phases"
-    else :
-        name = "dataset"
+    # if reference :
+    #     name = "dataset-delta"
+    # # elif phases :
+    # #     name = "dataset-phases"
+    # else :
+    name = "dataset"
     savefile = "{:s}/{:s}".format(folder,name)
 
     if not READ or not os.path.exists(savefile+".train.torch") or RESTART :
@@ -136,21 +136,21 @@ def prepare_dataset(ref_index:int,\
 
         if os.path.exists(savefile+".torch") and not RESTART:
             dataset = torch.load(savefile+".torch")
-            if reference:
-                # dipole  = dataset[ref_index].dipole
-                pos     = dataset[ref_index].pos
-            else :
-                # dipole = torch.full((3,),torch.nan)
-                pos = torch.full((3,),torch.nan)
+            # if reference:
+            #     # dipole  = dataset[ref_index].dipole
+            #     pos     = dataset[ref_index].pos
+            # else :
+            #     # dipole = torch.full((3,),torch.nan)
+            #     pos = torch.full((3,),torch.nan)
         else :
-            if reference :
-                dataset, pos = make_dataset_delta(  ref_index = ref_index,
-                                                    data = data,
-                                                    max_radius = max_radius,
-                                                    output=output,
-                                                    pbc = pbc,
-                                                    indices = indices,
-                                                    requires_grad = requires_grad)
+            # if reference :
+            #     dataset, pos = make_dataset_delta(  ref_index = ref_index,
+            #                                         data = data,
+            #                                         max_radius = max_radius,
+            #                                         output=output,
+            #                                         pbc = pbc,
+            #                                         indices = indices,
+            #                                         requires_grad = requires_grad)
             # elif phases :
             #     dataset = make_dataset_phases(  data = data,
             #                                     max_radius = max_radius,\
@@ -158,15 +158,15 @@ def prepare_dataset(ref_index:int,\
             #                                     requires_grad = requires_grad)
             #     # dipole = torch.full((3,),torch.nan)
             #     pos = torch.full((3,),torch.nan)
-            else :
-                dataset = make_dataset( data=data,
-                                        max_radius=max_radius,
-                                        output=output,
-                                        pbc = pbc ,
-                                        indices = indices,
-                                        requires_grad=requires_grad)
-                # dipole = torch.full((3,),torch.nan)
-                pos = torch.full((3,),torch.nan)
+            # else :
+            dataset = make_dataset( data=data,
+                                    max_radius=max_radius,
+                                    output=output,
+                                    pbc = pbc ,
+                                    indices = indices,
+                                    requires_grad=requires_grad)
+            # dipole = torch.full((3,),torch.nan)
+            # pos = torch.full((3,),torch.nan)
         not_shuffled = copy(dataset)
         # shuffle
         # random.shuffle(dataset)
@@ -193,15 +193,15 @@ def prepare_dataset(ref_index:int,\
         test_dataset   = torch.load(savefile+".test.torch")
         unused_dataset = torch.load(savefile+".unused.torch")
 
-        if reference :
-            # Open the JSON file and load the data
-            with open("{:s}/reference.json".format(folder)) as f:
-                reference = json.load(f)
-            # dipole = torch.tensor(reference['dipole'])
-            pos    = torch.tensor(reference['pos'])
-        else :
-            # dipole = torch.full((3,),torch.nan)
-            pos = torch.full((3,),torch.nan)
+        # if reference :
+        #     # Open the JSON file and load the data
+        #     with open("{:s}/reference.json".format(folder)) as f:
+        #         reference = json.load(f)
+        #     # dipole = torch.tensor(reference['dipole'])
+        #     pos    = torch.tensor(reference['pos'])
+        # else :
+        #     # dipole = torch.full((3,),torch.nan)
+        #     pos = torch.full((3,),torch.nan)
 
         SAVE = False
             
@@ -213,11 +213,11 @@ def prepare_dataset(ref_index:int,\
         torch.save(test_dataset, savefile+".test.torch")
         torch.save(unused_dataset, savefile+".unused.torch")
 
-        if reference :
-            # Write the dictionary to the JSON file
-            with open("reference.json", "w") as json_file:
-                # The 'indent' parameter is optional for pretty formatting
-                json.dump({"pos":pos.tolist()}, json_file, indent=4)  
+        # if reference :
+        #     # Write the dictionary to the JSON file
+        #     with open("reference.json", "w") as json_file:
+        #         # The 'indent' parameter is optional for pretty formatting
+        #         json.dump({"pos":pos.tolist()}, json_file, indent=4)  
 
     print("\n\tDatasets summary:")
     print("\t\ttrain:",len(train_dataset))
@@ -240,4 +240,4 @@ def prepare_dataset(ref_index:int,\
     else :
         example = Atoms(positions=pos,symbols=symbols)
 
-    return datasets, data, example
+    return datasets, example

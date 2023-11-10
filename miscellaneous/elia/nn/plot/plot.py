@@ -47,7 +47,7 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
 
             # Create a twin axis on the right with a log scale
             conditions = ["ratio-2","std","ratio","lr"]
-            if np.any( [ arrays[k] is not None for k in conditions ] ):
+            if np.any( [ arrays[k].isna().all() for k in conditions ] ):
             # if arrays["ratio-2"] is not None or arrays["std"] is not None or arrays["ratio"] is not None :
                 # argv = {
                 #     "linestyle":"--",
@@ -58,20 +58,20 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
 
                 ax2 = ax.twinx()
 
-                if arrays["std"] is not None :
+                if arrays["std"].isna().all() :
                     ax2.plot(x,arrays["std"]/arrays["train"],color="brown",label="$\\mu$-train/$\\sigma$-train",marker="x",linestyle="dashed",linewidth=0.5,markersize=2)
 
-                if arrays["ratio"] is not None :
+                if arrays["ratio"].isna().all() :
                     ax2.plot(x, arrays["ratio"], color="green", label="train/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
 
-                if arrays["ratio-2"] is not None :
+                if arrays["ratio-2"].isna().all() :
                     ax2.plot(x, arrays["ratio-2"], color="black", label="train*/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
                     
-                if arrays["ratio-2"] is not None or arrays["ratio"] is not None:
+                if arrays["ratio-2"].isna().all() or arrays["ratio"].isna().all():
                     xlim = ax2.get_xlim()
                     ax2.hlines(y=1,xmin=xlim[0],xmax=xlim[1],linestyle="--",linewidth=0.7,alpha=0.7,color="black")
                 
-                if arrays["lr"] is not None :
+                if arrays["lr"].isna().all() :
                     ax2.plot(x,arrays["lr"],color="orange",label="lr",marker=".",linewidth=0.7,markersize=2,linestyle="--")
 
                 ax2.set_yscale("log")
