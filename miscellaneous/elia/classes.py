@@ -856,7 +856,7 @@ class MicroState:
 
         pass
 
-    def plot_time_series(self,what:str,file:str=None,opts=None):
+    def plot_time_series(self,what:str,array:np.ndarray=None,file:str=None,opts=None):
 
         if opts is None :
             opts = {"mean":False,"plot":None}
@@ -869,7 +869,10 @@ class MicroState:
             print("Warning: 'time' not present in 'properties'")
             time = None
 
-        quantity = self.properties[what].copy()
+        if array is not None:
+            quantity = array
+        else:
+            quantity = self.properties[what].copy()
         if len(quantity.shape) == 2:
             dim = quantity.shape[1]
         else :
@@ -1922,7 +1925,7 @@ class MicroState:
 
         return 
     
-    def eckart(self,index):
+    def eckart(self,index,inplace=False):
         from miscellaneous.elia.eckart import EckartFrame
         m = self.masses.reshape((-1,3))[:,0]
         print("\tsetting the 'EckartFrame' object with the following masses (a.u.): ",m)
@@ -1931,39 +1934,56 @@ class MicroState:
         x    = self.positions.reshape((N,-1,3))
         xref = self.positions[index].reshape((-1,3))
         print("\taligning the positions along the Eckart frame of the {:d}th configuration".format(index))
-        newx, shift, rotmat = eck.align(x,xref)
-        # save the shift and rotmat ... maybe they will be useful 
-        # self.eckart_shift  = shift
-        rotmat = np.asarray([ r.T for r in rotmat ])
-        return newx.reshape((N,-1)), shift, rotmat
+        newx, com, rotmat = eck.align(x,xref)
+        # check that everything is okay
+        # rotmat = np.asarray([ r.T for r in rotmat ])
+        # np.linalg.norm( ( newx - shift ) @ rotmat + shift - x ) 
+        if inplace:
+            from scipy.spatial.transform import Rotation   
+            self.properties["eckart-euler"] = np.full((N,3),np.nan)
+            for n in range(N):
+                # 'rotmat' is supposed to be right multiplied
+                # then to get the real rotation matrix we need to 
+                # take its transpose
+                r =  Rotation.from_matrix(rotmat[n].T)
+                angles = r.as_euler("xyz",degrees=True)
+                self.properties["eckart-euler"][n,:] = angles
+                
+        return newx, com, rotmat
 
     
-    def dipole_model(self,index,frame="global"):
-        if frame == "eckart" :
-            newx, _ , _  = self.eckart(index)            
-            # save old positions
-            oldpos = copy(self.positions)
-            # set the rotated positions
-            self.positions = copy(newx)
-            # compute the model in the Eckart frame
-            model = self.dipole_model(index,frame="global")
-            # re-set the positions to the original values
-            self.positions = oldpos
-            # return the model
-            return model
+    def dipole_model(self,index=0,frame="global"):
+        match frame:
+            case "eckart" :
+                newx, com, rotmat  = self.eckart(index)            
+                # save old positions
+                oldpos = copy(self.positions)
+                # set the rotated positions
+                self.positions = copy(newx.reshape((len(newx),-1)))
+                # compute the model in the Eckart frame
+                model, _, _ = self.dipole_model(index,frame="global")
+                # re-set the positions to the original values
+                self.positions = oldpos
+                # return the model
 
-        elif frame == "global" :
-            bec = self.bec[index]
-            d0  = self.properties["dipole"][index]
-            R0  = self.positions[index].reshape((-1,3))
-            model  = np.full((len(self),3),np.nan)
-            for n in range(len(self)):
-                R = self.positions[n].reshape((-1,3))
-                model[n,:] = bec.T @ (R - R0).flatten() + d0
-            return model
+                # 'rotmat' is supposed to be right-multiplied:
+                # vrot = v @ rotmat
+                return model, com, rotmat 
+
+            case "global" :
+                bec = self.bec[index]
+                d0  = self.properties["dipole"][index]
+                R0  = self.positions[index]#.reshape((-1,3))
+                N = len(self)
+                model  = np.full((N,3),np.nan)
+                for n in range(N):
+                    R = self.positions[n]#.reshape((-1,3))
+                    dD = bec.T @ (R - R0)
+                    model[n,:] = dD.flatten() + d0
+                return model, None, None
         
-        else :
-            raise ValueError("'frame' can be only 'eckart' or 'global' (dafault).")
+            case _ :
+                raise ValueError("'frame' can be only 'eckart' or 'global' (dafault).")
         
     def diff_bec(self,index,frame="global"):
 

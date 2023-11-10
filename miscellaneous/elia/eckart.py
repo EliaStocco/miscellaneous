@@ -652,17 +652,19 @@ class EckartFrame(object):
         """
         # get the c.o.m. 'com' of the coordinates 'x'
         xs, com = self.shift_to_com(x)
+        # xs + com[..., None, :] == x --> True
         # get the c.o.m. 'refcom' of 'xref'
-        _, refcom = self.shift_to_com(xref)
+        xref, refcom = self.shift_to_com(xref)
         # rotate 'x' into the Eckart frame
-        xrot, rotmat, _  = self.norm2(x,xref)
+        xrot, rotmat, _  = self.norm2(xs,xref)
         # put the c.o.m. of 'xrot' to zero
         # and then shift 'xrot' s.t. its c.o.m. is the same of 'xref'
-        sm    = -com   [..., None, :] # shift minus      
-        sp    = +refcom[..., None, :] # shift plus
-        shift = sm + sp   
-        xrot += shift
-        return xrot, shift, rotmat
+        # sm    = -com   [..., None, :] # shift minus      
+        # sp    = +refcom[..., None, :] # shift plus
+        # shift = sm + sp   
+        com = com[..., None, :] 
+        xrot += com
+        return xrot, com, rotmat
 
 if __name__ == "__main__":
 

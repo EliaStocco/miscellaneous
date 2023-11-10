@@ -13,10 +13,12 @@ import itertools
 import numpy as np
 import re
 import os
+
 # import fnmatch
 import contextlib
 import sys
-#from ipi.engine.properties import Properties
+
+# from ipi.engine.properties import Properties
 from ipi.utils.units import unit_to_internal, unit_to_user
 from scipy.ndimage import gaussian_filter1d, generic_filter
 
@@ -26,6 +28,7 @@ from scipy.ndimage import gaussian_filter1d, generic_filter
 #             'Dict2Obj', 'get_attributes', 'merge_attributes', 'read_comments_xyz', 'segment',
 #             'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector','remove_files_in_folder',
 #             'get_line_with_pattern']
+
 
 # @np.vectorize(signature="'(i),(),()->()'")
 def sigma_out_of_target(array, target, sigma):
@@ -46,29 +49,29 @@ def sigma_out_of_target(array, target, sigma):
     shape = array.shape
     N = array.shape[1]
 
-    smooth = np.full(shape,np.nan)    
+    smooth = np.full(shape, np.nan)
     for n in range(N):
-        smooth[:,n] = gaussian_filter1d(array[:,n], sigma[n], axis=0)
+        smooth[:, n] = gaussian_filter1d(array[:, n], sigma[n], axis=0)
 
     # Calculate the Euclidean distance between the smoothed array and the input array
     delta = np.abs(smooth - array)
 
     # Apply Gaussian smoothing to the delta values
-    std = np.full(shape,np.nan)
+    std = np.full(shape, np.nan)
     for n in range(N):
-        std[:,n] = generic_filter(delta[:,n],lambda x : np.std(x),size=int(sigma[n]),mode='constant') 
+        std[:, n] = generic_filter(
+            delta[:, n], lambda x: np.std(x), size=int(sigma[n]), mode="constant"
+        )
         # gaussian_filter1d(delta[:,n], sigma[n], axis=0)
 
     # Calculate 'a' and 'b' arrays representing how far 'array' and 'smooth' are from 'target' in terms of standard deviations
-    a = np.full(shape,np.nan)
-    b = np.full(shape,np.nan)
+    a = np.full(shape, np.nan)
+    b = np.full(shape, np.nan)
     for n in range(N):
-        a[:,n] = (array[:,n] - target[n]) / std[:,n]
-        b[:,n] = (smooth[:,n] - target[n]) / std[:,n]
+        a[:, n] = (array[:, n] - target[n]) / std[:, n]
+        b[:, n] = (smooth[:, n] - target[n]) / std[:, n]
 
     return a, b
-
-
 
 
 def str_to_bool(s):
@@ -80,7 +83,8 @@ def str_to_bool(s):
     else:
         raise ValueError(f"Invalid boolean string: {s}")
 
-def find_files_by_pattern(folder, pattern, expected_count=None,file_extension=None):
+
+def find_files_by_pattern(folder, pattern, expected_count=None, file_extension=None):
     """
     Find files in a folder that match a specified pattern and optional file extension.
 
@@ -98,29 +102,31 @@ def find_files_by_pattern(folder, pattern, expected_count=None,file_extension=No
         ValueError: If the expected_count is provided and doesn't match the actual count.
     """
     files = os.listdir(folder)
-    matching_files = [None]*len(files)
+    matching_files = [None] * len(files)
     n = 0
-    for filename in files :
-        if pattern in filename :
+    for filename in files:
+        if pattern in filename:
             if file_extension is None or filename.endswith(file_extension):
                 matching_files[n] = filename
                 n += 1
-    
+
     matching_files = matching_files[:n]
 
     if expected_count is not None and len(matching_files) != expected_count:
-        raise ValueError(f"Expected {expected_count} files, but found {len(matching_files)}.")
-    
-    for n,file in enumerate(matching_files):
-        matching_files[n] = os.path.join(folder,file)
+        raise ValueError(
+            f"Expected {expected_count} files, but found {len(matching_files)}."
+        )
 
-    if expected_count is not None and expected_count == 1 :
+    for n, file in enumerate(matching_files):
+        matching_files[n] = os.path.join(folder, file)
+
+    if expected_count is not None and expected_count == 1:
         matching_files = matching_files[0]
 
     return matching_files
 
-def remove_files_in_folder(folder,extension):
 
+def remove_files_in_folder(folder, extension):
     # List all files in the folder
     files = os.listdir(folder)
 
@@ -136,25 +142,67 @@ def remove_files_in_folder(folder,extension):
         except Exception as e:
             print(f"Error deleting {file_path}: {str(e)}")
 
-    return 
+    return
 
 
-def plot_bisector(ax,shiftx=0,shifty=0):
-	xlim = ax.get_xlim()
-	ylim = ax.get_ylim()
-	
-	# x1 = min(x.min(),y.min())
-	# y2 = max(x.max(),y.max())
-	x1 = min(xlim[0],ylim[0])
-	y2 = max(xlim[1],ylim[1])
-	bis = np.linspace(x1,y2,1000)
-	
-	ax.plot(bis+shiftx,bis+shifty,color="black",alpha=0.5,linestyle="dashed")
-	
-	ax.set_xlim(*xlim)
-	ax.set_ylim(*ylim)
+def square_plot(ax):
+    x = ax.get_xlim()
+    y = ax.get_ylim()
 
-def recursive_copy(source_dict:dict, target_dict:dict)->dict:
+    l, r = min(x[0], y[0]), max(x[1], y[1])
+
+    ax.set_xlim(l, r)
+    ax.set_ylim(l, r)
+    return ax
+
+
+def plot_bisector(ax, shiftx=0, shifty=0, argv=None):
+    default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
+    argv = add_default(argv,default)
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+
+    # x1 = min(x.min(),y.min())
+    # y2 = max(x.max(),y.max())
+    x1 = min(xlim[0], ylim[0])
+    y2 = max(xlim[1], ylim[1])
+    bis = np.linspace(x1, y2, 1000)
+
+    ax.plot(bis + shiftx, bis + shifty, **argv)
+
+    ax.set_xlim(*xlim)
+    ax.set_ylim(*ylim)
+    return
+
+def straigh_line(ax,shift,argv,lim,func):
+
+    default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
+    argv = add_default(argv,default)
+
+    xlim = lim()
+    
+    func(shift,xlim[0],xlim[1],**argv)
+
+    return ax
+
+def hzero(ax, shift=0, argv=None):
+    return straigh_line(ax,shift,argv,ax.get_xlim,ax.hlines)
+
+def vzero(ax, shift=0, argv=None):
+    return straigh_line(ax,shift,argv,ax.get_ylim,ax.vlines)
+
+    # default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
+    # argv = add_default(argv,default)
+
+    # xlim = ax.get_xlim()
+    
+    # ax.hlines(shift,xlim[0],xlim[1],**argv)
+
+    # return ax
+
+
+def recursive_copy(source_dict: dict, target_dict: dict) -> dict:
     """
     Recursively copy keys and values from a source dictionary to a target dictionary, if they are not present in the target.
 
@@ -175,7 +223,11 @@ def recursive_copy(source_dict:dict, target_dict:dict)->dict:
         {'a': 10, 'b': {'b1': 20, 'b2': {'b2_1': 3, 'b2_2': 30}}, 'd': 40}
     """
     for key, value in source_dict.items():
-        if isinstance(value, dict) and key in target_dict and isinstance(target_dict[key], dict):
+        if (
+            isinstance(value, dict)
+            and key in target_dict
+            and isinstance(target_dict[key], dict)
+        ):
             recursive_copy(value, target_dict[key])
         else:
             if key not in target_dict:
@@ -215,7 +267,6 @@ def add_default(dictionary: dict = None, default: dict = None) -> dict:
     return recursive_copy(source_dict=default, target_dict=dictionary)
 
 
-
 # https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten_list(_2d_list):
     flat_list = []
@@ -229,49 +280,53 @@ def flatten_list(_2d_list):
             flat_list.append(element)
     return flat_list
 
+
 def get_all_system_permutations(atoms):
-    species   = np.unique(atoms)
-    index     = {key: list(np.where(atoms == key)[0]) for key in species}
+    species = np.unique(atoms)
+    index = {key: list(np.where(atoms == key)[0]) for key in species}
     # permutations = {key: get_all_permutations(i) for i,key in zip(index.values(),species)}
     permutations = [get_all_permutations(i) for i in index.values()]
     return list(itertools.product(*permutations))
 
+
 def get_all_permutations(v):
     tmp = itertools.permutations(list(v))
-    return [ list(i) for i in tmp ]
+    return [list(i) for i in tmp]
+
 
 def str2bool(v):
     if isinstance(v, bool):
         return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+    if v.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    elif v.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-    
-def get_one_file_in_folder(folder,ext,pattern=None):
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
+def get_one_file_in_folder(folder, ext, pattern=None):
     files = list()
     for file in os.listdir(folder):
         if file.endswith(ext):
-            if pattern is None :
+            if pattern is None:
                 files.append(os.path.join(folder, file))
             elif pattern in file:
                 files.append(os.path.join(folder, file))
-            
-    if len(files) == 0 :
+
+    if len(files) == 0:
         raise ValueError("no '*{:s}' files found".format(ext))
-    elif len(files) > 1 :
+    elif len(files) > 1:
         raise ValueError("more than one '*{:s}' file found".format(ext))
     return files[0]
 
-def get_property_header(inputfile,N=1000,search=True):
 
-    names = [None]*N
+def get_property_header(inputfile, N=1000, search=True):
+    names = [None] * N
     restart = False
 
     with open(inputfile, "r") as ifile:
-        icol = 0        
+        icol = 0
         while True:
             line = ifile.readline()
             nline = line
@@ -285,57 +340,57 @@ def get_property_header(inputfile,N=1000,search=True):
                 nline = nline.split("-->")[0]
                 if "column" in nline:
                     lenght = 1
-                else :
+                else:
                     nline = nline.split("cols.")[1]
                     nline = nline.split("-")
-                    a,b = int(nline[0]),int(nline[1])
-                    lenght = b - a  + 1 
+                    a, b = int(nline[0]), int(nline[1])
+                    lenght = b - a + 1
 
-                if icol < N :
+                if icol < N:
                     if not search:
-                        if lenght == 1 :
+                        if lenght == 1:
                             names[icol] = line
                             icol += 1
-                        else :
+                        else:
                             for i in range(lenght):
                                 names[icol] = line + "-" + str(i)
                                 icol += 1
-                    else :
+                    else:
                         names[icol] = line
                         icol += 1
-                else :
+                else:
                     restart = True
                     icol += 1
-                
-            
-    if restart :
-        return get_property_header(inputfile,N=icol)
-    else :
+
+    if restart:
+        return get_property_header(inputfile, N=icol)
+    else:
         return names[:icol]
 
-def getproperty(inputfile, propertyname,data=None,skip="0",show=False):
 
-    def check(p,l):
-        if not l.find(p) :
-            return False # not found
-        elif l[l.find(p)-1] != " ":
-            return False # composite word
-        elif l[l.find(p)+len(p)] == "{":
+def getproperty(inputfile, propertyname, data=None, skip="0", show=False):
+    def check(p, l):
+        if not l.find(p):
+            return False  # not found
+        elif l[l.find(p) - 1] != " ":
+            return False  # composite word
+        elif l[l.find(p) + len(p)] == "{":
             return True
-        elif l[l.find(p)+len(p)] != " " :
-            return False # composite word
-        else :
+        elif l[l.find(p) + len(p)] != " ":
+            return False  # composite word
+        else:
             return True
 
-    if type(propertyname) in [list,np.ndarray]: 
-        out   = dict()
+    if type(propertyname) in [list, np.ndarray]:
+        out = dict()
         units = dict()
         data = np.loadtxt(inputfile)
         for p in propertyname:
-            out[p],units[p] = getproperty(inputfile,p,data,skip=skip)
-        return out,units
-    
-    if show : print("\tsearching for '{:s}'".format(propertyname))
+            out[p], units[p] = getproperty(inputfile, p, data, skip=skip)
+        return out, units
+
+    if show:
+        print("\tsearching for '{:s}'".format(propertyname))
 
     skip = int(skip)
 
@@ -352,26 +407,30 @@ def getproperty(inputfile, propertyname,data=None,skip="0",show=False):
                 line = ifile.readline()
                 if len(line) == 0:
                     raise EOFError
-                while "#" in line :  # fast forward if line is a comment
+                while "#" in line:  # fast forward if line is a comment
                     line = line.split(":")[0]
-                    if check(propertyname,line):
-                        cols = [ int(i)-1 for i in re.findall(r"\d+", line) ]                    
-                        if len(cols) == 1 :
+                    if check(propertyname, line):
+                        cols = [int(i) - 1 for i in re.findall(r"\d+", line)]
+                        if len(cols) == 1:
                             icol += 1
-                            output = data[:,cols[0]]
-                        elif len(cols) == 2 :
+                            output = data[:, cols[0]]
+                        elif len(cols) == 2:
                             icol += 1
-                            output = data[:,cols[0]:cols[1]+1]
-                        elif len(cols) != 0 :
+                            output = data[:, cols[0] : cols[1] + 1]
+                        elif len(cols) != 0:
                             raise ValueError("wrong string")
-                        if icol > 1 :
-                            raise ValueError("Multiple instances for '{:s}' have been found".format(propertyname))
+                        if icol > 1:
+                            raise ValueError(
+                                "Multiple instances for '{:s}' have been found".format(
+                                    propertyname
+                                )
+                            )
 
                         l = line
                         p = propertyname
-                        if l[l.find(p)+len(p)] == "{":
+                        if l[l.find(p) + len(p)] == "{":
                             unit = l.split("{")[1].split("}")[0]
-                        else :
+                        else:
                             unit = "atomic_unit"
 
                     # get new line
@@ -381,115 +440,134 @@ def getproperty(inputfile, propertyname,data=None,skip="0",show=False):
                 if icol <= 0:
                     print("Could not find " + propertyname + " in file " + inputfile)
                     raise EOFError
-                else :
-                    if show : print("\tfound '{:s}'".format(propertyname))
-                    return np.asarray(output),unit
+                else:
+                    if show:
+                        print("\tfound '{:s}'".format(propertyname))
+                    return np.asarray(output), unit
 
             except EOFError:
                 break
 
+
 def vector_type(arg_value):
     try:
         # Split the input string by commas and convert each element to an integer
-        values = [int(x) for x in arg_value.split(',')]
+        values = [int(x) for x in arg_value.split(",")]
         return values
     except ValueError as e:
         raise argparse.ArgumentTypeError(f"Invalid vector: {arg_value}") from e
-    
+
+
 def output_folder(folder):
-    if folder in ["",".","./"] :
+    if folder in ["", ".", "./"]:
         folder = "."
-    elif not os.path.exists(folder) :
+    elif not os.path.exists(folder):
         print("\n\tCreating directory '{:s}'".format(folder))
         os.mkdir(folder)
     return folder
 
-def output_file(folder,what):
+
+def output_file(folder, what):
     folder = output_folder(folder)
-    return "{:s}/{:s}".format(folder,what)
+    return "{:s}/{:s}".format(folder, what)
 
-def save2xyz(what,file,atoms,comment=""):
 
-    if len(what.shape) == 1 : # just one configuration, NOT correctly formatted
+def save2xyz(what, file, atoms, comment=""):
+    if len(what.shape) == 1:  # just one configuration, NOT correctly formatted
+        what = what.reshape((-1, 3))
+        return save2xyz(what, file, atoms)
 
-        what = what.reshape((-1,3))
-        return save2xyz(what,file,atoms)
-    
-    elif len(what.shape) == 2 : 
+    elif len(what.shape) == 2:
+        if what.shape[1] != 3:  # many configurations
+            what = what.reshape((len(what), -1, 3))
+            return save2xyz(what, file, atoms)
 
-        if what.shape[1] != 3 : # many configurations
-            what = what.reshape((len(what),-1,3))
-            return save2xyz(what,file,atoms)
-        
-        else : # just one configurations, correctly formatted
-            return save2xyz(np.asarray([what]),file,atoms)
+        else:  # just one configurations, correctly formatted
+            return save2xyz(np.asarray([what]), file, atoms)
 
-    elif len(what.shape) == 3 :
-
+    elif len(what.shape) == 3:
         Na = what.shape[1]
-        if what.shape[2] != 3 :
+        if what.shape[2] != 3:
             raise ValueError("wrong shape")
-        
-        with open(file,"w") as f :
-            
+
+        with open(file, "w") as f:
             for i in range(what.shape[0]):
-                pos = what[i,:,:]
-                f.write(str(Na)+"\n")
+                pos = what[i, :, :]
+                f.write(str(Na) + "\n")
                 f.write("# {:s}\n".format(comment))
                 for ii in range(Na):
-                    f.write("{:>2s} {:>20.12e} {:>20.12e} {:>20.12e}\n".format(atoms[ii],*pos[ii,:]))
+                    f.write(
+                        "{:>2s} {:>20.12e} {:>20.12e} {:>20.12e}\n".format(
+                            atoms[ii], *pos[ii, :]
+                        )
+                    )
         return
-    
-def print_cell(cell,tab="\t\t"):
+
+
+def print_cell(cell, tab="\t\t"):
     cell = cell.T
-    string = tab+"{:14s} {:1s} {:^10s} {:^10s} {:^10s}".format('','','x','y','z')
+    string = tab + "{:14s} {:1s} {:^10s} {:^10s} {:^10s}".format("", "", "x", "y", "z")
     for i in range(3):
-        string += "\n"+tab+"{:14s} {:1d} : {:>10.6f} {:>10.6f} {:>10.6f}".format('lattice vector',i+1,cell[i,0],cell[i,1],cell[i,2])
+        string += (
+            "\n"
+            + tab
+            + "{:14s} {:1d} : {:>10.6f} {:>10.6f} {:>10.6f}".format(
+                "lattice vector", i + 1, cell[i, 0], cell[i, 1], cell[i, 2]
+            )
+        )
     return string
 
-def convert(what,family,_from,_to):
-    factor  = unit_to_internal(family,_from,1)
-    factor *= unit_to_user(family,_to,1)
+
+def convert(what, family, _from, _to):
+    factor = unit_to_internal(family, _from, 1)
+    factor *= unit_to_user(family, _to, 1)
     return what * factor
+
 
 # def get_family(name):
 #     return Properties.property_dict[name]["dimension"]
+
 
 # https://www.blog.pythonlibrary.org/2014/02/14/python-101-how-to-change-a-dict-into-a-class/
 class Dict2Obj(object):
     """
     Turns a dictionary into a class
     """
-    #----------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
     def __init__(self, dictionary):
         """Constructor"""
         for key in dictionary:
             setattr(self, key, dictionary[key])
 
+
 def args_to_dict(args):
     arg_dict = vars(args)
     return arg_dict
 
-def get_attributes(obj):
-    return [i for i in obj.__dict__.keys() if i[:1] != '_']
 
-def merge_attributes(A,B):
+def get_attributes(obj):
+    return [i for i in obj.__dict__.keys() if i[:1] != "_"]
+
+
+def merge_attributes(A, B):
     attribs = get_attributes(B)
     for a in attribs:
         setattr(A, a, getattr(B, a))
     return A
 
-def read_comments_xyz(file,Nmax=1000000):
 
+def read_comments_xyz(file, Nmax=1000000):
     from ase import io
+
     first = io.read(file)
     Natoms = len(first)
 
     okay = 1
-    result = [None]*Nmax
+    result = [None] * Nmax
     restart = False
     i = 0
-    k = 0 
+    k = 0
 
     with open(file, "r+") as fp:
         # access each line
@@ -505,49 +583,55 @@ def read_comments_xyz(file,Nmax=1000000):
         while line:
             if i == okay:
                 result[k] = line
-                okay += Natoms+2
+                okay += Natoms + 2
                 k += 1
-            
+
             if k >= Nmax:
                 restart = True
                 break
-                
+
             line = fp.readline()
             i += 1
-    
-    if restart :
-        return read_comments_xyz(file,Nmax*2)
+
+    if restart:
+        return read_comments_xyz(file, Nmax * 2)
 
     return result[:k]
 
-def segment(A,B,N,start=0,end=1):
+
+def segment(A, B, N, start=0, end=1):
     """This function generates a segment
-       given the initial (A) and final (B) points
-       and put N points in the middle.
-       
-       A and B can be any kind of np.ndarray
+    given the initial (A) and final (B) points
+    and put N points in the middle.
+
+    A and B can be any kind of np.ndarray
     """
     assert A.shape == B.shape
-    
-    sequence = np.zeros((N+2,*A.shape))
-    T = np.linspace(start,end,N+2)
+
+    sequence = np.zeros((N + 2, *A.shape))
+    T = np.linspace(start, end, N + 2)
     # N = 0 -> t=0,1
     # N = 1 -> t=0,0.5,1
-    for n,t in enumerate(T):
-        #t = float(n)/(N+1)
-        sequence[n] = A*(1-t) + t*B
+    for n, t in enumerate(T):
+        # t = float(n)/(N+1)
+        sequence[n] = A * (1 - t) + t * B
     return sequence
+
 
 import os
 
-def remove_empty_folder(folder_path,show=True):
+
+def remove_empty_folder(folder_path, show=True):
     if is_folder_empty(folder_path):
         os.rmdir(folder_path)
-        if show: print(f"Folder '{folder_path}' has been removed.")
+        if show:
+            print(f"Folder '{folder_path}' has been removed.")
         return True
     else:
-        if show:  print(f"Folder '{folder_path}' is not empty and cannot be removed.")
+        if show:
+            print(f"Folder '{folder_path}' is not empty and cannot be removed.")
         return False
+
 
 def is_folder_empty(folder_path):
     return len(os.listdir(folder_path)) == 0
@@ -556,7 +640,7 @@ def is_folder_empty(folder_path):
 @contextlib.contextmanager
 def suppress_output(suppress=True):
     if suppress:
-        with open(os.devnull, 'w') as fnull:
+        with open(os.devnull, "w") as fnull:
             sys.stdout.flush()  # Flush the current stdout
             sys.stdout = fnull
             try:
@@ -566,19 +650,21 @@ def suppress_output(suppress=True):
     else:
         yield
 
-def get_line_with_pattern(file,pattern):
+
+def get_line_with_pattern(file, pattern):
     # Open the file and search for the line
     try:
-        with open(file, 'r') as f:
+        with open(file, "r") as f:
             for line in f:
                 if pattern in line:
                     return line
             else:
-                print("String '{:s}' not found in file '{:s}'".format(pattern,file))
+                print("String '{:s}' not found in file '{:s}'".format(pattern, file))
     except FileNotFoundError:
         raise ValueError("File '{:s}' not found".format(file))
-    except :
+    except:
         raise ValueError("error in 'get_line_with_pattern'")
+
 
 def get_floats_from_line(line):
     # Use regular expressions to find numbers in scientific or simple notation
