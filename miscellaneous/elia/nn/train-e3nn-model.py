@@ -11,7 +11,7 @@ torch.set_default_dtype(default_dtype)
 from miscellaneous.elia.nn.training import hyper_train_at_fixed_model
 from miscellaneous.elia.nn.dataset import prepare_dataset
 from miscellaneous.elia.nn.network import SabiaNetworkManager
-from miscellaneous.elia.functions import add_default, args_to_dict, str2bool
+from miscellaneous.elia.functions import add_default, str2bool
 
 #----------------------------------------------------------------#
 # Documentation
@@ -68,39 +68,39 @@ def get_args():
 
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument("-i", "--input",     action="store", type=str)
-    parser.add_argument("--options",         action="store", type=str)
-    parser.add_argument("--mul",             action="store", type=int)
-    parser.add_argument("--layers",          action="store", type=int)
-    parser.add_argument("--lmax",            action="store", type=int)
-    parser.add_argument("--name",            action="store", type=str)
-    # parser.add_argument("--reference",       action="store", type=str2bool,default=default_values["reference"])
-    parser.add_argument("--output",          action="store", type=str)
-    parser.add_argument("--max_radius",      action="store", type=float)
-    parser.add_argument("--folder",          action="store", type=str)
-    parser.add_argument("--output_folder",   action="store", type=str)
-    # parser.add_argument("--ref_index",       action="store", type=int)
-    parser.add_argument("--Natoms",          action="store", type=int)
-    parser.add_argument("--random",          action="store", type=str2bool, default=default_values["random"])
-    parser.add_argument("--epochs",          action="store", type=int)
-    parser.add_argument("--bs",              action="store", type=int,      nargs="+")
-    parser.add_argument("--lr",              action="store", type=float,    nargs="+")
-    parser.add_argument("--grid",            action="store", type=str2bool, default=default_values["grid"])
-    parser.add_argument("--max_time",        action="store", type=int,      default=default_values["max_time"])
-    parser.add_argument("--task_time",       action="store", type=int,      default=default_values["task_time"])
-    parser.add_argument("--dropout",         action="store", type=float,    default=default_values["dropout"])
-    parser.add_argument("--batchnorm",       action="store", type=str2bool, default=default_values["batchnorm"])
-    parser.add_argument("--use_shift",       action="store", type=str2bool, default=default_values["use_shift"])
-    parser.add_argument("--restart",         action="store", type=str2bool, default=default_values["restart"])
-    parser.add_argument("--recompute_loss",  action="store", type=str2bool, default=default_values["recompute_loss"])
-    parser.add_argument("--pbc",             action="store", type=str2bool, default=default_values["pbc"])
-    parser.add_argument("--instructions",    action="store", type=dict,     default=default_values["instructions"])
-    parser.add_argument("--debug",           action="store", type=str2bool, default=default_values["debug"])
-    parser.add_argument("--indices",         action="store", type=str,      default=default_values["indices"])
-    parser.add_argument("--weight_decay",    action="store", type=str,      default=default_values["weight_decay"])
-    parser.add_argument("--optimizer",       action="store", type=str,      default=default_values["optimizer"])
-    parser.add_argument("--scheduler",       action="store", type=str,      default=default_values["scheduler"])
-    parser.add_argument("--scheduler-factor",action="store", type=str,      default=default_values["scheduler-factor"])
+    parser.add_argument("-i", "--input",action="store", type=str, help="json file with the input parameters")
+    # parser.add_argument("--options",         action="store", type=str)
+    # parser.add_argument("--mul",             action="store", type=int)
+    # parser.add_argument("--layers",          action="store", type=int)
+    # parser.add_argument("--lmax",            action="store", type=int)
+    # parser.add_argument("--name",            action="store", type=str)
+    # # parser.add_argument("--reference",       action="store", type=str2bool,default=default_values["reference"])
+    # parser.add_argument("--output",          action="store", type=str)
+    # parser.add_argument("--max_radius",      action="store", type=float)
+    # parser.add_argument("--folder",          action="store", type=str)
+    # parser.add_argument("--output_folder",   action="store", type=str)
+    # # parser.add_argument("--ref_index",       action="store", type=int)
+    # parser.add_argument("--Natoms",          action="store", type=int)
+    # parser.add_argument("--random",          action="store", type=str2bool, default=default_values["random"])
+    # parser.add_argument("--epochs",          action="store", type=int)
+    # parser.add_argument("--bs",              action="store", type=int,      nargs="+")
+    # parser.add_argument("--lr",              action="store", type=float,    nargs="+")
+    # parser.add_argument("--grid",            action="store", type=str2bool, default=default_values["grid"])
+    # parser.add_argument("--max_time",        action="store", type=int,      default=default_values["max_time"])
+    # parser.add_argument("--task_time",       action="store", type=int,      default=default_values["task_time"])
+    # parser.add_argument("--dropout",         action="store", type=float,    default=default_values["dropout"])
+    # parser.add_argument("--batchnorm",       action="store", type=str2bool, default=default_values["batchnorm"])
+    # parser.add_argument("--use_shift",       action="store", type=str2bool, default=default_values["use_shift"])
+    # parser.add_argument("--restart",         action="store", type=str2bool, default=default_values["restart"])
+    # parser.add_argument("--recompute_loss",  action="store", type=str2bool, default=default_values["recompute_loss"])
+    # parser.add_argument("--pbc",             action="store", type=str2bool, default=default_values["pbc"])
+    # parser.add_argument("--instructions",    action="store", type=dict,     default=default_values["instructions"])
+    # parser.add_argument("--debug",           action="store", type=str2bool, default=default_values["debug"])
+    # parser.add_argument("--indices",         action="store", type=str,      default=default_values["indices"])
+    # parser.add_argument("--weight_decay",    action="store", type=str,      default=default_values["weight_decay"])
+    # parser.add_argument("--optimizer",       action="store", type=str,      default=default_values["optimizer"])
+    # parser.add_argument("--scheduler",       action="store", type=str,      default=default_values["scheduler"])
+    # parser.add_argument("--scheduler-factor",action="store", type=str,      default=default_values["scheduler-factor"])
 
     return parser.parse_args()
 
@@ -108,7 +108,7 @@ def get_args():
 
 def check_parameters(parameters):
     
-    str2bool_keys = ["reference","random","grid","pbc","recompute_loss","debug"] # "phases"
+    str2bool_keys = ["random","grid","pbc","recompute_loss","debug"]
     for k in str2bool_keys : 
         parameters[k] = str2bool(parameters[k])
     
@@ -125,6 +125,7 @@ def get_parameters():
 
     args = get_args()
 
+    parameters = None
     if args.input is not None :
         # read parameters from file
         try :
@@ -136,7 +137,8 @@ def get_parameters():
         # it should not be needed ...
         parameters = add_default(parameters,default_values)
     else :
-        parameters = args_to_dict(args)
+        raise ValueError("no input file provided (--input)")
+        # parameters = args_to_dict(args)
 
     # check that the arguments are okay
     check_parameters(parameters)
