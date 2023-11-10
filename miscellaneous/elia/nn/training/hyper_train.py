@@ -78,11 +78,11 @@ def hyper_train_at_fixed_model( net:torch.nn.Module,\
         net = copy(init_model)
         
         hyperparameters = {
-            'bs': bs,
-            'n_epochs'  : epochs.at[bs,lr],
-            'optimizer' : "Adam",
-            'lr'        : lr,
-            'loss'      : loss 
+            "bs": bs,
+            "n_epochs"  : epochs.at[bs,lr],
+            # "optimizer" : parameters["optimizer"],
+            "lr"        : lr,
+            "loss"      : loss 
         }
 
         count_try = 0

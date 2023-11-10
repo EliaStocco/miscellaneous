@@ -1,7 +1,6 @@
 # from copy import copy
 import torch
 from torch.nn import MSELoss
-from torch.optim import Adam
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
@@ -30,6 +29,11 @@ all_dataloader_val = None
 ytrain_real = None
 all_dataloader_train = None
 
+#----------------------------------------------------------------#
+# Attention!
+# There is a bit of confusion between 'parameters' and 'parameters':
+# some variables are stored in the former and not in the latter (or viceversa) just for simplicity.
+#----------------------------------------------------------------#
 
 def train(
     model: torch.nn.Module,
@@ -82,7 +86,7 @@ def train(
 
     Returns:
         tuple:
-            A tuple containing the trained model, arrays, correlation, and information about the training.
+            A tuple containing the trained model, dataframe, correlation, and information about the training.
     """
 
     start_task_time = time.time()
@@ -155,24 +159,44 @@ def train(
         hyperparameters["loss"] = MSELoss()
 
     print("\tHyperparameters:")
-    print("\t\tbatch_size: ", hyperparameters["bs"])
-    print("\t\tn_epochs: ", hyperparameters["n_epochs"])
-    print("\t\toptimizer: ", hyperparameters["optimizer"])
-    print("\t\tlr: ", hyperparameters["lr"])
-    # I had some problems with the loss
-    if type(hyperparameters["loss"]) == str:
-        print("\tloss_fn: ", hyperparameters["loss"])
+    for k in hyperparameters.keys():
+        try :
+            print("\t\t{:20s}: ".format(k),hyperparameters[k])
+        except:
+            if k == "loss":
+                if type(hyperparameters["loss"]) == str:
+                    print("\tloss_fn: ", hyperparameters["loss"])
+
+    # print("\t\tbatch_size: ", hyperparameters["bs"])
+    # print("\t\tn_epochs: ", hyperparameters["n_epochs"])
+    # print("\t\toptimizer: ", hyperparameters["optimizer"])
+    # print("\t\tlr: ", hyperparameters["lr"])
+    # # I had some problems with the loss
+    # if type(hyperparameters["loss"]) == str:
+    #     print("\tloss_fn: ", hyperparameters["loss"])
+    # if "weight_decay" in hyperparameters:
+    #     print("\t\weight_decay: ", hyperparameters["weight_decay"])
+
 
     # extract hyperparameters for the dict 'hyperparameters'
     batch_size = int(hyperparameters["bs"])
     n_epochs = int(hyperparameters["n_epochs"])
-    optimizer = hyperparameters["optimizer"]
-    lr = float(hyperparameters["lr"])
+    optimizer = parameters["optimizer"]
+    # lr = float(hyperparameters["lr"])
     loss_fn = hyperparameters["loss"]
 
     # set default values for some hyperparameters
-    if type(optimizer) == str and optimizer.lower() == "adam":
-        optimizer = Adam(model.parameters(), lr=lr)
+    if type(optimizer) == str: 
+        match optimizer.lower():
+            case "adam":
+                from torch.optim import Adam
+                optimizer = Adam(   params=model.parameters(), 
+                                    lr=hyperparameters["lr"])
+            case "adamw":
+                from torch.optim import AdamW
+                optimizer = AdamW(  params=model.parameters(), 
+                                    lr=hyperparameters["lr"],
+                                    weight_decay=parameters["weight_decay"])
 
     ##########################################
     # prepare the dataloaders for the train and validation datasets
@@ -191,16 +215,16 @@ def train(
 
     ##########################################
     # dataframe
-    arrays = pd.DataFrame(
+    dataframe = pd.DataFrame(
         np.nan,
-        columns=["epoch", "train", "val", "std", "ratio"],
+        columns=["epoch", "train", "val", "std", "ratio","lr"],
         index=np.arange(n_epochs),
     )
     if opts["recompute_loss"]:
-        arrays["train-2"] = None
-        arrays["ratio-2"] = None
+        dataframe["train-2"] = None
+        dataframe["ratio-2"] = None
     else:
-        arrays["ratio"] = None
+        dataframe["ratio"] = None
 
     ##########################################
     # compute the real values of the validation dataset only once
@@ -263,18 +287,25 @@ def train(
         if os.path.exists(savefiles["dataframes"]):
             tmp = pd.read_csv(savefiles["dataframes"])
             if not opts["recompute_loss"] and "train-2" in tmp:
-                arrays["train-2"] = None
-                arrays["ratio-2"] = None
-            arrays.iloc[: len(tmp)] = copy(tmp)
+                dataframe["train-2"] = None
+                dataframe["ratio-2"] = None
+            dataframe.iloc[: len(tmp)] = copy(tmp)
             del tmp
 
-        if opts["recompute_loss"] and "train-2" not in arrays:
-            arrays["train-2"] = None
-            arrays["ratio-2"] = None
+        if opts["recompute_loss"] and "train-2" not in dataframe:
+            dataframe["train-2"] = None
+            dataframe["ratio-2"] = None
     elif not os.path.exists(checkpoint_file):
-        print("\tnot checkpoint file found")
+        print("\tno checkpoint file found")
     elif opts["restart"]:
         print("\trestart=True")
+
+    ##########################################
+    print("\n\tOptimizer parameters")
+    for k,i in optimizer.param_groups[0].items():
+        if k == 'params' : 
+            continue
+        print("\t\t",k,": ",i)
 
     ##########################################
     # start the training procedure
@@ -323,6 +354,8 @@ def train(
             disable=opts["disable"],
         ) as bar:
 
+            ##########################################
+            # cycle over mini-batches
             for step, X in bar:
 
                 # necessary to train the model
@@ -338,21 +371,23 @@ def train(
                 loss = loss_fn(y_pred, y_real)
 
                 # store the loss function in an array
-                train_loss_one_epoch[step] = float(loss)  # / parameters["Natoms"]
+                train_loss_one_epoch[step] = float(loss)
 
                 # backward pass
                 optimizer.zero_grad()
                 loss.backward()
                 # update weights
                 optimizer.step()
-
+                
                 # print progress
                 bar.set_postfix(
                     epoch=epoch,
                     train=np.mean(train_loss_one_epoch[: step + 1]),
-                    # train=train_loss_one_epoch[step],
-                    val=arrays.at[epoch - 1, "val"] if epoch != 0 else np.nan,
+                    val=dataframe.at[epoch - 1, "val"] if epoch != 0 else np.nan,
                 )
+
+            ##########################################
+            # finished cyclying over mini-batches
 
             if model.use_shift:
                 print("\t!! SHIFT:", model.shift.detach().numpy())
@@ -365,45 +400,48 @@ def train(
             # model.eval()
             # if True:  # with torch.no_grad():
 
+            # save learning rate
+            dataframe.at[epoch,"lr"] = float(optimizer.param_groups[0]["lr"])
+
             model.eval()
 
-            arrays.at[epoch, "epoch"] = epoch + 1
+            dataframe.at[epoch, "epoch"] = epoch + 1
 
             # saving parameters to temporary file
             N = opts["save"]["parameters"]
             if N != -1 and epoch % N == 0:
                 savefile = "{:s}/epoch={:d}.pth".format(parameters_folder, epoch)
-                print("\tSaving parameters to file '{:s}'".format(savefile))
+                print("\tsaving parameters to file '{:s}'".format(savefile))
                 torch.save(model.state_dict(), savefile)
 
-            arrays.at[epoch, "train"] = np.mean(train_loss_one_epoch)
-            arrays.at[epoch, "std"] = np.std(train_loss_one_epoch)
+            dataframe.at[epoch, "train"] = np.mean(train_loss_one_epoch)
+            dataframe.at[epoch, "std"] = np.std(train_loss_one_epoch)
 
             # compute the loss function
             # predict the value for the validation dataset
-            yval_pred = model.get_pred(all_dataloader_val)  # get_pred(model,all_dataloader_val)
-            arrays.at[epoch, "val"] = float(loss_fn(yval_pred, yval_real))
+            yval_pred = model.get_pred(all_dataloader_val)
+            dataframe.at[epoch, "val"] = float(loss_fn(yval_pred, yval_real))
             if not opts["recompute_loss"]:
-                arrays.at[epoch, "ratio"] = (
-                    arrays.at[epoch, "train"] / arrays.at[epoch, "val"]
+                dataframe.at[epoch, "ratio"] = (
+                    dataframe.at[epoch, "train"] / dataframe.at[epoch, "val"]
                 )
 
-            # set arrays
+            # set dataframe
             if opts["recompute_loss"]:
                 ytrain_pred = model.get_pred(all_dataloader_train) 
-                arrays.at[epoch, "train-2"] = float(loss_fn(ytrain_pred, ytrain_real))  # /parameters["Natoms"]
-                arrays.at[epoch, "ratio-2"] = (arrays.at[epoch, "train-2"] / arrays.at[epoch, "val"])
+                dataframe.at[epoch, "train-2"] = float(loss_fn(ytrain_pred, ytrain_real))
+                dataframe.at[epoch, "ratio-2"] = (dataframe.at[epoch, "train-2"] / dataframe.at[epoch, "val"])
 
-            if arrays.at[epoch, "train"] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
+            if dataframe.at[epoch, "train"] > opts["thr"]["exit"] and opts["thr"]["exit"] > 0:
                 info = "try again"
                 break
 
-            arrays[: epoch + 1].to_csv(savefiles["dataframes"], index=False)
+            dataframe[: epoch + 1].to_csv(savefiles["dataframes"], index=False)
 
             # produce learning curve plot
             if epoch >= 1:                
                 plot_learning_curves(
-                    arrays=arrays,
+                    arrays=dataframe,
                     file=savefiles["images"],
                     title=name if name != "untitled" else None,
                     opts=opts["plot"]["learning-curve"],
@@ -412,8 +450,8 @@ def train(
             # print progress
             bar.set_postfix(
                 epoch=epoch,
-                train=arrays.at[epoch, "train"],
-                val=arrays.at[epoch, "val"],
+                train=dataframe.at[epoch, "train"],
+                val=dataframe.at[epoch, "val"],
             )
 
         # saving checkpoint to file
@@ -451,4 +489,4 @@ def train(
     elif info == "exit-task file detected":
         print("\n\t'exit-task' file detected\n")
 
-    return model, arrays, info
+    return model, dataframe, info

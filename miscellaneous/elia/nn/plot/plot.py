@@ -7,18 +7,15 @@ import numpy as np
 # @reloading
 def plot_learning_curves(arrays,file,title=None,opts=None):
 
-    train_loss  = arrays["train"]   if "train"   in arrays else None
-    val_loss    = arrays["val"]     if "val"     in arrays else None
-    train_loss2 = arrays["train-2"] if "train-2" in arrays else None
-    errors      = arrays["std"]     if "std"     in arrays else None
-    ratio       = arrays["ratio"]   if "ratio"   in arrays else None
-    ratio2      = arrays["ratio-2"] if "ratio-2" in arrays else None
-
+    cols = ["train","val","train-2","std","ratio","ratio-2"]
+    for k in cols:
+        if k not in arrays:
+            arrays[k] = None
 
     if opts is None:
         opts = {}
         opts["N"] = 1
-    N = len(train_loss)
+    N = len(arrays["train"])
     if N % opts["N"] != 0 :
         return
     else :
@@ -26,15 +23,15 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
 
             matplotlib.use('Agg')
             fig,ax = plt.subplots(figsize=(10,4))
-            x = np.arange(len(train_loss))+1
+            x = np.arange(len(arrays["train"]))+1
 
-            ax.plot(x,val_loss,  color="red" ,label="val",  marker=".",linewidth=0.7,markersize=2,linestyle="-")
-            ax.plot(x,train_loss,color="navy",label="$\\mu$-train",marker=".",linewidth=0.7,markersize=2,linestyle="-")
-            if errors is not None :
-                # ax.errorbar(x,train_loss,errors,color="navy",alpha=0.5,linewidth=0.5)
-                ax.plot(x,errors,color="purple",label="$\\sigma$-train",marker=".",linewidth=0.7,markersize=2,linestyle="-")
-            if train_loss2 is not None :
-                ax.plot(x,train_loss2,color="green",label="train$^*$",marker=".",linewidth=0.7,markersize=2,linestyle="-")
+            ax.plot(x,arrays["val"],  color="red" ,label="val",  marker=".",linewidth=0.7,markersize=2,linestyle="-")
+            ax.plot(x,arrays["train"],color="navy",label="$\\mu$-train",marker=".",linewidth=0.7,markersize=2,linestyle="-")
+            if arrays["std"] is not None :
+                # ax.errorbar(x,arrays["train"],arrays["std"],color="navy",alpha=0.5,linewidth=0.5)
+                ax.plot(x,arrays["std"],color="purple",label="$\\sigma$-train",marker=".",linewidth=0.7,markersize=2,linestyle="-")
+            if arrays["train-2"] is not None :
+                ax.plot(x,arrays["train-2"],color="green",label="train$^*$",marker=".",linewidth=0.7,markersize=2,linestyle="-")
 
             ax.set_ylabel("loss")
             ax.set_xlabel("epoch")
@@ -48,24 +45,34 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
             # ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             # ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 
-
             # Create a twin axis on the right with a log scale
-            if ratio2 is not None or errors is not None or ratio is not None :
+            conditions = ["ratio-2","std","ratio","lr"]
+            if np.any( [ arrays[k] is not None for k in conditions ] ):
+            # if arrays["ratio-2"] is not None or arrays["std"] is not None or arrays["ratio"] is not None :
+                # argv = {
+                #     "linestyle":"--",
+                #     "linewidth":0.7,
+                #     "alpha":0.7,
+                #     "marker":"x",
+                # }
 
                 ax2 = ax.twinx()
 
-                if errors is not None :
-                    ax2.plot(x,errors/train_loss,color="brown",label="$\\mu$-train/$\\sigma$-train",marker="x",linestyle="dashed",linewidth=0.5,markersize=2)
+                if arrays["std"] is not None :
+                    ax2.plot(x,arrays["std"]/arrays["train"],color="brown",label="$\\mu$-train/$\\sigma$-train",marker="x",linestyle="dashed",linewidth=0.5,markersize=2)
 
-                if ratio is not None :
-                    ax2.plot(x, ratio, color="green", label="train/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
+                if arrays["ratio"] is not None :
+                    ax2.plot(x, arrays["ratio"], color="green", label="train/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
 
-                if ratio2 is not None :
-                    ax2.plot(x, ratio2, color="black", label="train*/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
+                if arrays["ratio-2"] is not None :
+                    ax2.plot(x, arrays["ratio-2"], color="black", label="train*/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
                     
-                if ratio2 is not None or ratio is not None:
+                if arrays["ratio-2"] is not None or arrays["ratio"] is not None:
                     xlim = ax2.get_xlim()
                     ax2.hlines(y=1,xmin=xlim[0],xmax=xlim[1],linestyle="--",linewidth=0.7,alpha=0.7,color="black")
+                
+                if arrays["lr"] is not None :
+                    ax2.plot(x,arrays["lr"],color="orange",label="lr",marker=".",linewidth=0.7,markersize=2,linestyle="--")
 
                 ax2.set_yscale("log")
                 ax2.set_ylabel("ratio")

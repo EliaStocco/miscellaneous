@@ -42,6 +42,8 @@ default_values = {
         "epochs"         : 10000,
         "bs"             : [1],
         "lr"             : [1e-3],
+        "weight_decay"   : 1e-2,
+        "optimizer"      : "adam",
         "grid"           : True,
         "max_time"       : -1,
         "task_time"      : -1,
@@ -93,6 +95,8 @@ def get_args():
     parser.add_argument("--instructions",   action="store", type=dict,     default=default_values["instructions"])
     parser.add_argument("--debug",          action="store", type=str2bool, default=default_values["debug"])
     parser.add_argument("--indices",        action="store", type=str,      default=default_values["indices"])
+    parser.add_argument("--weight_decay",   action="store", type=str,      default=default_values["weight_decay"])
+    parser.add_argument("--optimizer",      action="store", type=str,      default=default_values["optimizer"])
 
     return parser.parse_args()
 
