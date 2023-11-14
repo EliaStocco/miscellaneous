@@ -175,22 +175,24 @@ def plot_bisector(ax, shiftx=0, shifty=0, argv=None):
     ax.set_ylim(*ylim)
     return
 
-def straigh_line(ax,shift,argv,lim,func):
+def straigh_line(ax,shift,argv,get_lim,func,set_lim):
 
     default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
     argv = add_default(argv,default)
 
-    xlim = lim()
+    xlim = get_lim()
     
     func(shift,xlim[0],xlim[1],**argv)
+
+    set_lim(xlim[0],xlim[1])
 
     return ax
 
 def hzero(ax, shift=0, argv=None):
-    return straigh_line(ax,shift,argv,ax.get_xlim,ax.hlines)
+    return straigh_line(ax,shift,argv,ax.get_xlim,ax.hlines,ax.set_xlim)
 
 def vzero(ax, shift=0, argv=None):
-    return straigh_line(ax,shift,argv,ax.get_ylim,ax.vlines)
+    return straigh_line(ax,shift,argv,ax.get_ylim,ax.vlines,ax.set_ylim)
 
     # default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
     # argv = add_default(argv,default)

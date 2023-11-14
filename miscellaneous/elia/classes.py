@@ -1147,15 +1147,16 @@ class MicroState:
         df["shape"] = size
         return df
     
-    families = {    "energy"        :["conserved","kinetic_md","potential"],
-                    "polarization"  :["polarization"],
-                    "dipole"        :["electric-dipole"],
-                    "time"          :["time"]
+    families = {    "energy"          : ["conserved","kinetic_md","potential"],
+                    "polarization"    : ["polarization"],
+                    "electric-dipole" : ["dipole"],
+                    "time"            : ["time"],
+                    "electric-field"  : ["Efield","Eenvelope"]
                 }
     
     @staticmethod
     def search_family(what):
-        for k in MicroState.families:
+        for k in MicroState.families.keys():
             if what in MicroState.families[k]:
                 return k
         else :
