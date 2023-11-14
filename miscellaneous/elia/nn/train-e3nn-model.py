@@ -215,7 +215,7 @@ def main():
         print("\n\tModifying datasets for debugging")
         train_dataset = datasets["train"]
         val_dataset   = datasets["val"]
-        test_dataset  = datasets["test"]
+        # test_dataset  = datasets["test"]
         
         if "n_debug" in parameters :
             train_dataset = train_dataset[0:parameters["n_debug"]["train"]] 
@@ -227,11 +227,12 @@ def main():
         print("\tDatasets summary:")
         print("\t\ttrain:",len(train_dataset))
         print("\t\t  val:",len(val_dataset))
-        print("\t\t test:",len(test_dataset))
+        # print("\t\t test:",len(test_dataset))
 
-        datasets = {"train":train_dataset,\
-                    "val"  :val_dataset,\
-                    "test" :test_dataset }
+        datasets = {
+            "train":train_dataset,\
+            "val"  :val_dataset
+        }
         
         parameters["bs"] = [len(train_dataset)]
 

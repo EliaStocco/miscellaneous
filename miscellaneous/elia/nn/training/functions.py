@@ -1,12 +1,19 @@
 import torch
 
-def save_checkpoint(file,epoch,model,optimizer):
+def save_checkpoint(file,epoch,model,optimizer,scheduler=None,ma=None,maLR=None):
     print("\tsaving checkpoint to file '{:s}'".format(file))
-    torch.save({
+    tosave = {
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
-    }, file)
+    }
+    if scheduler is not None :
+        tosave['scheduler_state_dict'] = scheduler.state_dict()
+    if ma is not None:
+        tosave['ma'] = ma.state_dict()
+    if maLR is not None:
+        tosave['maLR'] = maLR.state_dict()
+    torch.save(tosave, file)
 
 # a useful function
 def get_all_dataloader(dataset,make_dataloader):

@@ -1294,6 +1294,10 @@ class MicroState:
             out = self.ase
 
         return out
+
+    def extxyz(self):
+
+        return 
     
     def subsample(self,indices:list):
 
