@@ -7,4 +7,5 @@
 *.pth
 *.cpython
 *.cpython-*
+.vscode/
 

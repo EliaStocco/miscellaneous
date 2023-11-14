@@ -1130,7 +1130,7 @@ class MicroState:
     def show_properties(self):
         '''show the properties of the class'''
 
-        print("Properties of the object:")
+        # print("Properties of the object:")
         keys = list(self.properties.keys())
         size = [None]*len(keys)
         for n,k in enumerate(keys):
@@ -1147,26 +1147,19 @@ class MicroState:
         df["shape"] = size
         return df
     
-    families = {    "energy"          : ["conserved","kinetic_md","potential"],
-                    "polarization"    : ["polarization"],
-                    "electric-dipole" : ["dipole"],
-                    "time"            : ["time"],
-                    "electric-field"  : ["Efield","Eenvelope"]
-                }
-    
-    @staticmethod
-    def search_family(what):
-        for k in MicroState.families.keys():
-            if what in MicroState.families[k]:
-                return k
-        else :
-            raise ValueError('family {:s} not found. \
-                             But you can add it to the "MicroState.families" dict :) \
-                             to improve the code '.format(what))
+    # @staticmethod
+    # def search_family(what):
+    #     for k in MicroState.families.keys():
+    #         if what in MicroState.families[k]:
+    #             return k
+    #     else :
+    #         raise ValueError('family {:s} not found. \
+    #                          But you can add it to the "MicroState.families" dict :) \
+    #                          to improve the code '.format(what))
 
     def convert_property(self,what,unit,family=None,inplace=True):
-        if family is None:
-            family = self.search_family(what)
+        # if family is None:
+        #     family = search_family(what)
         factor = convert(1,family,_from=self.units[what],_to=unit)
         if inplace :
             self.properties[what] = self.properties[what] * factor

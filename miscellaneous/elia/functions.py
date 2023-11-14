@@ -519,11 +519,29 @@ def print_cell(cell, tab="\t\t"):
         )
     return string
 
+families = {    "energy"          : ["conserved","kinetic_md","potential"],
+                "polarization"    : ["polarization"],
+                "electric-dipole" : ["dipole"],
+                "time"            : ["time"],
+                "electric-field"  : ["Efield","Eenvelope"]
+}
+    
+def search_family(what):
+    for k in families.keys():
+        if what in families[k]:
+            return k
+    else :
+        raise ValueError('family {:s} not found. \
+                            But you can add it to the "families" dict :) \
+                            to improve the code '.format(what))
 
-def convert(what, family, _from, _to):
-    factor = unit_to_internal(family, _from, 1)
-    factor *= unit_to_user(family, _to, 1)
-    return what * factor
+def convert(what, family=None, _from="atomic_unit", _to="atomic_unit"):
+    if family is not None:
+        factor = unit_to_internal(family, _from, 1)
+        factor *= unit_to_user(family, _to, 1)
+        return what * factor
+    else :
+        return what
 
 
 # def get_family(name):
