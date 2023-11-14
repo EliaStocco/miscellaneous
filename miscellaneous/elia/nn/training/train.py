@@ -183,12 +183,29 @@ def train(
             
     ##########################################
     # set the learning rate scheduler
+    movingaverage = None
+    scheduler = None
+    movingaverageLR = None
     match parameters["scheduler"].lower():
         case "" :
             scheduler = None
         case "plateau":
             from torch.optim.lr_scheduler import ReduceLROnPlateau
             scheduler = ReduceLROnPlateau(optimizer,factor=parameters["scheduler-factor"])
+        case "ma":
+            from miscellaneous.elia.nn.functions import MovingAverage
+            movingaverage = MovingAverage(parameters["scheduler-window"])
+            movingaverageLR = MovingAverage(parameters["scheduler-window"])
+            from torch.optim.lr_scheduler import LambdaLR
+            def myscheduler(epoch):
+                if epoch < parameters["scheduler-epoch"]:
+                    movingaverageLR.update(1)
+                    return movingaverageLR.get_ma() 
+                else:
+                    new = 1 - parameters["scheduler-max"] * np.exp( - movingaverage.get_madt() )
+                    movingaverageLR.update(new)
+                    return movingaverageLR.get_ma()
+            scheduler = LambdaLR(optimizer,lr_lambda=myscheduler)
         case _:
             raise ValueError("scheduler not known")
         
@@ -275,9 +292,33 @@ def train(
         print("\tReading checkpoint from file '{:s}'".format(checkpoint_file))
         checkpoint = torch.load(checkpoint_file)
 
+        start_epoch = checkpoint["epoch"] + 1
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        start_epoch = checkpoint["epoch"] + 1
+        if scheduler is not None :
+            if 'scheduler_state_dict' not in checkpoint:
+                warnings.warn("No 'scheduler_state_dict' found in checkpoint file")
+            else :
+                try :
+                    scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+                except:
+                    warnings.warn("Problem reading 'scheduler_state_dict' from checkpoint file")
+        if movingaverage is not None :
+            if 'ma' not in checkpoint:
+                warnings.warn("No 'ma' found in checkpoint file")
+            else :
+                try :
+                    movingaverage.load_state_dict(checkpoint['ma'])
+                except:
+                    warnings.warn("Problem reading 'ma' from checkpoint file")
+        if movingaverageLR is not None :
+            if 'maLR' not in checkpoint:
+                warnings.warn("No 'maLR' found in checkpoint file")
+            else :
+                try :
+                    movingaverageLR.load_state_dict(checkpoint['maLR'])
+                except:
+                    warnings.warn("Problem reading 'maLR' from checkpoint file")
 
         # read array
         if os.path.exists(savefiles["dataframes"]):
@@ -427,7 +468,11 @@ def train(
             ##########################################
             # scheduler
             if scheduler is not None:
-                scheduler.step(val_loss)
+                if movingaverage is not None:
+                    movingaverage.update(np.log10(val_loss))
+                    scheduler.step()
+                else :
+                    scheduler.step(val_loss)
             
             if not opts["recompute_loss"]:
                 dataframe.at[epoch, "ratio"] = (
@@ -469,11 +514,11 @@ def train(
         # saving checkpoint to file
         N = opts["save"]["checkpoint"]
         if N != -1 and epoch % N == 0:
-            save_checkpoint(checkpoint_file, epoch, model, optimizer)
+            save_checkpoint(checkpoint_file, epoch, model, optimizer, scheduler, movingaverage, movingaverageLR)
 
         k += 1
     #
-    save_checkpoint(checkpoint_file, k - 1, model, optimizer)
+    save_checkpoint(checkpoint_file, k - 1, model, optimizer, scheduler, movingaverage, movingaverageLR)
 
     if info == "all good":
 
