@@ -189,9 +189,11 @@ def train(
     match parameters["scheduler"].lower():
         case "" :
             scheduler = None
+        case "none" :
+            scheduler = None
         case "plateau":
             from torch.optim.lr_scheduler import ReduceLROnPlateau
-            scheduler = ReduceLROnPlateau(optimizer,factor=parameters["scheduler-factor"])
+            scheduler = ReduceLROnPlateau(optimizer,factor=parameters["scheduler-factor"],patience=parameters["scheduler-patience"])
         case "ma":
             from miscellaneous.elia.nn.functions import MovingAverage
             movingaverage = MovingAverage(parameters["scheduler-window"])
