@@ -1,7 +1,7 @@
 from ase.io import read, write
 import chemiscope
 import numpy as np
-import os
+import json
 
 from rascal.representations import SphericalInvariants as SOAP
 from skmatter.preprocessing import StandardFlexibleScaler
@@ -9,22 +9,24 @@ from skmatter.feature_selection import FPS
 from sklearn.decomposition import PCA
 from tqdm.auto import tqdm
 import argparse
+from miscellaneous.elia.functions import add_default
 
 def main():
 
-    description = "Process atomic structures and select a diverse subset using Farthest Point Sampling (FPS)"
+    description = "Process atomic structures and select a diverse subset using the Farthest Point Sampling (FPS) algorithm."
 
     message = "!Pay attention that the provided positions should be in angstrom!"
 
     # Define the command-line argument parser with a description
     parser = argparse.ArgumentParser()
-
-    parser.add_argument("-i" , "--input"         , action="store", type=str , help="input file")
-    parser.add_argument("-o" , "--output"        , action="store", type=str , help="output file with the selected structures ")
-    parser.add_argument("-oi", "--output_indices", action="store", type=str , help="output file with indices of the selected structures (default: 'indices.txt')",default='indices.txt')
-    parser.add_argument("-if", "--input_format"  , action="store", type=str , help="input file format (default: 'None')" , default=None)
-    parser.add_argument("-of", "--output_format" , action="store", type=str , help="output file format (default: 'None')", default=None)
-    parser.add_argument("-n" , "--number"        , action="store", type=int , help="number of desired structure (default: '100')", default=None)
+    argv = {"metavar" : "\b"}
+    parser.add_argument("-i" , "--input"         , action="store", type=str , **argv, help="input file")
+    parser.add_argument("-o" , "--output"        , action="store", type=str , **argv, help="output file with the selected structures ")
+    parser.add_argument("-oi", "--output_indices", action="store", type=str , **argv, help="output file with indices of the selected structures (default: 'indices.txt')",default='indices.txt')
+    parser.add_argument("-if", "--input_format"  , action="store", type=str , **argv, help="input file format (default: 'None')" , default=None)
+    parser.add_argument("-of", "--output_format" , action="store", type=str , **argv, help="output file format (default: 'None')", default=None)
+    parser.add_argument("-n" , "--number"        , action="store", type=int , **argv, help="number of desired structure (default: '100')", default=None)
+    parser.add_argument("-sh", "--soap_hyper"    , action="store", type=str , **argv, help="JSON file with the SOAP hyperparameters", default=None)
 
     # Print the script's description
     print("\n\t{:s}".format(description))
@@ -49,6 +51,16 @@ def main():
     print('\tAvailable structure properties: ', available_structure_properties)
     print('\tAvailable atom-level properties: ', available_atom_level_properties)
 
+    if args.soap_hyper is not None :
+        print("\n\tReading the SOAP hyperparameters from file '{:s}' ... ".format(args.soap_hyper),end="")
+        with open(args.soap_hyper, 'r') as file:
+            # Load the JSON data from the file
+            user_soap_hyper = json.load(file)
+        print("done")
+    else:
+        user_soap_hyper = None
+
+
     print("\n\tPreparing SOAP object ... ",end="")
     SOAP_HYPERS = {
         "interaction_cutoff": 3.5,
@@ -58,6 +70,8 @@ def main():
         "cutoff_smooth_width": 0.5,
         "gaussian_sigma_type": "Constant",
     }
+
+    SOAP_HYPERS = add_default(user_soap_hyper,SOAP_HYPERS)
 
     #
     numbers = list(sorted(set([int(n) for frame in frames for n in frame.numbers])))

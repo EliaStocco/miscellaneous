@@ -175,22 +175,24 @@ def plot_bisector(ax, shiftx=0, shifty=0, argv=None):
     ax.set_ylim(*ylim)
     return
 
-def straigh_line(ax,shift,argv,lim,func):
+def straigh_line(ax,shift,argv,get_lim,func,set_lim):
 
     default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
     argv = add_default(argv,default)
 
-    xlim = lim()
+    xlim = get_lim()
     
     func(shift,xlim[0],xlim[1],**argv)
+
+    set_lim(xlim[0],xlim[1])
 
     return ax
 
 def hzero(ax, shift=0, argv=None):
-    return straigh_line(ax,shift,argv,ax.get_xlim,ax.hlines)
+    return straigh_line(ax,shift,argv,ax.get_xlim,ax.hlines,ax.set_xlim)
 
 def vzero(ax, shift=0, argv=None):
-    return straigh_line(ax,shift,argv,ax.get_ylim,ax.vlines)
+    return straigh_line(ax,shift,argv,ax.get_ylim,ax.vlines,ax.set_ylim)
 
     # default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
     # argv = add_default(argv,default)
@@ -517,11 +519,29 @@ def print_cell(cell, tab="\t\t"):
         )
     return string
 
+families = {    "energy"          : ["conserved","kinetic_md","potential"],
+                "polarization"    : ["polarization"],
+                "electric-dipole" : ["dipole"],
+                "time"            : ["time"],
+                "electric-field"  : ["Efield","Eenvelope"]
+}
+    
+def search_family(what):
+    for k in families.keys():
+        if what in families[k]:
+            return k
+    else :
+        raise ValueError('family {:s} not found. \
+                            But you can add it to the "families" dict :) \
+                            to improve the code '.format(what))
 
-def convert(what, family, _from, _to):
-    factor = unit_to_internal(family, _from, 1)
-    factor *= unit_to_user(family, _to, 1)
-    return what * factor
+def convert(what, family=None, _from="atomic_unit", _to="atomic_unit"):
+    if family is not None:
+        factor = unit_to_internal(family, _from, 1)
+        factor *= unit_to_user(family, _to, 1)
+        return what * factor
+    else :
+        return what
 
 
 # def get_family(name):
