@@ -225,38 +225,29 @@ class MicroState:
 
             # assume they are all the same 
             # extract unit of the positions
-            comments = read_comments_xyz(instructions.positions)
-            matches = re.findall(abcABCunits,comments[0])
-            if len(matches) != 2 :
-                print("Hey man! We have a problem here :(")
-                self.units["positions"] = "atomic_unit"
-            else :
-                self.units["positions"] = matches[0]
+            try : 
+                print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,instructions.positions))
+                comments = read_comments_xyz(instructions.positions)
+                matches = re.findall(abcABCunits,comments[0])
+                if len(matches) != 2 :
+                    print("Hey man! We have a problem here :(")
+                    self.units["positions"] = "atomic_unit"
+                else :
+                    self.units["positions"] = matches[0]
 
-            # if "types" in toread:
-            print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,file))
-            self.types = [ system.get_chemical_symbols() for system in positions0 ]
-            self.numbers = [ system.numbers for system in positions0 ]
+                # if "types" in toread:
+                print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,file))
+                self.types = [ system.get_chemical_symbols() for system in positions0 ]
+                self.numbers = [ system.numbers for system in positions0 ]
 
-            del positions
-            del positions0
-
-
-
-        # if "types" in toread:
-
-        #     print("{:s}reading atomic types from file '{:s}'".format(MicroStatePrivate.tab,instructions.types))
-        #     if not hasattr(instructions,"types"):
-        #         instructions.types = instructions.positions
-        #     positions = io.read(instructions.types,index=":")
-        #     self.types = [ system.get_chemical_symbols() for system in positions ]
-        #     self.numbers = [ system.numbers for system in positions ]
-
-
-        # if "cells" in toread :
-            print("{:s}reading cells (for each configuration) from file '{:s}'".format(MicroStatePrivate.tab,file))
+                del positions
+                del positions0
+            except: 
+                self.types = None
+                self.numbers = None
 
             try : 
+                print("{:s}reading cells (for each configuration) from file '{:s}'".format(MicroStatePrivate.tab,file))
                 # comments = read_comments_xyz(instructions.cells)
                 cells = [ abcABC.search(comment) for comment in comments ]
                 self.cells = np.zeros((len(cells),3,3))
@@ -1268,16 +1259,20 @@ class MicroState:
         return df
 
     # @reloading
-    def to_ase(self,inplace=False,recompute=False,**argv)->Atoms:
+    def to_ase(self,inplace=False,recompute=False,pbc=None,**argv)->Atoms:
 
         out = None
         if recompute or not hasattr(self,"ase"):
             out = [None]*self.Nconf
             N = np.arange(len(out))
-            if hasattr(self,"cells"):
+            if pbc is None:
+                pbc = hasattr(self,"cells")
+            if hasattr(self,"cells") and pbc:
+                print("CIAOOOOO PBC")
                 for n,t,p,c in zip(N,self.types,self.positions,self.cells):
                     out[n] = Atoms(symbols=t, positions=p.reshape(-1,3), cell=c.T, pbc=True,**argv)
             else :
+                print("CIAOOOOO NO PBC")
                 for n,t,p in zip(N,self.types,self.positions):
                     out[n] = Atoms(symbols=t, positions=p.reshape(-1,3),pbc=False,**argv)
 
