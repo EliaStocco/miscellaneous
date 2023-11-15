@@ -120,6 +120,7 @@ def preprocess(lattice, positions, symbols, max_radius, default_dtype, pbc, requ
     #x = type_onehot[[type_encoding[atom] for atom in symbols]]
     if not torch.is_tensor(x):
         x = torch.tensor(x)
+    x = x.to(default_dtype)
     if requires_grad["x"] is not None :
         x.requires_grad_(requires_grad["x"])
 

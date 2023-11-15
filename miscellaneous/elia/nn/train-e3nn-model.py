@@ -54,7 +54,7 @@ default_values = {
         "debug"            : False,
         "indices"          : None,
         "options"          : None,
-        "scheduler"        : None,
+        "scheduler"        : "",
         "scheduler-factor" : 1e-2,
     }
 

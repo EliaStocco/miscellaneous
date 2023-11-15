@@ -45,7 +45,7 @@ class SimpleNetwork(torch.nn.Module):
         **argv
     ) -> None:
 
-        super().__init__(**argv)
+        super().__init__()
         torch.set_default_dtype(self.default_dtype)
         self.lmax            = lmax
         self.max_radius      = max_radius
@@ -120,7 +120,7 @@ class SimpleNetwork(torch.nn.Module):
                 edge_src=edge_src,
                 edge_dst=edge_dst,
                 pbc=data["pbc"],
-            )
+            )        
         return batch, data["x"], edge_src, edge_dst, edge_vec
 
     def forward(self, data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
