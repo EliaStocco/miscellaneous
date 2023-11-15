@@ -9,8 +9,7 @@ import torch
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 from miscellaneous.elia.nn.training import hyper_train_at_fixed_model
-from miscellaneous.elia.nn.dataset import prepare_dataset
-from miscellaneous.elia.nn.network import SabiaNetworkManager
+from miscellaneous.elia.nn.network import aile3nn
 from miscellaneous.elia.functions import add_default, str2bool
 
 #----------------------------------------------------------------#
@@ -146,40 +145,9 @@ def main():
         random.seed(0)
         np.random.seed(0)
    
-    # ##########################################
-    # # preparing dataset
-    # opts = {
-    #     "prepare":{
-    #         "restart":False
-    #     },
-    #     "build":{
-    #         "restart":False
-    #     },
-    #     #"use_shift": parameters["shift"],
-    #     "instructions" : parameters["instructions"]
-    # }
-    
     if "datasets" not in parameters:
         raise ValueError("please provide a dict in the input file to specify where to find the datasets.")
     datasets = read_datasets(parameters["datasets"])
-
-    # # I should remove this function from the training procedure
-    # datasets, example = prepare_dataset(  # ref_index  = parameters["ref_index"],
-    #                                     max_radius = parameters["max_radius"],
-    #                                     # reference  = parameters["reference"],
-    #                                     output     = parameters["output"],
-    #                                     pbc        = parameters["pbc"],
-    #                                     indices    = parameters["indices"],
-    #                                     folder     = parameters["folder"],
-    #                                     opts       = opts
-    #                                         )
-    
-    # There is a bug:
-    # if requires_grad=True and I build the dataset then at the second epoch the code crash with the following message:
-    # Trying to backward through the graph a second time (or directly access saved tensors after 
-    # they have already been freed). Saved intermediate values of the graph are freed when 
-    # you call .backward() or autograd.grad(). Specify retain_graph=True if you need to backward 
-    # through the graph a second time or if you need to access saved tensors after calling backward.
 
     ##########################################
     # test
@@ -194,7 +162,6 @@ def main():
         print("\n\tModifying datasets for debugging")
         train_dataset = datasets["train"]
         val_dataset   = datasets["val"]
-        # test_dataset  = datasets["test"]
         
         if "n_debug" in parameters :
             train_dataset = train_dataset[0:parameters["n_debug"]["train"]] 
@@ -206,7 +173,6 @@ def main():
         print("\tDatasets summary:")
         print("\t\ttrain:",len(train_dataset))
         print("\t\t  val:",len(val_dataset))
-        # print("\t\t test:",len(test_dataset))
 
         datasets = {
             "train":train_dataset,\
@@ -217,11 +183,7 @@ def main():
 
     ##########################################
     # construct the model
-
-    # if parameters["reference"] :
-    #     irreps_in = "{:d}x0e+1x1o".format(len(data.all_types()))
-    # else :
-    types = parameters["chemical-species"] # np.unique(example.get_chemical_symbols())
+    types = parameters["chemical-species"]
     irreps_in = "{:d}x0e".format(len(types))
 
     if parameters["output"] in ["E","EF"]:
@@ -240,13 +202,12 @@ def main():
         "max_radius"          : parameters["max_radius"],  
         "num_neighbors"       : 2,                      
         "pool_nodes"          : True,                      
-        "num_nodes"           : 2,
+        # "num_nodes"           : 2,
         "number_of_basis"     : 10,
         "mul"                 : parameters["mul"],
         "layers"              : parameters["layers"],
         "lmax"                : parameters["lmax"],
         "dropout_probability" : parameters["dropout"],
-        # "batchnorm"           : parameters["batchnorm"],
         "pbc"                 : parameters["pbc"],
         "use_shift"           : parameters["use_shift"]
     }
@@ -255,22 +216,16 @@ def main():
 
     instructions = {
             "kwargs"           : copy(kwargs),
-            "class"            : "SabiaNetworkManager",
+            "class"            : "aile3nn",
             "module"           : "miscellaneous.elia.nn.network",
-            # "chemical-symbols" : parameters["chemical-symbols"], #example.get_chemical_symbols(),
         }
     
     with open("instructions.json", "w") as json_file:
         json.dump(instructions, json_file, indent=4)
 
-    net = SabiaNetworkManager(**kwargs)
+    net = aile3nn(**kwargs)
     N = net.n_parameters()
     print("Tot. number of parameters: ",N)
-    
-    # ##########################################
-    # # Natoms
-    # if parameters["Natoms"] is None or parameters["Natoms"] == 'None' :
-    #     parameters["Natoms"] = example.get_global_number_of_atoms() 
 
     ##########################################
     # choose the loss function
@@ -278,7 +233,6 @@ def main():
         loss = net.loss(Natoms=parameters["Natoms"] if "Natoms" in parameters else None)
     elif parameters["output"] == "EF" :
         raise ValueError("not implemented yet")
-        loss = net.loss(lE=0.1,lF=0.9)
     
     ##########################################
     # optional settings

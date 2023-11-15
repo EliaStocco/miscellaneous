@@ -150,6 +150,7 @@ def make_dataset(systems:Atoms,max_radius:float,disable:bool=False):
                 "lattice": lattice,       # it should be None if pbc=False
                 "edge_shift": edge_shift, # it should be None if pbc=False
                 "x": x,
+                "pbc" : pbc,
                 "max_radius": max_radius,
                 "symbols": crystal.get_chemical_symbols(),
                 "edge_index": edge_index,

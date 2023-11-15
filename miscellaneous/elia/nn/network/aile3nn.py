@@ -1,52 +1,42 @@
 import torch
-import numpy as np
-import torch_geometric
+from .iPIinterface import iPIinterface
+from .SimpleNetwork import SimpleNetwork
+# from .Methods4Training import EDFMethods4Training
 from torch_geometric.data import Data
-from typing import Dict, Union
-from scipy.stats import pearsonr
 from torch.nn import MSELoss
-from miscellaneous.elia.good_coding import froze
-from abc import ABC, abstractproperty, abstractmethod
+from scipy.stats import pearsonr
+import numpy as np
 from typing import TypeVar
-A = TypeVar('A', bound='Methods4Training')
-T = TypeVar('T', bound='EDFMethods4Training')
+T = TypeVar('T', bound='aile3nn')
+# See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
+# of `T` to annotate `self`. Many methods of `Module` return `self` and we want those return values to be
+# the type of the subclass, not the looser type of `Module`.
 
-@froze
-class Methods4Training(ABC):
+__all__ = ["aile3nn"]
 
-    @abstractproperty
-    def output(self:A): 
-        pass
+class aile3nn(SimpleNetwork,iPIinterface):
 
-    @abstractmethod
-    def get_pred(self:A,**argv):
-        pass
+    def __init__(self: T,output: str = "D",**kwargs) -> None:
+        if output not in ["E", "D", "ED", "EF", "EDF"]:
+            raise ValueError("'output' must be 'E', 'D', 'EF', 'ED' or 'EDF'")
+        self.output = output
+        super().__init__(**kwargs)        
 
-    @abstractmethod
-    def get_real(self:A,**argv):
-        pass
-
-    @abstractmethod
-    def loss(self:A,**argv):
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def correlation(**argv):
-        pass
-
-    @abstractmethod
-    def forces(self:A,**argv):
-        pass
-
-# @froze
-class EDFMethods4Training():
-
-    def __init__(self: T,**argv)->None:
-
-        super().__init__(**argv)
+    def n_parameters(self:T):
+        return sum(p.numel() for p in self.parameters())
 
     # @staticmethod
+    # def batch(X):
+    #     return len(torch.unique(X.batch))
+    
+    # this should be moved to another class
+    def message(self):
+        if self.use_shift:
+                print("\t!! SHIFT:", self.shift.detach().numpy())
+                print("\t!! FACTOR:", self.factor.detach().numpy())
+        return
+    
+    # this should be moved to another class
     def get_pred(self: T, X: Data) -> torch.tensor:
         """return Energy, Polarization and Forces"""
 
@@ -71,7 +61,7 @@ class EDFMethods4Training():
 
         return y
 
-    # @staticmethod
+    # this should be moved to another class
     def get_real(self:T,X: Data) -> torch.tensor:
         """return Energy, Polarization and/or Forces"""
 
@@ -101,7 +91,8 @@ class EDFMethods4Training():
 
         return y
 
-    def loss(self:T,lE:float=None,lF:float=None,lP:float=None,Natoms=None,periodic=False,regularization=0.1)->callable:
+    # this should be moved to another class
+    def loss(self:T,lE:float=None,lF:float=None,lP:float=None,Natoms=None,periodic=False)->callable:
 
         lE = lE if lE is not None else 1.0
         lF = lF if lF is not None else 1.0
@@ -130,23 +121,13 @@ class EDFMethods4Training():
             return torch.mean(torch.square(x-y).sum(dim=1)) # mean only along the batch size
 
         if self.output == "E":
-            # if Natoms > 1 :
-            #     return lambda x,y: loss_scalar(x,y) / Natoms
-            # else :
-            #     return loss_scalar
             return loss_scalar
         
         elif self.output == "D" :
-            if periodic :
-                def periodic_loss(x:torch.tensor,y:torch.tensor,\
-                                  X:Union[torch_geometric.data.Data, Dict[str, torch.Tensor]])->torch.Tensor:
-                    # do things
-                    return loss_vector(x,y)
-                return periodic_loss
-            else :
-                return loss_vector
+            return loss_vector
         
         elif self.output == "EF":
+            raise ValueError("not implemented yet")
             def loss_EF(x,y):
                 E = loss_scalar(x[:,0],y[:,0])
                 F = loss_vector(x[:,1:],y[:,1:])
@@ -154,23 +135,14 @@ class EDFMethods4Training():
             if Natoms > 1 :
                 return lambda x,y: loss_EF(x,y) / Natoms
             else :
-                return loss_EF 
-        
-        # elif self.output == "EDF":
-        #     def loss_EPF(x,y):
-        #         E = self._mseloss(x[:,0],y[:,0])
-        #         P = self._mseloss(x[:,1:4],y[:,1:4])
-        #         F = self._mseloss(x[:,4:],y[:,4:])
-        #         return lE * E + lP * P + lF * F
-        #     return loss_EPF
-        
+                return loss_EF      
+               
         else :
             raise ValueError("error in output mode")
         
+    # this should be moved to another class
     @staticmethod
     def correlation(x:torch.tensor,y:torch.tensor):
-
-        #N = {"E": 1, "P": 3, "EP": 4, "EPF": 1+3+3*X.Natoms[0]}
 
         x = x.detach().numpy()
         y = y.detach().numpy()
@@ -181,3 +153,4 @@ class EDFMethods4Training():
             out[i] = pearsonr(x[:,i],y[:,i]).correlation
 
         return out
+        

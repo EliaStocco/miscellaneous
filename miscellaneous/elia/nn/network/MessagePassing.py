@@ -20,7 +20,6 @@ def tp_path_exists(irreps_in1, irreps_in2, ir_out):
                 return True
     return False
 
-
 class Compose(torch.nn.Module):
 
     first : torch.nn.Module
@@ -101,12 +100,9 @@ class MessagePassing(torch.nn.Module):
         self.irreps_edge_attr = o3.Irreps(irreps_edge_attr)
         self.debug = debug
 
-        # redundant, but same 'attribute' for all the classes
         self.irreps_in  = self.irreps_node_input
         self.irreps_out = self.irreps_node_output
-        
         irreps_node = self.irreps_node_input
-
         act = {
             1: torch.nn.functional.silu,
             -1: torch.tanh,
@@ -115,9 +111,7 @@ class MessagePassing(torch.nn.Module):
             1: torch.sigmoid,
             -1: torch.tanh,
         }
-
         self.layers = torch.nn.ModuleList()
-
         for _ in range(layers):
             irreps_scalars = o3.Irreps(
                 [
@@ -135,7 +129,6 @@ class MessagePassing(torch.nn.Module):
             )
             ir = "0e" if tp_path_exists(irreps_node, self.irreps_edge_attr, "0e") else "0o"
             irreps_gates = o3.Irreps([(mul, ir) for mul, _ in irreps_gated]).simplify()
-
             gate = Gate(
                 irreps_scalars,
                 [act[ir.p] for _, ir in irreps_scalars],  # scalar
@@ -143,13 +136,7 @@ class MessagePassing(torch.nn.Module):
                 [act_gates[ir.p] for _, ir in irreps_gates],  # gates (scalars)
                 irreps_gated,  # gated tensors
             )
-            # print("irreps_node:",irreps_node)
-            # print("irreps_node_attr:",self.irreps_node_attr)
-            # print("irreps_edge_attr:",self.irreps_edge_attr)
-            # print("irreps_in:",gate.irreps_in)
-            conv = Convolution(
-                irreps_node, self.irreps_node_attr, self.irreps_edge_attr, gate.irreps_in, fc_neurons, num_neighbors
-            )
+            conv = Convolution(irreps_node, self.irreps_node_attr, self.irreps_edge_attr, gate.irreps_in, fc_neurons, num_neighbors)
             irreps_node = gate.irreps_out
             if batchnorm :
                 raise ValueError("not implemented yet")
@@ -159,19 +146,11 @@ class MessagePassing(torch.nn.Module):
             else :
                 self.layers.append(Compose(conv, gate))
 
-        conv = Convolution(irreps_node, self.irreps_node_attr, self.irreps_edge_attr, \
-                           self.irreps_out, fc_neurons, num_neighbors)
+        conv = Convolution(irreps_node, self.irreps_node_attr, self.irreps_edge_attr,self.irreps_out, fc_neurons, num_neighbors)
         self.layers.append(conv)
-
-        # self.layers = torch.nn.ModuleList(tmp)
-        # self.layers = tmp
-
-        # Define proportion or neurons to dropout
-        # self.dropout = Dropout(dropout_probability)
 
         if dropout_probability < 0 :
             raise ValueError("'dropout_probability' should be >= zero")
-        
         elif dropout_probability > 0 :
             self.dropout = torch.nn.ModuleList()
             for lay in self.layers :
@@ -183,22 +162,11 @@ class MessagePassing(torch.nn.Module):
             self.dropout_probability = dropout_probability
         else :
             self.dropout = None
-
-        
-        # if batchnorm:
-        #     self.layers.append(Compose(conv,BatchNorm(irreps=conv.irreps_node_output,affine=True)))
-        # else:
-        #     self.layers.append(conv)
-
         pass
 
     def forward(self:T, node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
-
         for n,lay in enumerate(self.layers):
             node_features = lay(node_features, node_attr, edge_src, edge_dst, edge_attr, edge_scalars)
-
-            # Apply dropout
             if self.dropout is not None :
                 node_features = self.dropout[n](node_features)
-
         return node_features
