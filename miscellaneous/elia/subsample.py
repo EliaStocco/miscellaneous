@@ -17,7 +17,7 @@ def prepare_args():
 
     # Define command-line arguments
 
-    argv = {"metavar" : "\b",}
+    argv = {"metavar" : "\b"}
     parser.add_argument("-i", "--input",  type=str, default='i-pi.positions_0.xyz', **argv,
                         help="input file containing the MD trajectory (default: 'i-pi.positions_0.xyz')")
 
