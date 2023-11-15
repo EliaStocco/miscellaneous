@@ -56,10 +56,12 @@ if args.output_unit is not None :
 
     if type(atoms) == list :
         for n in range(len(atoms)):
+            atoms[n].set_calculator(None)
             atoms[n].positions *= factor_pos
             if pbc:
                 atoms[n].cell *= factor_cell
     else :
+        atoms.set_calculator(None)
         atoms.cell *= factor_pos
         if pbc:
             atoms.cell *= factor_cell
