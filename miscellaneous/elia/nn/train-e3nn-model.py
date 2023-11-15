@@ -20,26 +20,24 @@ from miscellaneous.elia.functions import add_default, str2bool
 
 #----------------------------------------------------------------#
 
-#####################
-
 description = "train a 'e3nn' model"
 
-#####################
-
+#--------------------------------#
 default_values = {
         "mul"              : 2,
         "layers"           : 6,
         "lmax"             : 2,
         "name"             : "untitled",
-        # "reference"        : False,
         "output"           : "D",
         "max_radius"       : 6.0,
-        "folder"           : "LiNbO3",
+        "datasets"         : {
+            "train" : "data/dataset.train.pth",
+            "val"   : "data/dataset.val.pth",
+        },
         "output_folder"    : "LiNbO3/results",
-        # "ref_index"        : 0 ,
         "Natoms"           : None,
         "random"           : False,
-        "epochs"           : 10000,
+        "epochs"           : 10,
         "bs"               : [1],
         "lr"               : [1e-3],
         "weight_decay"     : 1e-2,
@@ -48,7 +46,7 @@ default_values = {
         "max_time"         : -1,
         "task_time"        : -1,
         "dropout"          : 0.01,
-        "batchnorm"        : True,
+        # "batchnorm"        : True,
         "use_shift"        : None,
         "restart"          : False,
         "recompute_loss"   : False,
@@ -61,8 +59,7 @@ default_values = {
         "scheduler-factor" : 1e-2,
     }
 
-#####################
-
+#--------------------------------#
 def get_args():
     """Prepare parser of user input arguments."""
 
@@ -72,8 +69,7 @@ def get_args():
 
     return parser.parse_args()
 
-#####################
-
+#--------------------------------#
 def check_parameters(parameters):
     
     str2bool_keys = ["random","grid","pbc","recompute_loss","debug"]
@@ -86,8 +82,12 @@ def check_parameters(parameters):
     if parameters["max_time"] <= 0 :
         parameters["max_time"] = -1
 
-#####################
+    if "chemical-species" not in parameters \
+        or parameters["chemical-species"] is None \
+            or len(parameters["chemical-species"]) == 0 :
+        raise ValueError("Please specify a list of the chemical species that compose the provided atomic structures.")
 
+#--------------------------------#
 def get_parameters():
     """get user parameters"""
 
@@ -118,8 +118,15 @@ def get_parameters():
     
     return parameters
 
-#####################
+#--------------------------------#
+# read datasets
+def read_datasets(files:dict):
+    dataset = dict()
+    for k,file in files.items():
+        dataset[k] = torch.load(file)
+    return dataset
 
+#--------------------------------#
 def main():
 
     ##########################################
@@ -139,29 +146,33 @@ def main():
         random.seed(0)
         np.random.seed(0)
    
-    ##########################################
-    # preparing dataset
-    opts = {
-        "prepare":{
-            "restart":False
-        },
-        "build":{
-            "restart":False
-        },
-        #"use_shift": parameters["shift"],
-        "instructions" : parameters["instructions"]
-    }
+    # ##########################################
+    # # preparing dataset
+    # opts = {
+    #     "prepare":{
+    #         "restart":False
+    #     },
+    #     "build":{
+    #         "restart":False
+    #     },
+    #     #"use_shift": parameters["shift"],
+    #     "instructions" : parameters["instructions"]
+    # }
+    
+    if "datasets" not in parameters:
+        raise ValueError("please provide a dict in the input file to specify where to find the datasets.")
+    datasets = read_datasets(parameters["datasets"])
 
-    # I should remove this function from the training procedure
-    datasets, example = prepare_dataset(  # ref_index  = parameters["ref_index"],
-                                        max_radius = parameters["max_radius"],
-                                        # reference  = parameters["reference"],
-                                        output     = parameters["output"],
-                                        pbc        = parameters["pbc"],
-                                        indices    = parameters["indices"],
-                                        folder     = parameters["folder"],
-                                        opts       = opts
-                                            )
+    # # I should remove this function from the training procedure
+    # datasets, example = prepare_dataset(  # ref_index  = parameters["ref_index"],
+    #                                     max_radius = parameters["max_radius"],
+    #                                     # reference  = parameters["reference"],
+    #                                     output     = parameters["output"],
+    #                                     pbc        = parameters["pbc"],
+    #                                     indices    = parameters["indices"],
+    #                                     folder     = parameters["folder"],
+    #                                     opts       = opts
+    #                                         )
     
     # There is a bug:
     # if requires_grad=True and I build the dataset then at the second epoch the code crash with the following message:
@@ -210,7 +221,7 @@ def main():
     # if parameters["reference"] :
     #     irreps_in = "{:d}x0e+1x1o".format(len(data.all_types()))
     # else :
-    types = np.unique(example.get_chemical_symbols())
+    types = parameters["chemical-species"] # np.unique(example.get_chemical_symbols())
     irreps_in = "{:d}x0e".format(len(types))
 
     if parameters["output"] in ["E","EF"]:
@@ -235,7 +246,7 @@ def main():
         "layers"              : parameters["layers"],
         "lmax"                : parameters["lmax"],
         "dropout_probability" : parameters["dropout"],
-        "batchnorm"           : parameters["batchnorm"],
+        # "batchnorm"           : parameters["batchnorm"],
         "pbc"                 : parameters["pbc"],
         "use_shift"           : parameters["use_shift"]
     }
@@ -246,7 +257,7 @@ def main():
             "kwargs"           : copy(kwargs),
             "class"            : "SabiaNetworkManager",
             "module"           : "miscellaneous.elia.nn.network",
-            "chemical-symbols" : example.get_chemical_symbols(),
+            # "chemical-symbols" : parameters["chemical-symbols"], #example.get_chemical_symbols(),
         }
     
     with open("instructions.json", "w") as json_file:
@@ -256,16 +267,17 @@ def main():
     N = net.n_parameters()
     print("Tot. number of parameters: ",N)
     
-    ##########################################
-    # Natoms
-    if parameters["Natoms"] is None or parameters["Natoms"] == 'None' :
-        parameters["Natoms"] = example.get_global_number_of_atoms() 
+    # ##########################################
+    # # Natoms
+    # if parameters["Natoms"] is None or parameters["Natoms"] == 'None' :
+    #     parameters["Natoms"] = example.get_global_number_of_atoms() 
 
     ##########################################
     # choose the loss function
     if parameters["output"] in ["D","E"] :
-        loss = net.loss(Natoms=parameters["Natoms"])
+        loss = net.loss(Natoms=parameters["Natoms"] if "Natoms" in parameters else None)
     elif parameters["output"] == "EF" :
+        raise ValueError("not implemented yet")
         loss = net.loss(lE=0.1,lF=0.9)
     
     ##########################################

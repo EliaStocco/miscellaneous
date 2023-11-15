@@ -89,7 +89,7 @@ class MessagePassing(torch.nn.Module):
         num_neighbors,
         debug=False,
         dropout_probability=0.,
-        batchnorm=True,
+        batchnorm=False,
     ) -> None:
         super().__init__()
         self.num_neighbors = num_neighbors
@@ -152,6 +152,7 @@ class MessagePassing(torch.nn.Module):
             )
             irreps_node = gate.irreps_out
             if batchnorm :
+                raise ValueError("not implemented yet")
                 bn = BatchNorm(irreps=conv.irreps_out)
                 tmp = Compose(conv, bn)
                 self.layers.append(Compose(tmp, gate))

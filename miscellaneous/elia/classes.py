@@ -1268,11 +1268,9 @@ class MicroState:
             if pbc is None:
                 pbc = hasattr(self,"cells")
             if hasattr(self,"cells") and pbc:
-                print("CIAOOOOO PBC")
                 for n,t,p,c in zip(N,self.types,self.positions,self.cells):
                     out[n] = Atoms(symbols=t, positions=p.reshape(-1,3), cell=c.T, pbc=True,**argv)
             else :
-                print("CIAOOOOO NO PBC")
                 for n,t,p in zip(N,self.types,self.positions):
                     out[n] = Atoms(symbols=t, positions=p.reshape(-1,3),pbc=False,**argv)
 

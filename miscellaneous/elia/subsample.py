@@ -41,14 +41,6 @@ def main():
     # Print the script's description
     print("\n\t{:s}".format(description))
 
-
-    # Read the MicroState data from the input file
-    instructions = {
-        "cells": args.input,      # Use the input file for 'cells' data
-        "positions": args.input,  # Use the input file for 'positions' data
-        "types": args.input       # Use the input file for 'types' data
-    }
-
     print("\tReading atomic structures from file '{:s}' using the 'ase.io.read' with format '{:s}' ... ".format(args.input,args.format), end="")
     atoms = read(args.input,format=args.format,index=":")
     print("done")

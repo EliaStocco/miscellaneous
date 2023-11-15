@@ -4,7 +4,7 @@ import torch
 import random
 from copy import copy
 from ase import Atoms
-from miscellaneous.elia.nn.dataset import make_dataset, make_dataset_delta, make_dataset_phases
+from miscellaneous.elia.nn.dataset import make_dataset
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import add_default, find_files_by_pattern
 
@@ -60,7 +60,6 @@ def prepare_dataset(# ref_index:int,\
             instructions = {
                 "properties" : find_files_by_pattern (folder,"properties",1), # "{:s}/i-pi.properties.out".format(folder),\
                 "positions":infile,
-                # "cells":infile,
                 "types":infile
                 }
             if pbc :
@@ -82,52 +81,12 @@ def prepare_dataset(# ref_index:int,\
         if "dipole" not in data.properties :
             data.get_dipole(same_lattice=same_lattice,inplace=True)
 
-        # if pbc :
-        #     # compute the polarization from the dipole
-        #     _ = data._get_pol_from_dipole(same_lattice=same_lattice,inplace=True)
-        #     # This has to be modified
-        #     data.fix_polarization(same_lattice=same_lattice,inplace=True)
-        #     _, shift = data.shift_polarization(same_lattice=same_lattice,inplace=True,shift=opts["shift"])
-        #     # shift = [0,0,0]
-        #     # if "dipole" in data.properties :
-        #     #     del data.properties["dipole"]
-        #     data.get_dipole(same_lattice=same_lattice,inplace=True,recompute=True)
-        # else :
-        #     shift = [0,0,0]
-        #     if "dipole" not in data.properties :
-        #         data.get_dipole(same_lattice=same_lattice,inplace=True)
-
-    ##########################################
-    # show time-series
-    if False :
-        if output in ["E","EF"]:
-            variables = ["potential"]
-        elif output == "D":
-            variables = ["dipole","phases"]
-        else :
-            variables = ["potential","dipole"]
-    
-        f = "{:s}/time-series".format(folder)
-        if not os.path.exists(f):
-            os.mkdir(f)
-        for var in variables:
-            filename = "{:s}/{:s}.pdf".format(f,var)
-
-            if var == "dipole":
-                _ = data.get_dipole(same_lattice=same_lattice)
-
-            data.plot_time_series(what=var,file=filename,opts={"mean":False,"plot":{"markersize":0.1}})
-
     ########################################## 
 
     RESTART = opts["build"]["restart"]
     READ = opts["build"]["read"]
     SAVE = opts["build"]["save"]
-    # if reference :
-    #     name = "dataset-delta"
-    # # elif phases :
-    # #     name = "dataset-phases"
-    # else :
+
     name = "dataset"
     savefile = "{:s}/{:s}".format(folder,name)
 
@@ -136,47 +95,19 @@ def prepare_dataset(# ref_index:int,\
 
         if os.path.exists(savefile+".torch") and not RESTART:
             dataset = torch.load(savefile+".torch")
-            # if reference:
-            #     # dipole  = dataset[ref_index].dipole
-            #     pos     = dataset[ref_index].pos
-            # else :
-            #     # dipole = torch.full((3,),torch.nan)
-            #     pos = torch.full((3,),torch.nan)
         else :
-            # if reference :
-            #     dataset, pos = make_dataset_delta(  ref_index = ref_index,
-            #                                         data = data,
-            #                                         max_radius = max_radius,
-            #                                         output=output,
-            #                                         pbc = pbc,
-            #                                         indices = indices,
-            #                                         requires_grad = requires_grad)
-            # elif phases :
-            #     dataset = make_dataset_phases(  data = data,
-            #                                     max_radius = max_radius,\
-            #                                     output=output,\
-            #                                     requires_grad = requires_grad)
-            #     # dipole = torch.full((3,),torch.nan)
-            #     pos = torch.full((3,),torch.nan)
-            # else :
             dataset = make_dataset( data=data,
                                     max_radius=max_radius,
                                     output=output,
                                     pbc = pbc ,
                                     indices = indices,
                                     requires_grad=requires_grad)
-            # dipole = torch.full((3,),torch.nan)
-            # pos = torch.full((3,),torch.nan)
         not_shuffled = copy(dataset)
-        # shuffle
-        # random.shuffle(dataset)
 
-        # train, test, validation
-        #p_test = 20/100 # percentage of data in test dataset
-        #p_val  = 20/100 # percentage of data in validation dataset
+
         n = opts["size"]["train"]
-        i = opts["size"]["val"] #int(p_test*len(dataset))
-        j = opts["size"]["test"]#int(p_val*len(dataset))
+        i = opts["size"]["val"] 
+        j = opts["size"]["test"]
 
         train_dataset   = copy(dataset[:n])
         val_dataset     = copy(dataset[n:n+j])
@@ -193,16 +124,6 @@ def prepare_dataset(# ref_index:int,\
         test_dataset   = torch.load(savefile+".test.torch")
         unused_dataset = torch.load(savefile+".unused.torch")
 
-        # if reference :
-        #     # Open the JSON file and load the data
-        #     with open("{:s}/reference.json".format(folder)) as f:
-        #         reference = json.load(f)
-        #     # dipole = torch.tensor(reference['dipole'])
-        #     pos    = torch.tensor(reference['pos'])
-        # else :
-        #     # dipole = torch.full((3,),torch.nan)
-        #     pos = torch.full((3,),torch.nan)
-
         SAVE = False
             
     if SAVE :
@@ -211,13 +132,7 @@ def prepare_dataset(# ref_index:int,\
         torch.save(train_dataset,savefile+".train.torch")
         torch.save(val_dataset,  savefile+".val.torch")
         torch.save(test_dataset, savefile+".test.torch")
-        torch.save(unused_dataset, savefile+".unused.torch")
-
-        # if reference :
-        #     # Write the dictionary to the JSON file
-        #     with open("reference.json", "w") as json_file:
-        #         # The 'indent' parameter is optional for pretty formatting
-        #         json.dump({"pos":pos.tolist()}, json_file, indent=4)  
+        torch.save(unused_dataset, savefile+".unused.torch") 
 
     print("\n\tDatasets summary:")
     print("\t\ttrain:",len(train_dataset))

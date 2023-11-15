@@ -40,7 +40,7 @@ class SabiaNetwork(torch.nn.Module):
         debug: bool = False,
         pool_nodes: bool = True,
         dropout_probability: float = 0,
-        batchnorm: bool = True,
+        batchnorm: bool = False,
         pbc: bool = True,
         use_shift: bool = False,
         **argv
