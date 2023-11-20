@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from copy import copy
 import argparse
-from miscellaneous.elia.functions import str2bool, suppress_output
+from miscellaneous.elia.functions import str2bool
 from miscellaneous.elia.nn.dataset import make_dataset
 
 description = "Build a dataset from an 'extxyz' file, readable by 'train-e3nn-model.py'."
