@@ -1,10 +1,4 @@
-# This file is part of i-PI.
-# i-PI Copyright (C) 2014-2015 i-PI developers
-# See the "licenses" directory for full license information.
-
-# author: Elia Stocco
-# email : stocco@fhi-berlin.mpg.de
-
+#!/usr/bin/env python
 import argparse
 import numpy as np
 import pandas as pd

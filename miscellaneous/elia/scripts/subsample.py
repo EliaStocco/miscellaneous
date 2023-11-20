@@ -3,8 +3,6 @@ import argparse
 from copy import copy
 import numpy as np
 from ase.io import write, read
-from miscellaneous.elia.classes import MicroState
-from miscellaneous.elia.functions import str2bool, suppress_output
 
 # Description of the script's purpose
 description = "Sumsample an (ASE readable) MD trajectory given a set of indices."

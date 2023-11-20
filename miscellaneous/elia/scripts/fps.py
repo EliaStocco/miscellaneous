@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from ase.io import read, write
 import chemiscope
 import numpy as np

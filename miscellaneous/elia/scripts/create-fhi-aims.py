@@ -1,9 +1,9 @@
+#!/usr/bin/env python
 import argparse
 import numpy as np
 import os
 import glob
-from ase.io import read, write
-from miscellaneous.elia.functions import str2bool, suppress_output
+from ase.io import read
 
 # Description of the script's purpose
 description = "Create the 'control.in' file for FHI-aims"

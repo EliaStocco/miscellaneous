@@ -1,8 +1,8 @@
+#!/usr/bin/env python
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import get_one_file_in_folder
 import numpy as np
 import argparse
-import pandas as pd
 import os
 
 description = ""

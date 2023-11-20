@@ -1,5 +1,5 @@
+#!/usr/bin/env python
 import argparse
-import os
 from ase.io import write
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import str2bool, suppress_output

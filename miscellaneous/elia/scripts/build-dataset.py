@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from ase.io import read
 import random
 import os
