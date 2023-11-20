@@ -8,4 +8,4 @@
 *.cpython
 *.cpython-*
 .vscode/
-
+.vscode/*
