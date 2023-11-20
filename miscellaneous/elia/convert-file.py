@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from ase.io import read, write
 from ase.cell import Cell
 from miscellaneous.elia.functions import str2bool, suppress_output, convert
@@ -7,6 +8,9 @@ import numpy as np
 # Description of the script's purpose
 description = "Convert the format of a file using 'ASE'"
 
+# Attention:
+# If the parser used in ASE automatically modify the unit of the cell and/or positions,
+# then you should add this file format to the list at line 55 so that the user will be warned.
 
 def main():
 
@@ -31,12 +35,28 @@ def main():
     args = parser.parse_args()
     end = "" if not args.debug else ""
     print("done\n")
+    print("\n\tInput arguments:")
+    for k in args.__dict__.keys():
+        print("\t{:>20s}:".format(k),getattr(args,k))
+    print()
 
     print("\tReading data from input file '{:s}' ... ".format(args.input), end=end)
     with suppress_output(not args.debug):
+        # Try to determine the format by checking each supported format
+        if args.input_format is None:
+            from ase.io.formats import filetype
+            args.input_format = filetype(args.input, read=isinstance(args.input, str))
+
         atoms = read(args.input,format=args.input_format,index=":")
     if not args.debug:
         print("done\n")
+
+    if args.input_format in ["espresso-in","espresso-out"]:
+        args.input_unit = "angstrom"
+        args.input_unit_cell = "angstrom"
+        print("\t!Attention: the file format is '{:s}', then the position ".format(args.input_format)+\
+              "and cell are automatically convert to 'angstrom' by ASE.\n\t"+\
+                "Specify the output units (-ou,--output_unit) if you do not want the output to be in 'angstrom'.\n")
 
     pbc = np.any( [ np.all(atoms[n].get_pbc()) for n in range(len(atoms)) ] )
 
