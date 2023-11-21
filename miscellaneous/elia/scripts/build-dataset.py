@@ -28,7 +28,7 @@ def prepare_args():
     argv = {"metavar" : "\b"}
     parser.add_argument("-i", "--input"  , type=str, **argv, help="input 'extxyz' file with the atomic structures")
     parser.add_argument("-o", "--output" , type=str, **argv, default="dataset", help="prefix for the output files (default: 'dataset')")
-    parser.add_argument("-n", "--size"   , type=size_type, **argv, help="size of the train, val, and test datasets (example: '100,10,10')")
+    parser.add_argument("-n", "--size"   , type=size_type, **argv, help="size of the train, val, and test datasets (example: '[1000,100,100]')",default=np.asarray([1000,100,100]))
     parser.add_argument("-r", "--random", type=str2bool, **argv, default=True, help="whether the atomic structures are chosen randomly (default: true)")
     parser.add_argument("-s", "--seed", type=int, **argv, default=None, help="seed of the random numbers generator (default: None)")
     parser.add_argument("-pbc", "--pbc"  ,  type=str2bool, **argv, default=True, help="whether the system is periodic (default: True)")
