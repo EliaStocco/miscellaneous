@@ -29,6 +29,49 @@ from scipy.ndimage import gaussian_filter1d, generic_filter
 #             'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector','remove_files_in_folder',
 #             'get_line_with_pattern']
 
+def cart2lattice(cell): #,*argc,**argv):
+    """ Cartesian to lattice coordinates rotation matrix
+    
+    Input:
+        cell: lattice parameters, 
+            where the i^th basis vector is stored in the i^th columns
+            (it's the opposite of ASE, QE, FHI-aims)
+            lattice : 
+                | a_1x a_2x a_3x |
+                | a_1y a_2y a_3y |
+                | a_1z a_2z a_3z |
+    Output:
+        rotation matrix
+    """
+    matrix = lattice2cart(cell)
+    matrix = np.linalg.inv( matrix )
+    return matrix
+
+def lattice2cart(cell): #,*argc,**argv):
+    """ Lattice to Cartesian coordinates rotation matrix
+    
+    Input:
+        cell: lattice parameters, 
+            where the i^th basis vector is stored in the i^th columns
+            (it's the opposite of ASE, QE, FHI-aims)
+            lattice : 
+                | a_1x a_2x a_3x |
+                | a_1y a_2y a_3y |
+                | a_1z a_2z a_3z |
+    Output:
+        rotation matrix
+    """
+
+    if cell.shape != (3,3):
+        raise ValueError("lattice with wrong shape:",cell.shape)
+    from copy import copy
+    # I have to divide normalize the lattice parameters
+    length = np.linalg.norm(cell,axis=0)
+    matrix = copy(cell)
+    # normalize the columns
+    for i in range(3):
+        matrix[:,i] /= length[i]
+    return matrix
 
 # @np.vectorize(signature="'(i),(),()->()'")
 def sigma_out_of_target(array, target, sigma):
