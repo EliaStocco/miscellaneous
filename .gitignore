@@ -1,11 +1,16 @@
-# Ignore files starting with '#'
+# files to ignore
 \#*
-**/__pycache__/
+*.pth
+*.torch
 *.pyc
 *.zip
 *.torch
 *.pth
 *.cpython
 *.cpython-*
+
+# folders to ignore
 .vscode/
 .vscode/*
+__pycache__/
+*.egg-info/
