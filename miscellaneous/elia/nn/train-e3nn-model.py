@@ -49,7 +49,7 @@ default_values = {
         "use_shift"        : None,
         "restart"          : False,
         "recompute_loss"   : False,
-        "pbc"              : False,
+        # "pbc"              : False,
         "instructions"     : None,
         "debug"            : False,
         "indices"          : None,
@@ -208,7 +208,7 @@ def main():
         "layers"              : parameters["layers"],
         "lmax"                : parameters["lmax"],
         "dropout_probability" : parameters["dropout"],
-        "pbc"                 : parameters["pbc"],
+        # "pbc"                 : parameters["pbc"],
         "use_shift"           : parameters["use_shift"]
     }
 

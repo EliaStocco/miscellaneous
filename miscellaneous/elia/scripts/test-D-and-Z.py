@@ -77,6 +77,8 @@ def main():
         atoms = read(args.positions)
     sys.stdout = original_stdout
 
+    model.store_chemical_species(atoms=atoms)
+
     # if not model.pbc :
     #     atoms.cells = [None]*len(atoms.positions)    
 
@@ -88,7 +90,7 @@ def main():
 
     # for n,(pos,cell) in enumerate(zip(atoms.positions,atoms.cells)):
     pos = atoms.positions
-    cell = np.asarray(atoms.cell).T if model.pbc else None
+    cell = np.asarray(atoms.cell).T if np.all(atoms.get_pbc()) else None
     d,z,x = model.get_value_and_jac(pos=pos.reshape((-1,3)),cell=cell)
     D = d.detach().numpy()#.flatten()
     Z = z.detach().numpy()#.flatten()

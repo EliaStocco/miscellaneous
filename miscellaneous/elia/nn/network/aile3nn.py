@@ -20,7 +20,11 @@ class aile3nn(SimpleNetwork,iPIinterface):
         if output not in ["E", "D", "ED", "EF", "EDF"]:
             raise ValueError("'output' must be 'E', 'D', 'EF', 'ED' or 'EDF'")
         self.output = output
-        super().__init__(**kwargs)        
+
+        # call the __init__ methods of both parent classes explicitly
+        SimpleNetwork.__init__(self, **kwargs)
+        iPIinterface.__init__(self, **kwargs)
+        pass
 
     def n_parameters(self:T):
         return sum(p.numel() for p in self.parameters())

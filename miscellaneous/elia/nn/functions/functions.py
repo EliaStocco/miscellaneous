@@ -6,6 +6,7 @@ import numpy as np
 from prettytable import PrettyTable
 import subprocess
 from miscellaneous.elia.functions import add_default
+from miscellaneous.elia.nn.network import iPIinterface
 import warnings
 
 def count_parameters(model):
@@ -49,7 +50,7 @@ def get_class(module_name, class_name):
     except Exception as e:
         raise ValueError(f"An error occurred: {e}")
     
-def get_model(instructions,parameters:str)->torch.nn.Module:
+def get_model(instructions,parameters:str):
 
     if type(instructions) == str :
 
@@ -102,7 +103,10 @@ def get_model(instructions,parameters:str)->torch.nn.Module:
     model.eval()
 
     # Store the chemical species that will be used during the simulation.
-    model._symbols = instructions["chemical-symbols"]
+    if "chemical-symbols" in instructions:
+        model._symbols = instructions["chemical-symbols"]
+    else:
+        print("!Warning: no chemical symbols provided in the input json file. You need to provide them before using 'get', 'get_jac', or 'get_value_and_jac'.")
 
     return model
 
