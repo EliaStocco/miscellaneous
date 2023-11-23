@@ -12,8 +12,13 @@ message = "\t!Attention:\n"+\
     "\n"
 DEBUG=False
 
-def list_type(s):
-    return [ int(i) for i in s.split(" ") ]
+def size_type(s):
+    s = s.split("[")[1].split("]")[0].split(",")
+    match len(s):
+        case 3:
+            return np.asarray([ int(k) for k in s ])
+        case _:
+            raise ValueError("You should provide 3 integers") 
 
 def prepare_args():
 
@@ -27,8 +32,8 @@ def prepare_args():
     parser.add_argument("-o", "--output", type=str, default='shifted&fixed.extxyz', **argv,
                         help="output 'extxyz' file (default: 'shifted&fixed.extxyz')")
 
-    parser.add_argument("-s", "--shift",  type=list_type, default=None, **argv,
-                        help="additional arrays to be added to the output file")
+    parser.add_argument("-s", "--shift",  type=size_type, default=None, **argv,
+                        help="additional arrays to be added to the output file (default: [0,0,0])")
     
     return parser.parse_args()
 

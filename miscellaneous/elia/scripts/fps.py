@@ -65,7 +65,7 @@ def main():
     print("\n\tPreparing SOAP object ... ",end="")
     SOAP_HYPERS = {
         "interaction_cutoff": 3.5,
-        "max_radial": 6,
+        "max_radial": 8,
         "max_angular": 6,
         "gaussian_sigma_constant": 0.4,
         "cutoff_smooth_width": 0.5,

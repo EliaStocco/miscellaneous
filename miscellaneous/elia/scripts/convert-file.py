@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 from ase.io import read, write
 from ase.cell import Cell
-from miscellaneous.elia.functions import str2bool, suppress_output, convert
+# from miscellaneous.elia.functions import str2bool, suppress_output, convert
 import argparse
 import numpy as np
+import contextlib
+import sys
+import os
+
+#---------------------------------------#
 
 # Description of the script's purpose
 description = "Convert the format of a file using 'ASE'"
@@ -12,29 +17,72 @@ description = "Convert the format of a file using 'ASE'"
 # If the parser used in ASE automatically modify the unit of the cell and/or positions,
 # then you should add this file format to the list at line 55 so that the user will be warned.
 
+#---------------------------------------#
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "y", "1"):
+        return True
+    elif v.lower() in ("no", "false", "f", "n", "0"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+@contextlib.contextmanager
+def suppress_output(suppress=True):
+    if suppress:
+        with open(os.devnull, "w") as fnull:
+            sys.stdout.flush()  # Flush the current stdout
+            sys.stdout = fnull
+            try:
+                yield
+            finally:
+                sys.stdout = sys.__stdout__  # Restore the original stdout
+    else:
+        yield
+
+def convert(what, family=None, _from="atomic_unit", _to="atomic_unit"):
+    if family is not None:
+        factor = unit_to_internal(family, _from, 1)
+        factor *= unit_to_user(family, _to, 1)
+        return what * factor
+    else :
+        return what
+#---------------------------------------#
+
+try:
+    from ipi.utils.units import unit_to_internal, unit_to_user
+    conversion_possible = True
+except:
+    print("!Warning: this script is not able to import i-PI: it will not be posssible to convert from different units.")
+    conversion_possible = False
+
+#---------------------------------------#
+
 def main():
 
     # Define the command-line argument parser with a description
     parser = argparse.ArgumentParser(description=description)
-
-    parser.add_argument("-i"  , "--input"        ,   type=str     , help="input file")
-    parser.add_argument("-o"  , "--output"       ,   type=str     , help="output file")
-    parser.add_argument("-if" , "--input_format" ,   type=str     , help="input file format (default: 'None')" , default=None)
-    parser.add_argument("-of" , "--output_format",   type=str     , help="output file format (default: 'None')", default=None)
-    parser.add_argument("-d"  , "--debug"        ,   type=str2bool, help="debug (default: False)"              , default=False)
-    parser.add_argument("-iu" , "--input_unit"   ,   type=str     , help="input positions unit (default: atomic_unit)"  , default=None)
-    parser.add_argument("-iuc", "--input_unit_cell", type=str, help="input cell unit (default: atomic_unit)"  , default=None)
-    parser.add_argument("-ou" , "--output_unit" ,    type=str     , help="output unit (default: atomic_unit)", default=None)
-    parser.add_argument("-r"  , "--rotate" ,         type=str2bool     , help="whether to rotate the cell s.t. to be compatible with i-PI (default: False)", default=False)
+    argv = {"metavar":"\b"}
+    parser.add_argument("-i"  , "--input"        ,   **argv,type=str     , help="input file")
+    parser.add_argument("-o"  , "--output"       ,   **argv,type=str     , help="output file")
+    parser.add_argument("-if" , "--input_format" ,   **argv,type=str     , help="input file format (default: 'None')" , default=None)
+    parser.add_argument("-of" , "--output_format",   **argv,type=str     , help="output file format (default: 'None')", default=None)
+    parser.add_argument("-d"  , "--debug"        ,   **argv,type=str2bool, help="debug (default: False)"              , default=False)
+    parser.add_argument("-iu" , "--input_unit"   ,   **argv,type=str     , help="input positions unit (default: atomic_unit)"  , default=None)
+    parser.add_argument("-iuc", "--input_unit_cell", **argv,type=str, help="input cell unit (default: atomic_unit)"  , default=None)
+    parser.add_argument("-ou" , "--output_unit" ,    **argv,type=str     , help="output unit (default: atomic_unit)", default=None)
+    parser.add_argument("-r"  , "--rotate" ,         **argv,type=str2bool     , help="whether to rotate the cell s.t. to be compatible with i-PI (default: False)", default=False)
 
     # Print the script's description
-    print("\n\t{:s}".format(description))
+    print("\n{:s}".format(description))
 
     # Parse the command-line arguments
-    print("\n\tReading input arguments ... ",end="")
+    print("\nReading input arguments ... ",end="")
     args = parser.parse_args()
     end = "" if not args.debug else ""
-    print("done\n")
+    print("done")
     print("\n\tInput arguments:")
     for k in args.__dict__.keys():
         print("\t{:>20s}:".format(k),getattr(args,k))
@@ -49,7 +97,7 @@ def main():
 
         atoms = read(args.input,format=args.input_format,index=":")
     if not args.debug:
-        print("done\n")
+        print("done")
 
     if args.input_format in ["espresso-in","espresso-out"]:
         args.input_unit = "angstrom"
@@ -63,6 +111,8 @@ def main():
     print("\tThe read atomic structions is {:s}periodic".format("" if pbc else "not "))
 
     if args.output_unit is not None :
+        if not conversion_possible:
+            raise ValueError("!Attention: it's not possible to convert the units because i-PI was not imported.")
         if args.input_unit is None :
             args.input_unit = "atomic_unit"
         extra = "" if not pbc else "(and lattice parameters) "
@@ -107,4 +157,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
