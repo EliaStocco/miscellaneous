@@ -174,17 +174,19 @@ def remove_files_in_folder(folder, extension):
     files = os.listdir(folder)
 
     # Iterate over the files and delete files with the specified extension
+    n = 0
     for file in files:
         file_path = os.path.join(folder, file)
         try:
             if os.path.isfile(file_path) and file.endswith(extension):
                 os.remove(file_path)
-                # print(f"Deleted: {file_path}")
-            else:
-                # print(f"Skipped: {file_path} (not a file or wrong extension)")
+                n += 1
+            #     # print(f"Deleted: {file_path}")
+            # else:
+            #     # print(f"Skipped: {file_path} (not a file or wrong extension)")
         except Exception as e:
             print(f"Error deleting {file_path}: {str(e)}")
-
+        print("removed {:d} files".format(n))
     return
 
 
