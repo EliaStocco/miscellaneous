@@ -6,7 +6,6 @@ import numpy as np
 from prettytable import PrettyTable
 import subprocess
 from miscellaneous.elia.functions import add_default
-from miscellaneous.elia.nn.network import iPIinterface
 import warnings
 
 def count_parameters(model):

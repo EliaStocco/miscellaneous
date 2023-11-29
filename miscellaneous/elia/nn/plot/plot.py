@@ -26,8 +26,8 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
             ax.plot(x,arrays["train"],color="navy",label="$\\mu$-train",marker=".",linewidth=0.7,markersize=2,linestyle="-")
             if arrays["std"] is not None :
                 ax.plot(x,arrays["std"],color="purple",label="$\\sigma$-train",marker=".",linewidth=0.7,markersize=2,linestyle="-")
-            if arrays["train-2"] is not None :
-                ax.plot(x,arrays["train-2"],color="green",label="train$^*$",marker=".",linewidth=0.7,markersize=2,linestyle="-")
+            # if arrays["train-2"] is not None :
+            #     ax.plot(x,arrays["train-2"],color="green",label="train$^*$",marker=".",linewidth=0.7,markersize=2,linestyle="-")
 
             ax.set_ylabel("loss")
             ax.set_xlabel("epoch")
@@ -47,15 +47,15 @@ def plot_learning_curves(arrays,file,title=None,opts=None):
                 if not arrays["std"].isna().all():
                     ax2.plot(x,arrays["std"]/arrays["train"],color="brown",label="$\\mu$-train/$\\sigma$-train",marker="x",linestyle="dashed",linewidth=0.5,markersize=2)
 
-                if not arrays["ratio"].isna().all():
-                    ax2.plot(x, arrays["ratio"], color="green", label="train/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
+                # if not arrays["ratio"].isna().all():
+                #     ax2.plot(x, arrays["ratio"], color="green", label="train/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
 
-                if not arrays["ratio-2"].isna().all():
-                    ax2.plot(x, arrays["ratio-2"], color="black", label="train*/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
+                # if not arrays["ratio-2"].isna().all():
+                #     ax2.plot(x, arrays["ratio-2"], color="black", label="train*/val",marker="x", linestyle="dashed",linewidth=0.5,markersize=2)
                     
-                if not arrays["ratio-2"].isna().all():
-                    xlim = ax2.get_xlim()
-                    ax2.hlines(y=1,xmin=xlim[0],xmax=xlim[1],linestyle="--",linewidth=0.7,alpha=0.7,color="black")
+                # if not arrays["ratio-2"].isna().all():
+                #     xlim = ax2.get_xlim()
+                #     ax2.hlines(y=1,xmin=xlim[0],xmax=xlim[1],linestyle="--",linewidth=0.7,alpha=0.7,color="black")
                 
                 if not arrays["lr"].isna().all() :
                     ax2.plot(x,arrays["lr"],color="orange",label="lr",marker=".",linewidth=0.7,markersize=2,linestyle="--")
