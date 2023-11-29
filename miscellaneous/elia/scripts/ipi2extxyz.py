@@ -7,27 +7,17 @@ from ase.io import write, read
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder, str2bool
 
+# ToDo:
+# remove dependece on 'MicroState'
+
 description = "Convert the i-PI output files to an extxyz file with the specified properties and arrays.\n"
 DEBUG=False
 # example:
 # python ipi2extxyz.py -p i-pi -f data -aa forces,data/i-pi.forces_0.xyz -ap dipole,potential -o test.extxyz
 
-def arrays_type(s):
-    out = list()
-    for a in s.split(" "):
-        new = a.split(",")
-        match len(new):
-            case 0:
-                raise ValueError("error in reading the additional arrays")
-            case 1:
-                new.append(None)
-            case _:
-                raise ValueError("wrongly formatted additional arrays")
-        out.append(new)
-    return out
-
-def properties_type(s):
-    return s.split(",")
+def arrays_type(s,dtype):
+    s = s.split("[")[1].split("]")[0].split(",")
+    return np.asarray([ dtype(k) for k in s ])
 
 def prepare_args():
 
@@ -45,7 +35,7 @@ def prepare_args():
                         help="input file containing the MD trajectory positions and cells (default: '[prefix].positions_0.xyz')")
     
     parser.add_argument("-pbc", "--pbc",  type=str2bool, default=True, **argv,
-                        help="whether the system is periodic (default: True")
+                        help="whether the system is periodic (default: True)")
 
     parser.add_argument("-pf", "--properties_file",  type=str, default=None, **argv,
                         help="input file containing the MD trajectory properties (default: '[prefix].properties.out')")
@@ -53,10 +43,10 @@ def prepare_args():
     parser.add_argument("-if", "--format",  type=str, default='i-pi', **argv,
                         help="input file format (default: 'i-pi')")
 
-    parser.add_argument("-aa", "--additional_arrays",  type=arrays_type, default=None, **argv,
+    parser.add_argument("-aa", "--additional_arrays",  type=lambda s: arrays_type(s,str), default=None, **argv,
                         help="additional arrays to be added to the output file")
     
-    parser.add_argument("-ap", "--additional_properties",  type=properties_type, default=None, **argv,
+    parser.add_argument("-ap", "--additional_properties",  type=lambda s: arrays_type(s,str), default=None, **argv,
                         help="additional properties to be added to the output file")
 
     parser.add_argument("-o", "--output",  type=str, default='output.extxyz', **argv,
@@ -71,6 +61,11 @@ def main():
 
     # Print the script's description
     print("\n\t{:s}".format(description))
+
+    print("\n\tInput arguments:")
+    for k in args.__dict__.keys():
+        print("\t{:>25s}:".format(k),getattr(args,k))
+    print()
 
     ###
     # atomic structures
@@ -112,12 +107,11 @@ def main():
 
     if args.additional_arrays is not None:
         arrays = dict()
-        for k,file in args.additional_arrays:
-            if file is None :
-                try :
-                    file = get_one_file_in_folder(folder=args.folder,ext="xyz",pattern=k)
-                except:
-                    raise ValueError("No file provided or found for array '{:s}'".format(k))
+        for k in args.additional_arrays:
+            try :
+                file = get_one_file_in_folder(folder=args.folder,ext="xyz",pattern=k)
+            except:
+                raise ValueError("No file provided or found for array '{:s}'".format(k))
             print("\tReading additional array '{:s}' from file '{:s}' using the 'ase.io.read' ... ".format(k,file), end="")
             tmp = read(file,index=":")
             arrays[k] = np.zeros((len(tmp)),dtype=object)
