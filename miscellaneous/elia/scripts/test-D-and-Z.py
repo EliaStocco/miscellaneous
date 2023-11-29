@@ -7,6 +7,11 @@ from ase.io import read
 # from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.nn.functions import get_model
 
+class MyHelpFormatter(argparse.HelpFormatter):
+    def format_description(self, description):
+        # Increase the space between lines by adding additional newlines
+        return description.replace('\n\n', '\n')
+
 #####################
 
 description = "Compute dipole and BEC tensors for a given atomic structure.\n"
@@ -14,26 +19,27 @@ description = "Compute dipole and BEC tensors for a given atomic structure.\n"
 def get_args():
     """Prepare parser of user input arguments."""
 
-    parser = argparse.ArgumentParser(description=description)
+    parser = argparse.ArgumentParser(description=description,formatter_class=argparse.RawDescriptionHelpFormatter,width=120)
 
+    argv = {"metavar":"\b"}
     parser.add_argument(
-        "-i","--instructions", action="store", type=str,
-        help="model input file", default="instructions.json"
+        "-i","--instructions", action="store", type=str, **argv,
+        help="model input file (default: 'instructions.json')", default="instructions.json"
     )
 
     parser.add_argument(
-        "-p","--parameters", action="store", type=str,
-        help="(torch) parameters file", default="parameters.pth",
+        "-p","--parameters", action="store", type=str, **argv,
+        help="torch parameters file (default: 'parameters.pth')", default="parameters.pth",
     )
 
     parser.add_argument(
-        "-q","--positions", action="store", type=str,
+        "-q","--positions", action="store", type=str, **argv,
         help="file with positions and cell (in a.u.)"
     )
 
     parser.add_argument(
-        "-o","--output", action="store", type=str,
-        help="prefix for the output files", default="test"
+        "-o","--output", action="store", type=str, **argv,
+        help="prefix for the output files (default: 'test')", default="test"
     )
 
     # parser.add_argument(

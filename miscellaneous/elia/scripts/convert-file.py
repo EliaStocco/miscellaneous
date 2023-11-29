@@ -102,9 +102,10 @@ def main():
     if args.input_format in ["espresso-in","espresso-out"]:
         args.input_unit = "angstrom"
         args.input_unit_cell = "angstrom"
-        print("\t!Attention: the file format is '{:s}', then the position ".format(args.input_format)+\
-              "and cell are automatically convert to 'angstrom' by ASE.\n\t"+\
-                "Specify the output units (-ou,--output_unit) if you do not want the output to be in 'angstrom'.\n")
+        if args.output_unit is None:
+            print("\t!Attention: the file format is '{:s}', then the position ".format(args.input_format)+\
+                "and cell are automatically convert to 'angstrom' by ASE.\n\t"+\
+                    "Specify the output units (-ou,--output_unit) if you do not want the output to be in 'angstrom'.\n")
 
     pbc = np.any( [ np.all(atoms[n].get_pbc()) for n in range(len(atoms)) ] )
 
