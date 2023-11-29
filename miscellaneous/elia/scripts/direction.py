@@ -63,7 +63,9 @@ def main():
     print("\t{:>20s}:".format("Rounded vector"),out)
 
     print()
-    print("\t{:>20s}:".format("Final vector"),out)
+    string = "{:>" + "{:d}".format(args.digit+8) + ".{:d}".format(args.digit) + "e}"
+    string = "[{:s},{:s},{:s}]".format(string,string,string)
+    print("\t{:>20s}:".format("Final vector")+string.format(out[0],out[1],out[2]))
 
     print("\n\tJob done :)\n")
 
