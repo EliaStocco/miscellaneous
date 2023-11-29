@@ -29,6 +29,14 @@ from scipy.ndimage import gaussian_filter1d, generic_filter
 #             'recursive_copy', 'add_default', 'args_to_dict', 'plot_bisector','remove_files_in_folder',
 #             'get_line_with_pattern']
 
+def size_type(s):
+    s = s.split("[")[1].split("]")[0].split(",")
+    match len(s):
+        case 3:
+            return np.asarray([ float(k) for k in s ])
+        case _:
+            raise ValueError("You should provide 3 integers") 
+        
 def cart2lattice(cell): #,*argc,**argv):
     """ Cartesian to lattice coordinates rotation matrix
     

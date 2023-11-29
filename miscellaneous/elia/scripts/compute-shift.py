@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 from ase.io import write, read
 from copy import copy
-from miscellaneous.elia.functions import cart2lattice, lattice2cart
+from miscellaneous.elia.functions import cart2lattice, size_type
 
 description = "Compute the best dipole quantum to be shifted to a dataset.\n"
 message = "\t!Attention:\n"+\
@@ -11,14 +11,6 @@ message = "\t!Attention:\n"+\
     "\t- the atomic structure have to represent an MD trajectory (the order matters!)"+\
     "\n"
 DEBUG=False
-
-def size_type(s):
-    s = s.split("[")[1].split("]")[0].split(",")
-    match len(s):
-        case 3:
-            return np.asarray([ float(k) for k in s ])
-        case _:
-            raise ValueError("You should provide 3 integers") 
 
 def prepare_args():
 
