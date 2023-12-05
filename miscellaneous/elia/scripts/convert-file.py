@@ -12,6 +12,24 @@ import os
 
 # Description of the script's purpose
 description = "Convert the format of a file using 'ASE'"
+warning = "***Warning***"
+closure = "Job done :)"
+keywords = "It's up to you to modify the required keywords."
+input_arguments = "Input arguments"
+
+#---------------------------------------#
+# colors
+try :
+    import colorama
+    from colorama import Fore, Style
+    colorama.init(autoreset=True)
+    description     = Fore.GREEN  + Style.BRIGHT + description             + Style.RESET_ALL
+    warning         = Fore.RED    + Style.BRIGHT + warning.replace("*","") + Style.RESET_ALL
+    closure         = Fore.BLUE   + Style.BRIGHT + closure                 + Style.RESET_ALL
+    keywords        = Fore.YELLOW + Style.NORMAL + keywords                + Style.RESET_ALL
+    input_arguments = Fore.GREEN  + Style.NORMAL + input_arguments         + Style.RESET_ALL
+except:
+    pass
 
 # Attention:
 # If the parser used in ASE automatically modify the unit of the cell and/or positions,
@@ -73,17 +91,18 @@ def main():
     parser.add_argument("-iu" , "--input_unit"   ,   **argv,type=str     , help="input positions unit (default: atomic_unit)"  , default=None)
     parser.add_argument("-iuc", "--input_unit_cell", **argv,type=str, help="input cell unit (default: atomic_unit)"  , default=None)
     parser.add_argument("-ou" , "--output_unit" ,    **argv,type=str     , help="output unit (default: atomic_unit)", default=None)
+    parser.add_argument("-s"  , "--scaled"      ,    **argv,type=str2bool, help="whether to output the scaled positions (default: False)", default=False)
     parser.add_argument("-r"  , "--rotate" ,         **argv,type=str2bool     , help="whether to rotate the cell s.t. to be compatible with i-PI (default: False)", default=False)
 
     # Print the script's description
-    print("\n{:s}".format(description))
+    print("\n\t{:s}".format(description))
 
     # Parse the command-line arguments
-    print("\nReading input arguments ... ",end="")
+    # print("\n\tReading input arguments ... ",end="")
     args = parser.parse_args()
     end = "" if not args.debug else ""
-    print("done")
-    print("\n\tInput arguments:")
+    # print("done")
+    print("\n\t{:s}:".format(input_arguments))
     for k in args.__dict__.keys():
         print("\t{:>20s}:".format(k),getattr(args,k))
     print()
@@ -103,34 +122,41 @@ def main():
         args.input_unit = "angstrom"
         args.input_unit_cell = "angstrom"
         if args.output_unit is None:
-            print("\t!Attention: the file format is '{:s}', then the position ".format(args.input_format)+\
+            print("\n\t{:s}: the file format is '{:s}', then the position ".format(warning,args.input_format)+\
                 "and cell are automatically convert to 'angstrom' by ASE.\n\t"+\
                     "Specify the output units (-ou,--output_unit) if you do not want the output to be in 'angstrom'.\n")
+        if args.output_format is None or args.output_format == "espresso-in":
+            print("\n\t{:s}: the file format is 'espresso-in'.\n\tThen, even though the positions have been converted to another unit, ".format(warning) + \
+                    "you will find the keyword 'angstrom' in the output file."+\
+                    "\n\t{:s}\n".format(keywords))
 
     pbc = np.any( [ np.all(atoms[n].get_pbc()) for n in range(len(atoms)) ] )
 
-    print("\tThe read atomic structions is {:s}periodic".format("" if pbc else "not "))
+    print("\tThe atomic structure is {:s}periodic.".format("" if pbc else "not "))
 
     if args.output_unit is not None :
         if not conversion_possible:
-            raise ValueError("!Attention: it's not possible to convert the units because i-PI was not imported.")
+            raise ValueError("It's not possible to convert the units because i-PI was not imported.")
         if args.input_unit is None :
             args.input_unit = "atomic_unit"
         extra = "" if not pbc else "(and lattice parameters) "
-        print("\tConverting positions from '{:s}' to '{:s}'".format(extra,args.input_unit,args.output_unit))
+        
         factor_pos = convert(what=1,family="length",_to=args.output_unit,_from=args.input_unit)
         if pbc : 
             if args.input_unit_cell is None :
-                print("\t***Warning*** The unit of the lattice parameters is not specified ('input_unit_cell'):\n\t\tit will be assumed to be equal to the positions unit")
+                print("\t{:s} The unit of the lattice parameters is not specified ('input_unit_cell'):".format(warning)+\
+                      "\n\t\tit will be assumed to be equal to the positions unit")
                 args.input_unit_cell = args.input_unit
-            print("\tConverting lattice parameters from '{:s}' to '{:s}'".format(args.input_unit_cell,args.output_unit))
+            # print("\tConverting lattice parameters from '{:s}' to '{:s}'".format(args.input_unit_cell,args.output_unit))
             factor_cell = convert(what=1,family="length",_to=args.output_unit,_from=args.input_unit_cell)
 
+        print("\tConverting positions {:s}from '{:s}' to '{:s}' ... ".format(extra,args.input_unit,args.output_unit),end=end)
         for n in range(len(atoms)):
             atoms[n].set_calculator(None)
             atoms[n].positions *= factor_pos
             if np.all(atoms[n].get_pbc()):
                 atoms[n].cell *= factor_cell
+        print("done")
 
     # atoms[0].positions - (atoms[0].cell.array @ atoms[0].get_scaled_positions().T ).T 
     if args.rotate:
@@ -144,6 +170,15 @@ def main():
             atoms[n].set_cell(cell,scale_atoms=True)
         print("done")
 
+    # scale
+    if args.scaled:
+        print("\tReplacing the cartesian positions with the fractional/scaled positions: ... ",end=end)        
+        for n in range(len(atoms)):
+            atoms[n].set_positions(atoms[n].get_scaled_positions())
+        print("done")
+        print("\n\t{:s}: in the output file the positions will be indicated as 'cartesian'.".format(warning) + \
+              "\n\t{:s}".format(keywords))
+
     # Write the data to the specified output file with the specified format
     print("\n\tWriting data to file '{:s}' ... ".format(args.output), end=end)
     try:
@@ -154,7 +189,7 @@ def main():
         print("\n\tError: {:s}".format(e))
 
     # Script completion message
-    print("\n\tJob done :)\n")
+    print("\n\t{:s}\n".format(closure))
 
 if __name__ == "__main__":
     main()
