@@ -8,10 +8,12 @@ import contextlib
 import sys
 import os
 
+DEBUG = False
+
 #---------------------------------------#
 
 # Description of the script's purpose
-description = "Convert the format of a file using 'ASE'"
+description = "Convert the format and unit of a file using 'ASE'"
 warning = "***Warning***"
 closure = "Job done :)"
 keywords = "It's up to you to modify the required keywords."
@@ -73,7 +75,7 @@ try:
     from ipi.utils.units import unit_to_internal, unit_to_user
     conversion_possible = True
 except:
-    print("!Warning: this script is not able to import i-PI: it will not be posssible to convert from different units.")
+    print("\t{:s}: this script is not able to import i-PI: it will not be posssible to convert from different units.".format(warning))
     conversion_possible = False
 
 #---------------------------------------#
@@ -87,7 +89,7 @@ def main():
     parser.add_argument("-o"  , "--output"       ,   **argv,type=str     , help="output file")
     parser.add_argument("-if" , "--input_format" ,   **argv,type=str     , help="input file format (default: 'None')" , default=None)
     parser.add_argument("-of" , "--output_format",   **argv,type=str     , help="output file format (default: 'None')", default=None)
-    parser.add_argument("-d"  , "--debug"        ,   **argv,type=str2bool, help="debug (default: False)"              , default=False)
+    # parser.add_argument("-d"  , "--debug"        ,   **argv,type=str2bool, help="debug (default: False)"              , default=False)
     parser.add_argument("-iu" , "--input_unit"   ,   **argv,type=str     , help="input positions unit (default: atomic_unit)"  , default=None)
     parser.add_argument("-iuc", "--input_unit_cell", **argv,type=str, help="input cell unit (default: atomic_unit)"  , default=None)
     parser.add_argument("-ou" , "--output_unit" ,    **argv,type=str     , help="output unit (default: atomic_unit)", default=None)
@@ -100,7 +102,7 @@ def main():
     # Parse the command-line arguments
     # print("\n\tReading input arguments ... ",end="")
     args = parser.parse_args()
-    end = "" if not args.debug else ""
+    end = "" if not DEBUG else ""
     # print("done")
     print("\n\t{:s}:".format(input_arguments))
     for k in args.__dict__.keys():
@@ -108,25 +110,25 @@ def main():
     print()
 
     print("\tReading data from input file '{:s}' ... ".format(args.input), end=end)
-    with suppress_output(not args.debug):
+    with suppress_output(not DEBUG):
         # Try to determine the format by checking each supported format
         if args.input_format is None:
             from ase.io.formats import filetype
             args.input_format = filetype(args.input, read=isinstance(args.input, str))
 
         atoms = read(args.input,format=args.input_format,index=":")
-    if not args.debug:
+    if not DEBUG:
         print("done")
 
     if args.input_format in ["espresso-in","espresso-out"]:
         args.input_unit = "angstrom"
         args.input_unit_cell = "angstrom"
         if args.output_unit is None:
-            print("\n\t{:s}: the file format is '{:s}', then the position ".format(warning,args.input_format)+\
+            print("\n\t{:s}: the input file format is '{:s}', then the position ".format(warning,args.input_format)+\
                 "and cell are automatically convert to 'angstrom' by ASE.\n\t"+\
-                    "Specify the output units (-ou,--output_unit) if you do not want the output to be in 'angstrom'.\n")
+                    "Specify the output units (-ou,--output_unit) if you do not want the output to be in 'angstrom'.")
         if args.output_format is None or args.output_format == "espresso-in":
-            print("\n\t{:s}: the file format is 'espresso-in'.\n\tThen, even though the positions have been converted to another unit, ".format(warning) + \
+            print("\n\t{:s}: the output file format is 'espresso-in'.\n\tThen, even though the positions have been converted to another unit, ".format(warning) + \
                     "you will find the keyword 'angstrom' in the output file."+\
                     "\n\t{:s}\n".format(keywords))
 
@@ -183,7 +185,7 @@ def main():
     print("\n\tWriting data to file '{:s}' ... ".format(args.output), end=end)
     try:
         write(images=atoms,filename=args.output, format=args.output_format)
-        if not args.debug:
+        if not DEBUG:
             print("done")
     except Exception as e:
         print("\n\tError: {:s}".format(e))

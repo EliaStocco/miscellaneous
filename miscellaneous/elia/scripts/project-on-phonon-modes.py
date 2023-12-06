@@ -1,16 +1,17 @@
-# This file is part of i-PI.
-# i-PI Copyright (C) 2014-2015 i-PI developers
-# See the "licenses" directory for full license information.
-
+#!/usr/bin/env python
 # author: Elia Stocco
-# email : stocco@fhi-berlin.mpg.de
-
+# email : elia.stocco@mpsd.mpg.de
 import os
 import argparse
 import numpy as np
-from ase.io import read,write
+from ase.io import read, write
+from ase import Atoms
 from icecream import ic
 from copy import copy
+from miscellaneous.elia.functions import matrix2str
+import pandas as pd
+from ase.geometry import get_distances
+from itertools import product
 
 DEBUG= True
 
@@ -330,6 +331,13 @@ class NormalModes():
 
         pass
     
+    def __repr__(self) -> str:
+        line = "" 
+        line += "{:<10s}: {:<10d}\n".format("# modes",self.Nmodes)  
+        line += "{:<10s}: {:<10d}\n".format("# dof",self.Ndof)  
+        line += "{:<10s}: {:<10d}\n".format("# atoms",self.Natoms)  
+        return line
+    
     @classmethod
     def load(cls,folder=None):    
 
@@ -406,8 +414,8 @@ class NormalModes():
             for j,k in enumerate(k_point):
                 kr = np.asarray(k) / size @ r
                 phase = np.exp(1.j * 2 * np.pi * kr )
-                phi = int(cmath.phase(phase)*180/np.pi)
-                ic(k,r,phi)
+                # phi = int(cmath.phase(phase)*180/np.pi)
+                # ic(k,r,phi)
                 supercell.eigvec[i*self.Ndof:(i+1)*self.Ndof,j*self.Nmodes:(j+1)*self.Nmodes] = \
                     ( self.eigvec * phase).real
                 
@@ -453,10 +461,14 @@ def prepare_parser():
         "-t", "--trajectory",  type=str,**argv,
         help="input file with the trajectory [a.u., extxyz]"#, default=None
     )
-    parser.add_argument(
-        "-r", "--relaxed",  type=str,**argv,
-        help="input file with the relaxed atomic structure (a.u.)"#, default=None
-    )
+    # parser.add_argument(
+    #     "-cr", "--cell_relaxed",  type=str,**argv,
+    #     help="cell relaxed atomic structure (a.u.)"#, default=None
+    # )
+    # parser.add_argument(
+    #     "-scr", "--super_cell_relaxed",  type=str,**argv,
+    #     help="supercell relaxed atomic structure (a.u.)"#, default=None
+    # )
     parser.add_argument(
         "-c", "--cell",  type=str,**argv,
         help="file with the primitive unit cell [a.u., extxyz]"#, default=None
@@ -481,6 +493,113 @@ def prepare_parser():
 
     return options
 
+def compute_relative_distances(config1:Atoms, config2:Atoms):
+    """
+    Compute relative distances between all pairs of atoms in two configurations.
+
+    Parameters:
+    - config1: ase.Atoms object representing the first atomic configuration.
+    - config2: ase.Atoms object representing the second atomic configuration.
+
+    Returns:
+    - distances_df: Pandas DataFrame containing the upper triangular part of the distance matrix.
+    """
+    positions1 = config1.get_positions()
+    positions2 = config2.get_positions()
+
+    N = len(positions1)
+    if N != len(positions2):
+        raise ValueError("error")
+
+    distances = np.full((N,N),np.nan)
+    for r in range(N):
+        for c in range(r,N):
+            distances[r,c] = np.linalg.norm(positions1[r,:] - positions2[c,:])
+            distances[c,r] = distances[r,c]
+    return distances
+
+def find_trasformation(c:Atoms,sc:Atoms):
+    M = np.asarray(sc.cell).T @ np.linalg.inv(np.asarray(c.cell).T)
+    size = M.round(0).diagonal().astype(int)
+    return size, M
+
+def find_replica(supercell:Atoms,cell:Atoms):
+
+    size, M = find_trasformation(c=cell,sc=supercell)
+
+    # distances = get_distances(cell.repeat(size),supercell) 
+
+    # this could be wrong
+    distances = compute_relative_distances(cell.repeat(size),supercell)
+    a = np.min(distances,axis=1)
+    b = np.min(distances,axis=0)
+    if not np.all(a == b):
+        raise ValueError("error")
+    index = np.argmin(distances,axis=0)
+    N = cell.get_global_number_of_atoms()
+    return index % N
+
+def plot_matrix(M,Natoms=None,file=None):
+    import matplotlib.pyplot as plt  
+    # from matplotlib.colors import ListedColormap
+    # Create a figure and axis
+    fig, ax = plt.subplots()  
+    argv = {
+        "alpha":0.5
+    }
+    ax.matshow(M, origin='upper',extent=[0, M.shape[1], M.shape[0], 0],**argv)
+    if Natoms is not None:
+        argv = {
+            "linewidth":0.8,
+            "linestyle":'--',
+            "color":"white",
+            "alpha":1
+        }
+        xx = np.arange(0,M.shape[0],Natoms*3)
+        yy = np.arange(0,M.shape[1],Natoms*3)
+        for x in xx:
+            ax.axhline(x, **argv) # horizontal lines
+        for y in yy:
+            ax.axvline(y, **argv) # horizontal lines
+        
+        
+
+        xx = xx + np.unique(np.diff(xx)/2)
+        N = int(np.power(len(xx),1/3)) # int(np.log2(len(xx)))
+        ticks = list(product(*([np.arange(N).tolist()]*3)))
+        ax.set_xticks(xx)
+        ax.set_xticklabels([str(i) for i in ticks])
+        # ax.xaxis.set(ticks=xx, ticklabels=[str(i) for i in ticks])
+        
+        yy = yy + np.unique(np.diff(yy)/2)
+        N = int(np.power(len(yy),1/3))
+        ticks = list(product(*([np.arange(N).tolist()]*3)))
+        # ax.yaxis.set(ticks=yy, ticklabels=ticks)
+        ax.set_yticks(yy)
+        ax.set_yticklabels([str(i) for i in ticks])
+
+    plt.tight_layout()
+    if file is None:
+        plt.show()
+    else:
+        plt.savefig(file)
+    return
+
+def sc2c(M,Natoms):
+
+    xx = np.arange(0,M.shape[0],Natoms*3)
+    N = int(np.power(len(xx),1/3))
+    cols = list(product(*([np.arange(N).tolist()]*3)))
+    # cols = [np.asarray(i) for i in cols ]
+    df = pd.DataFrame(columns=cols,index=cols)
+    xx = np.arange(0,M.shape[0]+1,Natoms*3)
+    for i,r in enumerate(cols):
+        for j,c in enumerate(cols):
+            df.at[r,c] = M[xx[i]:xx[i+1],xx[j]:xx[j+1]]
+    return df
+
+
+
 def main():
     ###
     # prepare/read input arguments
@@ -490,22 +609,59 @@ def main():
     print(description)
 
     trajectory = read(args.trajectory,format="extxyz",index=":")
-    relaxed = read(args.relaxed)
-    cell = read(args.cell).cell
-    supercell = read(args.super_cell).cell
+    # Crelaxed = read(args.cell_relaxed)
+    # SCrelaxed = read(args.super_cell_relaxed)
+    cell = read(args.cell)# .cell
+    supercell = read(args.super_cell)#.cell
     cnm  = NormalModes.load(args.cell_modes)
     scnm = NormalModes.load(args.super_cell_modes)
 
+    print("\tcell:\n\t# atoms: ",cnm.Natoms)
+    tmp = np.asarray(cell.cell).T
+    print(matrix2str(tmp.round(4),col_names=["1","2","3"],cols_align="^",width=6))
 
-    print("\t      cell # atoms: ",cnm.Natoms)
-    print("\t supercell # atoms: ",scnm.Natoms)
+    print("\tsupercell:\n\t# atoms: ",scnm.Natoms)
+    tmp = np.asarray(supercell.cell).T
+    print(matrix2str(tmp.round(4),col_names=["1","2","3"],cols_align="^",width=6))
 
     # np.asarray(supercell).T = M @ np.asarray(cell).T
-    M = np.asarray(supercell).T @ np.linalg.inv(np.asarray(cell).T)
-
-    size = M.round(0).diagonal().astype(int)
-
+    print("\ttrasformation matrix:")
+    size, M = find_trasformation(c=cell,sc=supercell)
+    print(matrix2str(M.round(2),col_names=["1","2","3"],cols_align="^",width=6))
     print("\tsupercell size: ",size)
+
+    plot_matrix(scnm.dynmat,cnm.Natoms,"supercell.dynmat.pdf")
+
+    dynmat = sc2c(scnm.dynmat,cnm.Natoms)
+
+    dynmatK = pd.DataFrame(index=dynmat.index,columns=["dynmat","eigvec","eigvals"],dtype=object)
+    for i in dynmat.index:
+
+        # Fourier transform
+        dynmatK.at[i,"dynmat"] = np.zeros(dynmat.at[i,i].shape)
+        for c in dynmat.columns:
+            kr = np.asarray(c) / size @ np.asarray(i)
+            phase = np.exp(1.j * 2 * np.pi * kr )
+            dynmatK.at[i,"dynmat"] = dynmatK.at[i,"dynmat"] + phase * dynmat.at[i,c]
+        imag = dynmatK.at[i,"dynmat"].imag
+        real = dynmatK.at[i,"dynmat"].real
+        ic(np.linalg.norm(imag))
+        ic(np.linalg.norm(real))
+        dynmatK.at[i,"dynmat"] = real
+
+        # Diagonalization
+        if not np.allclose(real, real.T):
+            raise ValueError("not symmetric")
+        
+        eigenvalues, eigenvectors = np.linalg.eigh(real)
+        dynmatK.at[i,"eigvec"] = eigenvectors
+        dynmatK.at[i,"eigvals"] = eigenvalues
+
+        # fuck, their negative
+
+
+
+
 
     factor_atoms = int(M.round(0).diagonal().astype(int).prod())
 
@@ -515,6 +671,13 @@ def main():
     cnm = cnm.remove_dof([0,1,2])
     # cnm.eigvec = cnm.eigvec[:,3:]
     bsnm = cnm.build_supercell_normal_modes(size)
+
+    # distances = compute_relative_distances(cell.repeat(size),supercell)
+    index = find_replica(supercell,cell)
+    print("\treplica: ",index)
+
+
+    plot_matrix(scnm.dynmat,None)
 
     
     print("\n\tJob done :)\n")
