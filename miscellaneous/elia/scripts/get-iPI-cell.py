@@ -3,7 +3,6 @@
 # email : elia.stocco@mpsd.mpg.de
 from ase.io import read
 import argparse
-from icecream import ic
 import numpy as np
 from miscellaneous.elia.functions import matrix2str
 
