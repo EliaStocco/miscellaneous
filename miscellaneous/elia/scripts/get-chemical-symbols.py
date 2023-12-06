@@ -6,7 +6,7 @@ import argparse
 import json
 
 #---------------------------------------#
-description     = "Print to screen the atomic symbols of an atomic configuration."
+description     = "Save to file and/or print to screen the chemical symbols of an atomic configuration."
 warning         = "***Warning***"
 closure         = "Job done :)"
 keywords        = "It's up to you to modify the required keywords."
