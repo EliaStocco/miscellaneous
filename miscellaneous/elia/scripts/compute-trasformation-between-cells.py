@@ -29,42 +29,16 @@ except:
     pass
 
 #---------------------------------------#
-def prepare_parser():
-    parser = argparse.ArgumentParser(description=description)
-    argv = {"metavar":"\b"}
-    parser.add_argument(
-        "-a", "--structure_A",  type=str,**argv,
-        help="atomic structure A [cell]"
-    )
-    parser.add_argument(
-        "-b", "--structure_B",  type=str,**argv,
-        help="atomic structure B [supercell]"
-    )
-    options = parser.parse_args()
-    return options
-
-#---------------------------------------#
 def find_trasformation(A:Atoms,B:Atoms):
     M = np.asarray(B.cell).T @ np.linalg.inv(np.asarray(A.cell).T)
     size = M.round(0).diagonal().astype(int)
     return size, M
 
 #---------------------------------------#
-def main():
-
-    args = prepare_parser()
-
-    # Print the script's description
-    print("\n\t{:s}".format(description))
-    # print("done")
-    print("\n\t{:s}:".format(input_arguments))
-    for k in args.__dict__.keys():
-        print("\t{:>20s}:".format(k),getattr(args,k))
-    print()
-
+def find_A2B(file_A,file_B):
     # structure A
-    print("\tReading structure A from input file '{:s}' ... ".format(args.structure_A), end="")
-    A = read(args.structure_A)
+    print("\tReading structure A from input file '{:s}' ... ".format(file_A), end="")
+    A = read(file_A)
     print("done")
 
     print("\tCell A:")
@@ -73,8 +47,8 @@ def main():
     print(line)
 
     # structure B
-    print("\tReading structure B from input file '{:s}' ... ".format(args.structure_B), end="")
-    B = read(args.structure_B)
+    print("\tReading structure B from input file '{:s}' ... ".format(file_B), end="")
+    B = read(file_B)
     print("done")
 
     print("\tCell B:")
@@ -90,6 +64,38 @@ def main():
 
     det = np.linalg.det(M)
     print("\tdet(M): {:6.4f}".format(det))
+
+    return
+
+#---------------------------------------#
+def prepare_parser():
+    parser = argparse.ArgumentParser(description=description)
+    argv = {"metavar":"\b"}
+    parser.add_argument(
+        "-a", "--structure_A",  type=str,**argv,
+        help="atomic structure A [cell]"
+    )
+    parser.add_argument(
+        "-b", "--structure_B",  type=str,**argv,
+        help="atomic structure B [supercell]"
+    )
+    options = parser.parse_args()
+    return options
+
+#---------------------------------------#
+def main():
+
+    args = prepare_parser()
+
+    # Print the script's description
+    print("\n\t{:s}".format(description))
+    # print("done")
+    print("\n\t{:s}:".format(input_arguments))
+    for k in args.__dict__.keys():
+        print("\t{:>20s}:".format(k),getattr(args,k))
+    print()
+
+    find_A2B(args.structure_A,args.structure_B)
     
     print("\n\t{:s}\n".format(closure))
 
