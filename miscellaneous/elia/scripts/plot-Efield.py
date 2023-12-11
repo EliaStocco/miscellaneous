@@ -13,11 +13,48 @@
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-from ipi.engine.eda import ElectricField
 import xml.etree.ElementTree as xmlet
 import os
 #import ast 
 from miscellaneous.elia.functions import convert
+
+class ElectricField:
+
+    def __init__(self, amp=None, freq=None, phase=None, peak=None, sigma=None):
+        self.amp = amp if amp is not None else np.zeros(3)
+        self.freq = freq if freq is not None else 0.0
+        self.phase = phase if phase is not None else 0.0
+        self.peak = peak if peak is not None else 0.0
+        self.sigma = sigma if sigma is not None else np.inf
+
+    def Efield(self,time):
+        """Get the value of the external electric field (cartesian axes)"""
+        if hasattr(time, "__len__"):
+            return np.outer(self._get_Ecos(time) * self.Eenvelope(time), self.amp)
+        else:
+            return self._get_Ecos(time) * self.Eenvelope(time) * self.amp
+
+    def _Eenvelope_is_on(self):
+        return self.peak > 0.0 and self.sigma != np.inf
+
+    def Eenvelope(self,time):
+        """Get the gaussian envelope function of the external electric field"""
+        # https://en.wikipedia.org/wiki/Normal_distribution
+        if self._Eenvelope_is_on():
+            x = time  # indipendent variable
+            u = self.peak  # mean value
+            s = self.sigma  # standard deviation
+            return np.exp(
+                -0.5 * ((x - u) / s) ** 2
+            )  # the returned maximum value is 1, when x = u
+        else:
+            return 1.0
+
+    def _get_Ecos(self, time):
+        """Get the sinusoidal part of the external electric field"""
+        # it's easier to define a function and compute this 'cos'
+        # again everytime instead of define a 'depend_value'
+        return np.cos(self.freq * time + self.phase)
 
 def plt_clean():
     ###
@@ -31,17 +68,31 @@ def compute(Ef,data,options):
     t = np.arange(0,options.t_max,options.time_spacing) * factor
     tt = t * convert ( 1 , "time" , "picosecond" , "atomic_unit" )
     E = np.zeros( (len(t),3))    
-    E = Ef._get_Efield(tt)
-    f = Ef._get_Eenvelope(tt) * np.linalg.norm(data["Eamp"])
+    E = Ef.Efield(tt)
+    f = Ef.Eenvelope(tt) * np.linalg.norm(data["amp"])
     En = np.linalg.norm(E,axis=1)
     return t,E,En,f
 
 def FFT_plot(Ef,data,options):
+
+    from miscellaneous.elia.fourier import FourierAnalyzer
+
     t,E,En,f= compute(Ef,data,options)
+    result = np.column_stack((E, f)).shape
+    fft = FourierAnalyzer(t,result)
+
+    # fft.plot_fourier_transform()
+    # fft.plot_power_spectrum()
+    # fft.plot_time_series()
 
     fig, ax = plt.subplots(figsize=(12,6))
 
-    ax.plot(t,f,label="$f_{env} \\times E_{amp}$",color="black")
+    fft.freq, fft.spectrum
+
+    for i in range(3):
+        ax.plot(fft.freq,fft.fft[:,i])
+    plt.show()
+
     ax.plot(t,En,label="$|E|$",color="gray",alpha=0.5)
     ax.plot(t,E[:,0],label="$E_x$",color="red",alpha=0.5)
     ax.plot(t,E[:,1],label="$E_y$",color="green",alpha=0.5)
@@ -97,11 +148,11 @@ def prepare_parser():
         help="output file ", default="Efield.pdf"
     )
     parser.add_argument(
-        "-t", "--t-max", action="store", type=float,
+        "-t", "--t_max", action="store", type=float,
         help="max time",
     )
     parser.add_argument(
-        "-dt", "--time-spacing", action="store", type=float,
+        "-dt", "--time_spacing", action="store", type=float,
         help="max time",default=1
     )
     parser.add_argument(
@@ -122,21 +173,21 @@ def get_data(options):
 
     data = xmlet.parse(options.input).getroot()
 
-    ensemble = None
+    efield = None
     for element in data.iter():
-        if element.tag == "ensemble":
-            ensemble = element
+        if element.tag == "efield":
+            efield = element
             break
 
     data     = {}
-    keys     = ["Eamp",          "Efreq",    "Ephase",   "Epeak","Esigma"]
+    keys     = ["amp",          "freq",    "phase",   "peak","sigma"]
     families = ["electric-field","frequency","undefined","time", "time"  ]
     
     for key,family in zip(keys,families):
 
         data[key] = None
         
-        element = ensemble.find(key)
+        element = efield.find(key)
 
         if element is not None:
             #value = ast.literal_eval(element.text)
@@ -174,17 +225,17 @@ def main():
 
     data = get_data(options)
 
-    Ef = ElectricField( Eamp=data["Eamp"],\
-                        Ephase=data["Ephase"],\
-                        Efreq=data["Efreq"],\
-                        Epeak=data["Epeak"],\
-                        Esigma=data["Esigma"])
+    Ef = ElectricField( amp=data["amp"],\
+                        phase=data["phase"],\
+                        freq=data["freq"],\
+                        peak=data["peak"],\
+                        sigma=data["sigma"])
 
     # plot of the E-field
     Ef_plot(Ef,data,options)
 
     # plot of the E-field FFT
-    #FFT_plot(Ef,data,options)
+    # FFT_plot(Ef,data,options)
 
     print("\n\tJob done :)\n")
 

@@ -4,7 +4,7 @@
 # from ase.io import read
 import argparse
 import numpy as np
-from miscellaneous.elia.functions import matrix2str
+from miscellaneous.elia.formatting import matrix2str
 from ase.cell import Cell
 from ase import Atoms
 from ase.io import write

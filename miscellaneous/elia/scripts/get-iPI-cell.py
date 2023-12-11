@@ -4,7 +4,7 @@
 from ase.io import read
 import argparse
 import numpy as np
-from miscellaneous.elia.functions import matrix2str
+from miscellaneous.elia.formatting import matrix2str
 
 #---------------------------------------#
 description     = "Save to file and/or print to screen the cell an atomic configuration in a i-PI compatible format."

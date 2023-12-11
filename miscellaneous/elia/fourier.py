@@ -52,7 +52,7 @@ class FourierAnalyzer:
         plt.show()
 
     def plot_fourier_transform(self):
-        plt.plot(self.freq, self.spectrum)
+        plt.plot(self.freq, self.fft)
         plt.title('Fourier Transform')
         plt.xlabel('Frequency')
         plt.ylabel('Amplitude')

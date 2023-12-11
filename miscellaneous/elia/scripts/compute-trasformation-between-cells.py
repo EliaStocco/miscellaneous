@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # author: Elia Stocco
 # email : elia.stocco@mpsd.mpg.de
-from miscellaneous.elia.functions import matrix2str
+from miscellaneous.elia.formatting import matrix2str
 from ase import Atoms
 from ase.io import read
 import argparse
