@@ -32,7 +32,7 @@ def prepare_args():
     argv = {"metavar":"\b"}
     parser.add_argument("-q", "--qpoints", type=str, **argv, help="qpoints file (default: 'qpoints.yaml')", default="qpoints.yaml")
     parser.add_argument("-i", "--input",   type=str, **argv, help="general phonopy file (default: 'phonopy.yaml')", default="phonopy.yaml")
-    parser.add_argument("-o", "--output",  type=str, **argv, help="csv output file (default: 'phonon-modes.csv')", default="phonon-modes.csv")
+    parser.add_argument("-o", "--output",  type=str, **argv, help="csv output file (default: 'phonon-modes.pickle')", default="phonon-modes.pickle")
     return parser.parse_args()
 #---------------------------------------#
 def main():
@@ -50,6 +50,7 @@ def main():
     print()
 
     #---------------------------------------#
+    # read input file ('phonopy.yaml')
     print("\tReading data from input file '{:s}' ... ".format(args.input), end="")
     with open(args.input) as f:
         info = yaml.safe_load(f)
@@ -64,7 +65,7 @@ def main():
     mass = factor * np.asarray([ [a["mass"]]*3 for a in info["unit_cell"]["points"] ]).flatten()
     
     #---------------------------------------#
-    # read qpoints
+    # read qpoints file ('qpoints.yaml')
     print("\n\tReading qpoints from input file '{:s}' ... ".format(args.qpoints), end="")
     with open(args.qpoints) as f:
         qpoints = yaml.safe_load(f)
@@ -93,13 +94,13 @@ def main():
 
         pm.at[q,"q"]     = tuple(q)
         pm.at[q,"freq"]  = [ a["frequency"] for a in phonon["band"] ]
-        pm.at[q,"modes"] = nm.build_supercell_normal_modes(size=size).modes
+        pm.at[q,"modes"] = nm.build_supercell_normal_modes(size=size)#.modes
 
         # print("\t\tfreq : ",np.asarray(pm.at[q,"freq"]).round(2))
 
     #---------------------------------------#
     print("\n\tWriting phonon modes to file '{:s}' ... ".format(args.output), end="")
-    pm.to_csv(args.output,index=False)
+    pm.to_pickle(args.output)
     print("done")
     
     # Script completion message
