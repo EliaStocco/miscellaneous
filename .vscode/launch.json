@@ -10,8 +10,8 @@
             "request": "launch",
             //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/fourier.py",
             //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/post_processing/BEC-along-training.py",
-            "program" : "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/phonopy-summary.py",
-            //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/train-e3nn-model.py",
+            //"program" : "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/post-process-phonopy.py",
+            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/modes2jmol.py",
             //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/dataset/build-dataset.py",
             //"cwd": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/train-water/",
             "cwd" : "/home/stoccoel/google-personal/works/LiNbO3/phonopy",
@@ -23,7 +23,11 @@
             //"env": {"PYTHONPATH": "/home/stoccoel/google-personal/miscellaneous/:/home/stoccoel/google-personal/i-pi-sabia/drivers/:/home/stoccoel/google-personal/i-pi-sabia/" },
             //"args" : ["--input", "input.json"],
             //"args" : ["-i", "geometry.in", "-o", "test.in"]
-            "args" : ["-q", "output/qpoints.yaml","-i", "output/phonopy.yaml"]
+            "args" : ["-i","primitive.xyz","-m","vib/phonopy.(0.0,0.0,0.0).mode"],
+            //"args" : ["-t", "trajectory.extxyz","-pm", "phonon-modes.pickle"],
+            //"args" : ["-t", "trajectory.extxyz","-pm", "phonon-modes.pickle"],
+            //"args" : ["-q", "output/qpoints.yaml","-i", "output/phonopy.yaml","-of","vib"]
+            
             // "args" : [  "-c","MgO/vib-1x1x1/MgO.extxyz",
             //             "-sc","MgO/vib-2x2x2/MgO.extxyz",
             //             // "-cr","MgO/vib-1x1x1/MgO.extxyz",

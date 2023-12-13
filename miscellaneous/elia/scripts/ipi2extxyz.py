@@ -6,6 +6,7 @@ from copy import copy
 from ase.io import write, read
 from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder, str2bool
+from miscellaneous.elia.input import size_type
 
 # ToDo:
 # remove dependece on 'MicroState'
@@ -14,10 +15,6 @@ description = "Convert the i-PI output files to an extxyz file with the specifie
 DEBUG=False
 # example:
 # python ipi2extxyz.py -p i-pi -f data -aa forces,data/i-pi.forces_0.xyz -ap dipole,potential -o test.extxyz
-
-def arrays_type(s,dtype):
-    s = s.split("[")[1].split("]")[0].split(",")
-    return np.asarray([ dtype(k) for k in s ])
 
 def prepare_args():
 
@@ -43,11 +40,11 @@ def prepare_args():
     parser.add_argument("-if", "--format",  type=str, default='i-pi', **argv,
                         help="input file format (default: 'i-pi')")
 
-    parser.add_argument("-aa", "--additional_arrays",  type=lambda s: arrays_type(s,str), default=None, **argv,
-                        help="additional arrays to be added to the output file")
+    parser.add_argument("-aa", "--additional_arrays",  type=lambda s: size_type(s,dtype=str), default=None, **argv,
+                        help="additional arrays to be added to the output file (example: [velocities,forces])")
     
-    parser.add_argument("-ap", "--additional_properties",  type=lambda s: arrays_type(s,str), default=None, **argv,
-                        help="additional properties to be added to the output file")
+    parser.add_argument("-ap", "--additional_properties",  type=lambda s: size_type(s,dtype=str), default=None, **argv,
+                        help="additional properties to be added to the output file (example: [potential])")
 
     parser.add_argument("-o", "--output",  type=str, default='output.extxyz', **argv,
                         help="output file in extxyz format (default: 'output.extxyz')")

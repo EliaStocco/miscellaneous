@@ -1,5 +1,6 @@
 import numpy as np
 from copy import copy
+from itertools import product
 from miscellaneous.elia.functions import get_one_file_in_folder
 
 class NormalModes():
@@ -16,13 +17,13 @@ class NormalModes():
         self.Natoms = int(self.Ndof / 3)
 
         empty = np.full((self.Ndof,self.Nmodes),np.nan)
-        self.ortho_modes = empty.copy()
         self.eigvec = empty.copy()
         self.dynmat = empty.copy()
-        self.modes  = empty.copy()
+        self.mode   = empty.copy()
         self.proj   = empty.copy()
+        self.non_ortho_modes = empty.copy()
 
-        self.eigvals = np.full(self.Nmodes,np.nan)
+        self.eigval = np.full(self.Nmodes,np.nan)
         # self.freq    = np.full(self.Nmodes,np.nan)
         self.masses  = np.full(self.Ndof,np.nan)
 
@@ -47,9 +48,9 @@ class NormalModes():
         file = get_one_file_in_folder(folder=folder,ext=".masses")
         self.masses[:] = np.loadtxt(file)
 
-        # ortho modes
+        # ortho mode
         file = get_one_file_in_folder(folder=folder,ext=".mode")
-        self.ortho_modes[:,:] = np.loadtxt(file)
+        self.mode[:,:] = np.loadtxt(file)
 
         # eigvec
         file = get_one_file_in_folder(folder=folder,ext=".eigvec")
@@ -59,16 +60,16 @@ class NormalModes():
         # file = get_one_file_in_folder(folder=folder,ext="_full.hess")
         # self.hess = np.loadtxt(file)
 
-        # eigvals
+        # eigval
         file = get_one_file_in_folder(folder=folder,ext=".eigval")
-        self.eigvals[:] = np.loadtxt(file)
+        self.eigval[:] = np.loadtxt(file)
 
         # dynmat 
         file = get_one_file_in_folder(folder=folder,ext=".dynmat")
         self.dynmat[:,:] = np.loadtxt(file)
 
-        # modes
-        # self.modes[:,:] = diag_matrix(self.masses,"-1/2") @ self.eigvec
+        # mode
+        # self.mode[:,:] = diag_matrix(self.masses,"-1/2") @ self.eigvec
         self.eigvec2modes()
 
         # proj
@@ -109,26 +110,26 @@ class NormalModes():
     # def set_eigvals(self,band,mode="phonopy"):
     #     if mode == "phonopy":
     #         N = self.Nmodes
-    #         eigvals = np.full(N,np.nan)
+    #         eigval = np.full(N,np.nan)
     #         for n in range(N):
-    #             eigvals[n] = band[n]["frequency"]
-    #         self.eigvals = np.square(eigvals)
+    #             eigval[n] = band[n]["frequency"]
+    #         self.eigval = np.square(eigval)
     #     else:
     #         raise ValueError("not implemented yet")
     #     pass
 
     @property
     def freq(self):
-        return np.sqrt(np.abs(self.eigvals.real)) * np.sign(self.eigvals.real)
+        return np.sqrt(np.abs(self.eigval.real)) * np.sign(self.eigval.real)
         
     def diagonalize(self,**argv):
         M = self.dynmat
         # if np.allclose(M, M.conj().T):
-        #     eigvals, eigvecs, = np.linalg.eigh(M,**argv)
+        #     eigval, eigvecs, = np.linalg.eigh(M,**argv)
         # else:
-        eigvals, eigvecs, = np.linalg.eigh(M,**argv)
-        frequencies = np.sqrt(np.abs(eigvals.real)) * np.sign(eigvals.real)
-        return frequencies, eigvals, eigvecs
+        eigval, eigvecs, = np.linalg.eigh(M,**argv)
+        frequencies = np.sqrt(np.abs(eigval.real)) * np.sign(eigval.real)
+        return frequencies, eigval, eigvecs
 
     @staticmethod
     def diag_matrix(M,exp):
@@ -144,8 +145,8 @@ class NormalModes():
         return out           
     
     def eigvec2modes(self):
-        self.modes = NormalModes.diag_matrix(self.masses,"-1/2") @ self.eigvec
-        # self.ortho_modes[:,:] = self.modes / np.linalg.norm(self.modes,axis=0)
+        self.non_ortho_mode = NormalModes.diag_matrix(self.masses,"-1/2") @ self.eigvec
+        self.mode = self.non_ortho_mode / np.linalg.norm(self.non_ortho_mode,axis=0)
 
     def eigvec2proj(self):
         self.proj = self.eigvec.T @ NormalModes.diag_matrix(self.masses,"1/2")
@@ -154,7 +155,39 @@ class NormalModes():
         return self.proj @ displ
 
     def project_velocities(self,vel):
-        return NormalModes.diag_matrix(self.eigvals,"-1/2") @ self.proj @ vel
+        return NormalModes.diag_matrix(self.eigval,"-1/2") @ self.proj @ vel
+    
+    def build_supercell_displacement(self,size,q):
+
+        q = np.asarray(q)
+
+        values = [None]*len(size)
+        for n,a in enumerate(size):
+            values[n] = np.arange(a)
+        r_point = list(product(*values))
+        
+        size = np.asarray(size)
+        N = size.prod()
+        supercell = NormalModes(self.Nmodes,self.Ndof*N)
+        supercell.masses[:] = np.asarray(list(self.masses)*N)
+        supercell.eigvec.fill(np.nan)
+        for i,r in enumerate(r_point):
+            kr = np.asarray(r) / size @ q
+            phase = np.exp(1.j * 2 * np.pi * kr )
+            # phi = int(cmath.phase(phase)*180/np.pi)
+            # ic(k,r,phi)
+            supercell.eigvec[i*self.Ndof:(i+1)*self.Ndof,:] = ( self.eigvec * phase).real
+                
+        if np.isnan(supercell.eigvec).sum() != 0:
+            raise ValueError("error")
+        
+        supercell.eigvec /= np.linalg.norm(supercell.eigvec,axis=0)
+        supercell.eigval = self.eigval.copy()
+        
+        supercell.eigvec2modes()
+        supercell.eigvec2proj()
+
+        return supercell
     
     def build_supercell_normal_modes(self,size):
 
@@ -203,9 +236,9 @@ class NormalModes():
         # out.ortho_modes = empty.copy()
         out.eigvec = self.eigvec[:,ii]
         out.dynmat = np.nan
-        # out.modes = empty.copy()
+        # out.mode = empty.copy()
         # out.proj = empty.copy()
-        out.eigvals = self.eigvals[ii]
+        out.eigval = self.eigval[ii]
 
         out.Nmodes = out.eigvec.shape[1]
 

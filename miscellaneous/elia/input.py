@@ -1,13 +1,12 @@
 import numpy as np
 import argparse
 #---------------------------------------#
-def size_type(s):
+def size_type(s,dtype=int,N=None):
     s = s.split("[")[1].split("]")[0].split(",")
-    match len(s):
-        case 3:
-            return np.asarray([ float(k) for k in s ])
-        case _:
-            raise ValueError("You should provide 3 integers") 
+    if N is not None and len(s) != N :
+        raise ValueError("You should provide {:d} values".format(N)) 
+    else:
+        return np.asarray([ dtype(k) for k in s ])
 #---------------------------------------#
 def str2bool(v):
     if isinstance(v, bool):

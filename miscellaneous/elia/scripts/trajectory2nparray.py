@@ -2,13 +2,11 @@
 import argparse
 import numpy as np
 from ase.io import read
-from ase import Atoms
 import pandas as pd
-from miscellaneous.elia.vectorize import easyvectorize
 
 #---------------------------------------#
 # Description of the script's purpose
-description = "Project a trajectory onto phonon modes."
+description = "Read a trajectory from an extxyz file, then extract a property or array and save it to file."
 warning = "***Warning***"
 closure = "Job done :)"
 keywords = "It's up to you to modify the required keywords."
@@ -51,15 +49,8 @@ def main():
     #---------------------------------------#
     # read trajectory
     print("\tReading trajectory from file '{:s}' ... ".format(args.trajectory), end="")
-    atoms = read(args.trajectory,format="extxyz",index=":")
+    trajectory = read(args.trajectory,format="extxyz",index=":")
     print("done")
-
-    print("\tVectorizing the trajectory ... ", end="")
-    trajectory = easyvectorize(Atoms)(atoms)
-    del atoms
-    print("done")
-
-    # a = trajectory.call(lambda x: x.arrays.velocities)
 
     #---------------------------------------#
     # read phonon modes ('phonon-modes.pickle')
@@ -69,6 +60,9 @@ def main():
 
     #---------------------------------------#
 
+
+
+    
     print("\n\tJob done :)\n")
 
 if __name__ == "__main__":
