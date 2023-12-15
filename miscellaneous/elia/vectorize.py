@@ -87,7 +87,7 @@ class easyvectorize():
             # Convert the result to the target type
             converted_result = easyvectorize.array(result)
             return converted_result
-        return wrapper
+        return wrapper 
 
     def __call__(self,*argc,**kwarg):
 
@@ -114,7 +114,7 @@ class easyvectorize():
                     setattr(element, name, value)
 
             def __getattr__(self, name):
-                ic("__getattr__")
+                # ic("__getattr__")
                 try:
                     # Try to get the attribute from the superclass
                     return super().__getattr__(name)
@@ -123,7 +123,7 @@ class easyvectorize():
                     raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
             def __getattribute__(self, name):
-                ic("__getattribute__")
+                # ic("__getattribute__")
                 # Check if the attribute is callable
                 try:
                     return super().__getattribute__(name)
@@ -166,8 +166,8 @@ class easyvectorize():
                 return [ func(element,*args, **kwargs) for element in self]
                             
             @easyvectorize.convert_array   
-            def call(self,func,*args, **kwargs):
-                return [ getattr(element,func)(*args, **kwargs) for element in self]
+            def call(self,func):
+                return [ func(element) for element in self]
 
         return vectorized(*argc,**kwarg)
     
