@@ -37,6 +37,21 @@ from scipy.ndimage import gaussian_filter1d, generic_filter
 #             return np.asarray([ float(k) for k in s ])
 #         case _:
 #             raise ValueError("You should provide 3 integers") 
+
+def phonopy2atoms(data):
+    from ase import Atoms
+    supercell_points = data["points"]
+
+    # Extract atomic positions and symbols
+    symbols = [entry["symbol"] for entry in supercell_points]
+    positions = [entry["coordinates"] for entry in supercell_points]
+
+    # Extract cell parameters from the supercell lattice
+    lattice_matrix = data["lattice"]
+
+    # Create an ase.Atoms object
+    return Atoms(symbols=symbols, positions=positions, cell=lattice_matrix, pbc=True)
+
         
 def cart2lattice(cell): #,*argc,**argv):
     """ Cartesian to lattice coordinates rotation matrix
@@ -659,6 +674,15 @@ def convert(what, family=None, _from="atomic_unit", _to="atomic_unit"):
 # def get_family(name):
 #     return Properties.property_dict[name]["dimension"]
 
+def nparray2list_in_dict(data):
+    if isinstance(data, np.ndarray):
+        return data.tolist()
+    elif isinstance(data, dict):
+        return {key: nparray2list_in_dict(value) for key, value in data.items()}
+    elif isinstance(data, (list, tuple)):
+        return [nparray2list_in_dict(item) for item in data]
+    else:
+        return data
 
 # https://www.blog.pythonlibrary.org/2014/02/14/python-101-how-to-change-a-dict-into-a-class/
 class Dict2Obj(object):

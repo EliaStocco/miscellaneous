@@ -77,6 +77,9 @@ def main():
     modes = np.loadtxt(args.modes)
     print("done")
 
+    if atoms.positions.flatten().shape != modes.shape[0]:
+        raise ValueError("positions and modes shapes do not match.")
+
     #---------------------------------------#
     # read eigenvalues
     if args.eigenvalues is not None:
@@ -87,6 +90,9 @@ def main():
         print("\tNo vibrational modes eigenvalues provided: setting them to zero ... ", end="")
         eigvals = np.zeros(modes.shape[0])
         print("done")
+
+    if eigvals.shape != modes.shape[0]:
+        raise ValueError("eigvals and modes shapes do not match.")
 
     #---------------------------------------#
     # frequencies
