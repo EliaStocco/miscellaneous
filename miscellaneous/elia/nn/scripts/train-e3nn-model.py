@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import time
 start_time = time.time()
 import numpy as np
@@ -56,6 +57,7 @@ default_values = {
         "options"          : None,
         "scheduler"        : "",
         "scheduler-factor" : 1e-2,
+        "init-parameters"  : None,
     }
 
 #--------------------------------#
@@ -226,6 +228,13 @@ def main():
     net = aile3nn(**kwargs)
     N = net.n_parameters()
     print("Tot. number of parameters: ",N)
+
+    ##########################################
+    # initialize the parameters if a file is provided
+    pfile = parameters["init-parameters"]
+    if pfile is not None:
+        print("Reading initial parameters from file '{:s}'".format(pfile))
+        net.load_state_dict(torch.load(pfile))
 
     ##########################################
     # choose the loss function
