@@ -12,13 +12,15 @@
             //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/post_processing/BEC-along-training.py",
             //"program" : "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/phonopy2NormalModes.py",
             //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/modes2jmol.py",
-            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/project-on-phonon-modes.py",
+            //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/project-on-phonon-modes.py",
+            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/ipi2extxyz.py",
             //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/dataset/build-dataset.py",
             //"cwd": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/train-water/",
-            "cwd" : "/home/stoccoel/google-personal/works/LiNbO3/phonopy",
+            "cwd" : "/home/stoccoel/google-personal/works/water/water-new-eda-nve/",
             //"cwd" : "/home/stoccoel/google-personal/works/train-water/",
             "console": "integratedTerminal",
             "justMyCode": false,
+            "args" : ["-f", "first", "-o", "first/trajectory.first.extxyz", "-ap", "[potential]"],
             //"args" : ["-bs","50","-lr","1.0e-4","-w","a"],
             //"env": {"PYTHONPATH": "/u/elsto/miscellaneous/"},
             //"env": {"PYTHONPATH": "/home/stoccoel/google-personal/miscellaneous/:/home/stoccoel/google-personal/i-pi-sabia/drivers/:/home/stoccoel/google-personal/i-pi-sabia/" },
@@ -26,7 +28,7 @@
             //"args" : ["-i", "geometry.in", "-o", "test.in"]
             //"args" : ["-i","supercell.xyz","-m","vib/phonopy.(0.0,0.0,0.0).mode"],
             //"args" : ["-g","start.au.xyz","-t", "trajectory.extxyz","-pm", "phonon-modes.pickle"],
-            "args" : ["-t", "trajectory.extxyz","-pm", "phonon-modes.pickle"],
+            //"args" : ["-t", "trajectory.extxyz","-pm", "phonon-modes.pickle"],
             //"args" : ["-q", "output/qpoints.yaml","-i", "output/phonopy.yaml","-of","vib"]
             
             // "args" : [  "-c","MgO/vib-1x1x1/MgO.extxyz",

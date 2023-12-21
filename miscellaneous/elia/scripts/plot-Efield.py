@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-
-# This file is part of i-PI.
-# i-PI Copyright (C) 2014-2015 i-PI developers
-# See the "licenses" directory for full license information.
-
-# author: Elia Stocco
-# email : stocco@fhi-berlin.mpg.de
-
-# python setup.py build
-# python setup.py install
-
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
