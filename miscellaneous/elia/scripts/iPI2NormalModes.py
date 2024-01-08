@@ -28,7 +28,7 @@ try :
     from colorama import Fore, Style
     colorama.init(autoreset=True)
     description     = Fore.GREEN  + Style.BRIGHT + description             + Style.RESET_ALL
-    warning         = Fore.RED    + Style.BRIGHT + warning.replace("*","") + Style.RESET_ALL
+    warning         = Fore.MAGENTA    + Style.BRIGHT + warning.replace("*","") + Style.RESET_ALL
     closure         = Fore.BLUE   + Style.BRIGHT + closure                 + Style.RESET_ALL
     keywords        = Fore.YELLOW + Style.NORMAL + keywords                + Style.RESET_ALL
     input_arguments = Fore.GREEN  + Style.NORMAL + input_arguments         + Style.RESET_ALL

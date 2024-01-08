@@ -20,7 +20,7 @@
             //"cwd" : "/home/stoccoel/google-personal/works/train-water/",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["-f", "first", "-o", "first/trajectory.first.extxyz", "-ap", "[potential]"],
+            "args" : ["-qf", "first/replay/replay.xyz", "-pf", "first/replay/i-pi.properties.out", "-o", "tmp.extxyz","-p", "[all]"],
             //"args" : ["-bs","50","-lr","1.0e-4","-w","a"],
             //"env": {"PYTHONPATH": "/u/elsto/miscellaneous/"},
             //"env": {"PYTHONPATH": "/home/stoccoel/google-personal/miscellaneous/:/home/stoccoel/google-personal/i-pi-sabia/drivers/:/home/stoccoel/google-personal/i-pi-sabia/" },

@@ -4,17 +4,44 @@ import os
 import numpy as np
 from copy import copy
 from ase.io import write, read
-from miscellaneous.elia.classes import MicroState
+from ase import Atoms
+from miscellaneous.elia.properties import properties as Properties
 from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder, str2bool
 from miscellaneous.elia.input import size_type
+from miscellaneous.elia.trajectory import trajectory
 
 # ToDo:
 # remove dependece on 'MicroState'
 
-description = "Convert the i-PI output files to an extxyz file with the specified properties and arrays.\n"
 DEBUG=False
 # example:
 # python ipi2extxyz.py -p i-pi -f data -aa forces,data/i-pi.forces_0.xyz -ap dipole,potential -o test.extxyz
+
+#---------------------------------------#
+
+# Description of the script's purpose
+description = "Convert the i-PI output files to an extxyz file with the specified properties and arrays.\n"
+warning = "***Warning***"
+error = "***Error***"
+closure = "Job done :)"
+information = "You should provide the positions as printed by i-PI."
+input_arguments = "Input arguments"
+
+
+#---------------------------------------#
+# colors
+try :
+    import colorama
+    from colorama import Fore, Style
+    colorama.init(autoreset=True)
+    description     = Fore.GREEN    + Style.BRIGHT + description             + Style.RESET_ALL
+    warning         = Fore.MAGENTA  + Style.BRIGHT + warning.replace("*","") + Style.RESET_ALL
+    error           = Fore.RED      + Style.BRIGHT + error.replace("*","")   + Style.RESET_ALL
+    closure         = Fore.BLUE     + Style.BRIGHT + closure                 + Style.RESET_ALL
+    information     = Fore.YELLOW   + Style.NORMAL + information             + Style.RESET_ALL
+    input_arguments = Fore.GREEN    + Style.NORMAL + input_arguments         + Style.RESET_ALL
+except:
+    pass
 
 def prepare_args():
 
@@ -41,10 +68,10 @@ def prepare_args():
                         help="input file format (default: 'i-pi')")
 
     parser.add_argument("-aa", "--additional_arrays",  type=lambda s: size_type(s,dtype=str), default=None, **argv,
-                        help="additional arrays to be added to the output file (example: [velocities,forces])")
+                        help="additional arrays to be added to the output file (example: [velocities,forces], default: [])")
     
-    parser.add_argument("-ap", "--additional_properties",  type=lambda s: size_type(s,dtype=str), default=None, **argv,
-                        help="additional properties to be added to the output file (example: [potential])")
+    parser.add_argument("-ap", "--additional_properties",  type=lambda s: size_type(s,dtype=str), default=["all"], **argv,
+                        help="additional properties to be added to the output file (example: [potential,dipole], default: [all])")
 
     parser.add_argument("-o", "--output",  type=str, default='output.extxyz', **argv,
                         help="output file in extxyz format (default: 'output.extxyz')")
@@ -81,18 +108,21 @@ def main():
         elif not os.path.exists(args.positions_file):
             raise ValueError("File '{:s}' does not exist.".format(args.positions_file))
 
-        # Read the MicroState data from the input file
-        instructions = {
-            # "cells"     : args.positions_file,  # Use the input file for 'cells' data
-            "positions" : args.positions_file,  # Use the input file for 'positions' data
-            # "types"     : args.positions_file   # Use the input file for 'types' data
-        }
+        # # Read the MicroState data from the input file
+        # instructions = {
+        #     # "cells"     : args.positions_file,  # Use the input file for 'cells' data
+        #     "positions" : args.positions_file,  # Use the input file for 'positions' data
+        #     # "types"     : args.positions_file   # Use the input file for 'types' data
+        # }
 
         print("\tReading atomic structures from file '{:s}' using the 'MicroState' class ... ".format(args.positions_file), end="")
         with suppress_output(not DEBUG):
-            data = MicroState(instructions=instructions)
-            atoms = data.to_ase(pbc=args.pbc)
-            del data
+            # data = MicroState(instructions=instructions)
+            # atoms = data.to_ase(pbc=args.pbc)
+            # atoms = read(args.positions_file,index=":")
+            # atoms = easyvectorize(Atoms)(atoms)
+            atoms = trajectory(args.positions_file)
+            # del data
         print("done")
     else :
         print("\tReading atomic structures from file '{:s}' using the 'ase.io.read' ... ".format(args.positions_file), end="")
@@ -101,6 +131,8 @@ def main():
             atoms.set_pbc([False, False, False])
             atoms.set_cell()
         print("done")
+    
+    print("\t# atomic structures: ",len(atoms))
 
     if args.additional_arrays is not None:
         arrays = dict()
@@ -141,15 +173,26 @@ def main():
             raise ValueError("File '{:s}' does not exist.".format(args.properties_file))
                 
         print("\tReading properties from file '{:s}' using the using the 'MicroState' class ... ".format(args.properties_file), end="")
-        instructions = {
-            "properties" : args.properties_file, 
-        }
+        # instructions = {
+        #     "properties" : args.properties_file, 
+        # }
         with suppress_output(not DEBUG):
-            allproperties = MicroState(instructions=instructions)
+            allproperties = Properties.load(file=args.properties_file)
         print("done")
 
-        print("\tSummary of the read properties:\n")
-        df = allproperties.show_properties()
+        if len(allproperties) != len(atoms):
+            print("\n\t{:s}: n. of atomic structures and n. of properties differ.".format(warning))
+            print("\t\t# atomic structures: {:d}".format(len(atoms)))
+            print("\t\t       # properties: {:d}".format(len(allproperties)))
+
+            if len(allproperties) == len(atoms)+1 :
+                print("\n\t{:s}.\n\tMaybe you provided a 'replay' input file --> discarding the first properties raw.".format(information))
+                allproperties = allproperties[1:]
+            else:
+                raise ValueError("I would expect n. of atomic structures to be (n. of properties + 1)")
+
+        print("\tSummary of the read properties (#: {:d}):\n".format(len(allproperties)))
+        df = allproperties.summary()
 
         def line(): print("\t\t-----------------------------------------")
         
@@ -160,6 +203,19 @@ def main():
             print("\t\t|{:^15s}|{:^15s}|{:^7d}|".format(row["name"],row["unit"],row["shape"]))
         line()
 
+        # all properties
+        if "all" in properties:
+            _properties = list(allproperties.properties.keys())
+            for p in properties:
+                p = p.replace(" ","")
+                if p[0] == "~":
+                    _properties.remove(p[1:])
+            properties = copy(_properties)  
+            del _properties
+        
+        print("\n\tStoring the following properties to file: ",properties)
+
+        # 
         tmp = dict()
         for k in properties:
             tmp[k] = allproperties.properties[k]
@@ -175,13 +231,13 @@ def main():
     # writing
     print("\n\tWriting output to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(args.output, atoms, format="extxyz")
+        write(args.output, list(atoms), format="extxyz")
         print("done")
     except Exception as e:
-        print(f"\n\tError: {e}")
+        print(f"\n\t{error}: {e}")
 
     # Script completion message
-    print("\n\tJob done :)\n")
+    print("\n\t{:s}\n".format(closure))
 
 if __name__ == "__main__":
     main()
