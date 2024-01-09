@@ -32,6 +32,9 @@ def prepare_args():
     
     parser.add_argument("-o", "--output", type=str, default='shifted&fixed.extxyz', **argv,
                         help="output 'extxyz' file (default: 'shifted&fixed.extxyz')")
+    
+    parser.add_argument("-j", "--jumps", type=str, default=None, **argv,
+                        help="output txt file with jumps indeces (default: 'None')")
 
     parser.add_argument("-s", "--shift",  type=size_type, default=None, **argv,
                         help="additional arrays to be added to the output file (default: [0,0,0])")
@@ -60,7 +63,7 @@ def main():
     atoms = read(args.input,format='extxyz',index=":")
     print("done")
 
-    print("\tConverting dipoles from cartesian to lattice coordinates ... ", end="")
+    print("\n\tConverting dipoles from cartesian to lattice coordinates ... ", end="")
     N = len(atoms)
     phases = np.full((N,3),np.nan)
     lenght = np.full((N,3),np.nan)
@@ -75,9 +78,10 @@ def main():
         # old[n,:] = copy(atoms[n].info["dipole"])
     print("done")
 
-    print("\tFixing the dipole jumps {:s}... ", end="")
+    print("\tFixing the dipole jumps ... ", end="")
+    old = phases.copy()
     for i in range(3):
-        phases[:,i] = np.unwrap(2*np.pi*phases[:,i])/(2*np.pi)
+        phases[:,i] = np.unwrap(phases[:,i],period=1)
     print("done")
 
     if args.shift is not None:
@@ -94,6 +98,13 @@ def main():
         R = lattice2cart(cell)
         atoms[n].info["dipole"] = R @ ( phases[n,:] * lenght[n,:] )
     print("done")
+
+    index = np.where(np.diff(old-phases,axis=0))[0]
+    print("\n\tFound {:d} jumps".format(len(index)))
+    if args.jumps is not None:
+        print("\tSaving the indices of the jumps to file '{:s}' ... ".format(args.jumps), end="")
+        np.savetxt(args.jumps,index)
+        print("done")
 
     ###
     # writing
