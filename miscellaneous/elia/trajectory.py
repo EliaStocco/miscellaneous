@@ -30,29 +30,30 @@ def trajectory(file,format:str=None):
         for n in range(len(atoms)):
             atoms[n].info = dict()
 
-        try : 
-            comments = read_comments_xyz(file)
-            cells = [ abcABC.search(comment) for comment in comments ]
-            cells = np.zeros((len(cells),3,3))
-            for n,cell in enumerate(cells):
-                a, b, c = [float(x) for x in cell.group(1).split()[:3]]
-                alpha, beta, gamma = [float(x) * deg2rad for x in cell.group(1).split()[3:6]]
-                cells[n] = mt.abc2h(a, b, c, alpha, beta, gamma)
+        # try : 
+        comments = read_comments_xyz(file)
+        strings = [ abcABC.search(comment) for comment in comments ]
+        cells = np.zeros((len(strings),3,3))
+        for n,cell in enumerate(strings):
+            a, b, c = [float(x) for x in cell.group(1).split()[:3]]
+            alpha, beta, gamma = [float(x) * deg2rad for x in cell.group(1).split()[3:6]]
+            cells[n] = mt.abc2h(a, b, c, alpha, beta, gamma)
 
-            # matches = re.findall(abcABCunits,comments[0])
-            # if len(matches) != 2 :
-            #     raise ValueError("wrong number of matches")
-            # else :
-            #     units = {
-            #         "positions" : matches[0],
-            #         "cell" : matches[1]
-            #     }
+        # matches = re.findall(abcABCunits,comments[0])
+        # if len(matches) != 2 :
+        #     raise ValueError("wrong number of matches")
+        # else :
+        #     units = {
+        #         "positions" : matches[0],
+        #         "cell" : matches[1]
+        #     }
 
-            for n in range(len(atoms)):
-                atoms[n].set_cell(cells[n].T)
+        for n in range(len(atoms)):
+            atoms[n].set_cell(cells[n].T)
+            atoms[n].set_pbc(True)
 
-        except:
-            pass
+        # except:
+        #     pass
     
     return easyvectorize(Atoms)(atoms)
 
