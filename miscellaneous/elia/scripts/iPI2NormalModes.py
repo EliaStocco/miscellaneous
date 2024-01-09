@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 from miscellaneous.elia.normal_modes import NormalModes
-from miscellaneous.elia.formatting import matrix2str
-from miscellaneous.elia.functions import convert
-from miscellaneous.elia.functions import output_folder
-from miscellaneous.elia.input import size_type
-from miscellaneous.elia.functions import phonopy2atoms
+# from miscellaneous.elia.formatting import matrix2str
+# from miscellaneous.elia.functions import convert
+# from miscellaneous.elia.functions import output_folder
+# from miscellaneous.elia.input import size_type
+# from miscellaneous.elia.functions import phonopy2atoms
 import argparse
 import numpy as np
-import yaml
+# import yaml
 import pandas as pd
-from icecream import ic
-import os
+# from icecream import ic
+# import os
 from ase.io import read
 # import warnings
 # warnings.filterwarnings("error")

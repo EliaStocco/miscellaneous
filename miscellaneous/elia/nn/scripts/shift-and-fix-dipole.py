@@ -4,6 +4,7 @@ import numpy as np
 from ase.io import write, read
 from copy import copy
 from miscellaneous.elia.functions import cart2lattice, lattice2cart
+from miscellaneous.elia.input import size_type
 
 description = "Fix the dipole jumps and shift the values of some multitples of the dipole quantum.\n"
 message = "\t!Attention:\n"+\
@@ -12,13 +13,13 @@ message = "\t!Attention:\n"+\
     "\n"
 DEBUG=False
 
-def size_type(s):
-    s = s.split("[")[1].split("]")[0].split(",")
-    match len(s):
-        case 3:
-            return np.asarray([ int(k) for k in s ])
-        case _:
-            raise ValueError("You should provide 3 integers") 
+# def size_type(s):
+#     s = s.split("[")[1].split("]")[0].split(",")
+#     match len(s):
+#         case 3:
+#             return np.asarray([ int(k) for k in s ])
+#         case _:
+#             raise ValueError("You should provide 3 integers") 
 
 def prepare_args():
 

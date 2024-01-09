@@ -2,7 +2,8 @@
 import argparse
 from ase.io import read
 import numpy as np
-from miscellaneous.elia.functions import str2bool, size_type
+from miscellaneous.elia.functions import str2bool
+from miscellaneous.elia.input import size_type
 
 description="Return a vector in cartesian coordinates depending on its lattice vector coordinates."
 

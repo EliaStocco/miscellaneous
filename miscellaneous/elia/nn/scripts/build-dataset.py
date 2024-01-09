@@ -8,17 +8,18 @@ from copy import copy
 import argparse
 from miscellaneous.elia.functions import str2bool
 from miscellaneous.elia.nn.dataset import make_dataset
+from miscellaneous.elia.input import size_type
 
 description = "Build a dataset from an 'extxyz' file, readable by 'train-e3nn-model.py'."
 
 
-def size_type(s):
-    s = s.split("[")[1].split("]")[0].split(",")
-    match len(s):
-        case 3:
-            return np.asarray([ int(k) for k in s ])
-        case _:
-            raise ValueError("You should provide 3 integers") 
+# def size_type(s):
+#     s = s.split("[")[1].split("]")[0].split(",")
+#     match len(s):
+#         case 3:
+#             return np.asarray([ int(k) for k in s ])
+#         case _:
+#             raise ValueError("You should provide 3 integers") 
 
 
 def prepare_args():
