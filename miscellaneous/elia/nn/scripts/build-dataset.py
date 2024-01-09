@@ -72,8 +72,8 @@ def main():
     n,i,j = args.size
     dataset = {
         "train" : copy(atoms[:n]),
-        "val"   : copy(atoms[n:n+j]),
-        "test"  : copy(atoms[n+j:n+j+i]),
+        "val"   : copy(atoms[n:n+i]),
+        "test"  : copy(atoms[n+i:n+i+j]),
     }
 
     print()
