@@ -10,9 +10,6 @@ from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder
 from miscellaneous.elia.input import size_type
 from miscellaneous.elia.trajectory import trajectory
 
-# ToDo:
-# remove dependece on 'MicroState'
-
 DEBUG=False
 # example:
 # python ipi2extxyz.py -p i-pi -f data -aa forces,data/i-pi.forces_0.xyz -ap dipole,potential -o test.extxyz
@@ -108,31 +105,18 @@ def main():
         elif not os.path.exists(args.positions_file):
             raise ValueError("File '{:s}' does not exist.".format(args.positions_file))
 
-        # # Read the MicroState data from the input file
-        # instructions = {
-        #     # "cells"     : args.positions_file,  # Use the input file for 'cells' data
-        #     "positions" : args.positions_file,  # Use the input file for 'positions' data
-        #     # "types"     : args.positions_file   # Use the input file for 'types' data
-        # }
-
-        print("\tReading atomic structures from file '{:s}' using the 'MicroState' class ... ".format(args.positions_file), end="")
+        print("\tReading atomic structures from file '{:s}' ... ".format(args.positions_file), end="")
         with suppress_output(not DEBUG):
-            # data = MicroState(instructions=instructions)
-            # atoms = data.to_ase(pbc=args.pbc)
-            # atoms = read(args.positions_file,index=":")
-            # atoms = easyvectorize(Atoms)(atoms)
-            atoms = trajectory(args.positions_file)
-            # del data
+            atoms = trajectory(args.positions_file,format="i-pi")
         print("done")
     else :
+        raise ValueError("to be implemented yet")
         print("\tReading atomic structures from file '{:s}' using the 'ase.io.read' ... ".format(args.positions_file), end="")
         atoms = read(args.positions_file,format=args.format,index=":")
         if not args.pbc:
             atoms.set_pbc([False, False, False])
             atoms.set_cell()
         print("done")
-    
-    print("\t# atomic structures: ",len(atoms))
 
     if args.additional_arrays is not None:
         arrays = dict()
@@ -155,7 +139,7 @@ def main():
 
     if args.additional_properties is not None:
         properties = list(args.additional_properties)
-        print("\tYou specified the following properties to be added to the output file: ",properties)
+        print("\n\tYou specified the following properties to be added to the output file: ",properties)
 
         ###
         # properties
@@ -172,7 +156,7 @@ def main():
         elif not os.path.exists(args.properties_file):
             raise ValueError("File '{:s}' does not exist.".format(args.properties_file))
                 
-        print("\tReading properties from file '{:s}' using the using the 'MicroState' class ... ".format(args.properties_file), end="")
+        print("\tReading properties from file '{:s}' ... ".format(args.properties_file), end="")
         # instructions = {
         #     "properties" : args.properties_file, 
         # }
@@ -180,18 +164,19 @@ def main():
             allproperties = Properties.load(file=args.properties_file)
         print("done")
 
+        print("\n\tSummary:")
+        print("\t# atomic structures: {:d}".format(len(atoms)))
+        print("\t       # properties: {:d}".format(len(allproperties)))
+
         if len(allproperties) != len(atoms):
             print("\n\t{:s}: n. of atomic structures and n. of properties differ.".format(warning))
-            print("\t\t# atomic structures: {:d}".format(len(atoms)))
-            print("\t\t       # properties: {:d}".format(len(allproperties)))
-
             if len(allproperties) == len(atoms)+1 :
-                print("\n\t{:s}.\n\tMaybe you provided a 'replay' input file --> discarding the first properties raw.".format(information))
+                print("\t{:s}\n\tMaybe you provided a 'replay' input file --> discarding the first properties raw.".format(information))
                 allproperties = allproperties[1:]
             else:
                 raise ValueError("I would expect n. of atomic structures to be (n. of properties + 1)")
 
-        print("\tSummary of the read properties (#: {:d}):\n".format(len(allproperties)))
+        print("\n\tSummary of the read properties:\n")
         df = allproperties.summary()
 
         def line(): print("\t\t-----------------------------------------")
