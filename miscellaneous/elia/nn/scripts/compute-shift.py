@@ -22,7 +22,7 @@ def prepare_args():
                         help="input file")
     parser.add_argument("-if" , "--input_format" ,   **argv,type=str     , 
                         help="input file format (default: 'None')" , default=None)
-    parser.add_argument("-s", "--shift",  type=lambda s: size_type(s,dtype=float), default=None, **argv,
+    parser.add_argument("-s", "--shift",  type=lambda s: size_type(s,dtype=float,N=3), default=None, **argv,
                         help="additional arrays to be added to the output file (default: [0,0,0])")
     
     return parser.parse_args()
@@ -55,7 +55,8 @@ def main():
     R = cart2lattice(cell)
     lenght = np.linalg.norm(cell,axis=0)
     shift = R @ args.shift / lenght
-    print("\tConverted the shift from cartesian to lattice coordinates: ",shift.astype(int), end="")
+    print("\tConverted the shift from cartesian to lattice coordinates: ",shift.astype(int))
+    print("\tShift with all digits: ",shift)
     
     # Script completion message
     print("\n\tJob done :)\n")
