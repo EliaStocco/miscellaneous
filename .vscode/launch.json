@@ -20,7 +20,7 @@
             //"cwd" : "/home/stoccoel/google-personal/works/train-water/",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["-i", "output.extxyz"],  
+            "args" : ["-i", "output.extxyz"],
             //"args" : ["-p", "i-pi.prefix", "-ap", "[all,~step]", "-o", "training-dataset.extxyz"],
             //"args" : ["-qf", "first/replay/replay.xyz", "-pf", "first/replay/i-pi.properties.out", "-o", "first/replay/trajectory.extxyz","-ap", "[all,~step]"],
             //"args" : ["-i","XDATCAR0","-o","unfolded.extxyz"],
