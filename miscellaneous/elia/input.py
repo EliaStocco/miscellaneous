@@ -1,8 +1,9 @@
 import numpy as np
 import argparse
 #---------------------------------------#
-def size_type(s,dtype=int,N=None):
-    s = s.split("[")[1].split("]")[0].split(",")
+def size_type(s:str,dtype=int,N=None):
+    s = s.replace("[","").replace("]","").replace(","," ").split()
+    # s = s.split("[")[1].split("]")[0].split(",")
     if N is not None and len(s) != N :
         raise ValueError("You should provide {:d} values".format(N)) 
     else:
