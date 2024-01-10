@@ -5,7 +5,7 @@ import numpy as np
 from ase.io import write, read
 
 # Description of the script's purpose
-description = "Sumsample an (ASE readable) MD trajectory given a set of indices."
+description = "Subsample an (ASE readable) MD trajectory given a set of indices."
 
 
 def prepare_args():
