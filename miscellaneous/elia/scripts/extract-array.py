@@ -1,17 +1,9 @@
 #!/usr/bin/env python
 import argparse
-import os
 import numpy as np
-from copy import copy
-from ase.io import write, read
-from ase import Atoms
-from miscellaneous.elia.properties import properties as Properties
-from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder, str2bool
-from miscellaneous.elia.input import size_type
-from miscellaneous.elia.trajectory import trajectory
 import re
 from miscellaneous.elia.input import size_type
-import ast
+
 #---------------------------------------#
 # Description of the script's purpose
 description = "Extract an array from a txt file using a keyword."
@@ -182,18 +174,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-#---------------------------------------#
-# if __name__ == "__main__":
-#     log_file_path = 'path/to/your/logfile.log'  # Replace with the actual path to your log file
-#     bec_arrays = extract_arrays(log_file_path, 'BEC')
-#     dipole_arrays = extract_arrays(log_file_path, 'dipole')
-
-#     for i, bec_array in enumerate(bec_arrays, start=1):
-#         print(f"BEC Array {i}:")
-#         print(bec_array)
-#         print()
-
-#     for i, dipole_array in enumerate(dipole_arrays, start=1):
-#         print(f"Dipole Array {i}:")
-#         print(dipole_array)
-#         print()
