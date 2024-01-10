@@ -14,6 +14,9 @@ DEBUG=False
 # example:
 # python ipi2extxyz.py -p i-pi -f data -aa forces,data/i-pi.forces_0.xyz -ap dipole,potential -o test.extxyz
 
+# To Do:
+# - add a long description with some example how to use the script
+
 #---------------------------------------#
 
 # Description of the script's purpose
@@ -83,9 +86,9 @@ def main():
     # Print the script's description
     print("\n\t{:s}".format(description))
 
-    print("\n\tInput arguments:")
+    print("\n\t{:s}:".format(input_arguments))
     for k in args.__dict__.keys():
-        print("\t{:>25s}:".format(k),getattr(args,k))
+        print("\t{:>20s}:".format(k),getattr(args,k))
     print()
 
     ###
@@ -137,7 +140,7 @@ def main():
             for n in range(len(arrays[k])):
                 atoms[n].arrays[k] = arrays[k][n]
 
-    if args.additional_properties is not None:
+    if args.additional_properties is not None and "none" not in args.additional_properties:
         properties = list(args.additional_properties)
         print("\n\tYou specified the following properties to be added to the output file: ",properties)
 
