@@ -36,7 +36,7 @@ class aile3nn(SimpleNetwork,iPIinterface):
     # this should be moved to another class
     def message(self):
         if self.use_shift:
-                print("\t!! SHIFT:", self.shift.detach().numpy())
+                print("\t!! SHIFT: [{:f},{:f},{:f}]".format(*list(self.shift.detach().numpy())))
                 print("\t!! FACTOR:", self.factor.detach().numpy())
         return
     
