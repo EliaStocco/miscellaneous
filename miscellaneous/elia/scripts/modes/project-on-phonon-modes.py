@@ -41,13 +41,13 @@ def prepare_args():
 
 def main():
 
-    #---------------------------------------#
-    # print the script's description
+    #------------------#
+    # Parse the command-line arguments
+    args = prepare_args()
+
+    # Print the script's description
     print("\n\t{:s}".format(description))
 
-    #---------------------------------------#
-    # parse the user input
-    args = prepare_args()
     print("\n\t{:s}:".format(input_arguments))
     for k in args.__dict__.keys():
         print("\t{:>20s}:".format(k),getattr(args,k))
@@ -82,7 +82,7 @@ def main():
         q = row["q"]
         print("\t\t- phonon modes {:d} with q-point {:s} ... ".format(k,str(q)), end="")
         if type(row["supercell"]) != NormalModes:
-            raise TypeError("'modes' element is of wrong type, it should be a 'NormalModes' object")     
+            raise TypeError("'supercell' element is of wrong type, it should be a 'NormalModes' object")     
         # row["modes"].write("test.yaml","yaml")   
         out = row["supercell"].project(trajectory)
         results.at[q,"q"] = q

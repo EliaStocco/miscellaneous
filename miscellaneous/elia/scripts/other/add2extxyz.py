@@ -2,16 +2,13 @@
 import argparse
 import numpy as np
 from ase.io import write
-from miscellaneous.elia.functions import cart2lattice
 from miscellaneous.elia.trajectory import trajectory
 
 #---------------------------------------#
 # Description of the script's purpose
 description = "Add data to an extxyz file."
-warning = "***Warning***"
 error = "***Error***"
 closure = "Job done :)"
-information = "You should provide the positions as printed by i-PI."
 input_arguments = "Input arguments"
 
 #---------------------------------------#
@@ -21,10 +18,8 @@ try :
     from colorama import Fore, Style
     colorama.init(autoreset=True)
     description     = Fore.GREEN    + Style.BRIGHT + description             + Style.RESET_ALL
-    warning         = Fore.MAGENTA  + Style.BRIGHT + warning.replace("*","") + Style.RESET_ALL
     error           = Fore.RED      + Style.BRIGHT + error.replace("*","")   + Style.RESET_ALL
     closure         = Fore.BLUE     + Style.BRIGHT + closure                 + Style.RESET_ALL
-    information     = Fore.YELLOW   + Style.NORMAL + information             + Style.RESET_ALL
     input_arguments = Fore.GREEN    + Style.NORMAL + input_arguments         + Style.RESET_ALL
 except:
     pass

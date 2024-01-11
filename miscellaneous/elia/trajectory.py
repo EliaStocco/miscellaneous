@@ -15,6 +15,11 @@ abcABCunits = r'\{([^}]+)\}'
 # structure  = trajectory[0]                               # --> ase.Atoms
 # positions  = trajectory.positions                        # --> (N,3,3)
 # dipole     = trajectory.call(lambda e: e.info["dipole"]) # --> (N,3)
+
+def info(t,name):
+    return t.call(lambda e:e.info[name])
+def array(t,name):
+    return t.call(lambda e:e.arrays[name])
     
 def trajectory(file,format:str=None):
 

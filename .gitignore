@@ -10,7 +10,7 @@
 *.cpython-*
 
 # folders to ignore
-.vscode/
+.vscode/launch.json
 __pycache__/
 *.egg-info/
 .ipynb_checkpoints/

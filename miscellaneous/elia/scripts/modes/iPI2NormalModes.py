@@ -39,22 +39,22 @@ def prepare_args():
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar":"\b"}
     parser.add_argument("-r",  "--reference",       type=str, **argv, 
-                        help="reference structure w.r.t. which the phonons are computed [a.u.] (default: 'start.xyz')", default="start.xyz")
+                        help="reference structure w.r.t. which the phonons are computed [a.u.] (default: None)",default=None)
     parser.add_argument("-f",  "--folder",         type=str, **argv, 
-                        help="folder with the output files of the i-PI vibrational analysis (default: '.')", default=".")
+                        help="folder with the output files of the i-PI normal analysis (default: 'vib')", default="vib")
     parser.add_argument("-o",  "--output",        type=str, **argv, 
-                        help="output file (default: 'vibrational-modes.pickle')", default="vibrational-modes.pickle")
+                        help="output file (default: 'normal-modes.pickle')", default="normal-modes.pickle")
     return parser.parse_args()
 #---------------------------------------#
 def main():
 
-    #---------------------------------------#
-    # print the script's description
+    #------------------#
+    # Parse the command-line arguments
+    args = prepare_args()
+
+    # Print the script's description
     print("\n\t{:s}".format(description))
 
-    #---------------------------------------#
-    # parse the user input
-    args = prepare_args()
     print("\n\t{:s}:".format(input_arguments))
     for k in args.__dict__.keys():
         print("\t{:>20s}:".format(k),getattr(args,k))
@@ -62,24 +62,27 @@ def main():
 
     #---------------------------------------#
     # read reference atomic structure
-    print("\tReading reference atomic structure from input '{:s}' ... ".format(args.reference), end="")
-    reference = read(args.reference)
-    print("done")
+    reference = None
+    if args.reference is not None:
+        print("\tReading reference atomic structure from input '{:s}' ... ".format(args.reference), end="")
+        reference = read(args.reference)
+        print("done")
 
     #---------------------------------------#
     # phonon modes
-    print("\n\tReading vibrational modes from folder '{:s}' ... ".format(args.folder))
+    print("\n\tReading normal modes from folder '{:s}' ... ".format(args.folder),end="")
     gamma = (0,0,0)
-    pm = pd.DataFrame(index=[gamma],columns=["q","freq","modes"])
+    # pm = pd.DataFrame(index=[gamma],columns=["q","freq","modes"])
     nm = NormalModes.load(args.folder)
-    pm.at[gamma,"q"]     = gamma
-    pm.at[gamma,"modes"] = nm 
-    nm.reference = reference
+    # pm.at[gamma,"q"]     = gamma
+    # pm.at[gamma,"modes"] = nm 
+    if reference is not None:
+        nm.reference = reference
     print("done")
 
     #---------------------------------------#
-    print("\n\tWriting vibrational modes to file '{:s}' ... ".format(args.output), end="")
-    pm.to_pickle(args.output)
+    print("\n\tWriting normal modes to file '{:s}' ... ".format(args.output), end="")
+    nm.to_pickle(args.output)
     print("done")
     
     #---------------------------------------#

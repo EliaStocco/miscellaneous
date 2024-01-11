@@ -116,9 +116,13 @@ def main():
         raise ValueError("to be implemented yet")
         print("\tReading atomic structures from file '{:s}' using the 'ase.io.read' ... ".format(args.positions_file), end="")
         atoms = read(args.positions_file,format=args.format,index=":")
-        if not args.pbc:
-            atoms.set_pbc([False, False, False])
-            atoms.set_cell()
+        print("done")
+
+    if not args.pbc:
+        print("\n\tRemoving lattice vectors from all the atomic structures ... ", end="")
+        for n in range(len(atoms)):
+            atoms[n].set_pbc([False, False, False])
+            atoms[n].set_cell(None)
         print("done")
 
     if args.additional_arrays is not None:

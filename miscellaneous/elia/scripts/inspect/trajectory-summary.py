@@ -86,7 +86,7 @@ def main():
     print(line)
 
     #---------------------------------------#
-    keys = atoms.arrays[0].keys()
+    keys = atoms[0].arrays.keys()
     check = dict()
     
     for k in keys:

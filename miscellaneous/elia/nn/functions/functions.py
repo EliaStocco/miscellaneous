@@ -6,6 +6,7 @@ import numpy as np
 from prettytable import PrettyTable
 import subprocess
 from miscellaneous.elia.functions import add_default
+from miscellaneous.elia.nn.network.iPIinterface import iPIinterface
 import warnings
 
 def count_parameters(model):
@@ -49,7 +50,7 @@ def get_class(module_name, class_name):
     except Exception as e:
         raise ValueError(f"An error occurred: {e}")
     
-def get_model(instructions,parameters:str):
+def get_model(instructions,parameters:str)->iPIinterface:
 
     if type(instructions) == str :
 

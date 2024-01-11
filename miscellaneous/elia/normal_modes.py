@@ -5,6 +5,10 @@ import xarray as xr
 from miscellaneous.elia.functions import get_one_file_in_folder, nparray2list_in_dict
 from warnings import warn
 from miscellaneous.elia.units import *
+import pickle
+import warnings
+# Disable all UserWarnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 def dot(A:xr.DataArray,B:xr.DataArray,dim:str):
     _A,ua = remove_unit(A)
@@ -92,7 +96,7 @@ class NormalModes():
         match module:
             case "pickle":
                 import pickle
-                with open(file,mode) as f:
+                with open(file,'rb') as f:
                     loaded_data = pickle.load(f)
             case "yaml":
                 import yaml
@@ -103,6 +107,12 @@ class NormalModes():
                 with open(file,mode) as f:
                     loaded_data = json.load(f)
         return cls(loaded_data)
+
+    def to_pickle(self,file):
+        # Open the file in binary write mode ('wb')
+        with open(file, 'wb') as file:
+            # Use pickle.dump() to serialize and save the object to the file
+            pickle.dump(self, file)
 
     @classmethod
     def load(cls,folder=None):    
@@ -307,7 +317,7 @@ class NormalModes():
         
     #     return out
     
-    def project(self,trajectory):       
+    def project(self,trajectory,warning="**Warning**"):       
 
         #-------------------#
         # reference position
@@ -432,6 +442,11 @@ class NormalModes():
         if not check_dim(U,'[energy]'):
             raise ValueError("the potential energy has the wrong unit: ",get_unit(U))
 
+        if np.any( U < 0 ):
+            print("\t{:s}: negative potential energies!".format(warning),end="\n\t")
+        if np.any( K < 0 ):
+            print("\t*{:s}:negative kinetic energies!".format(warning),end="\n\t")
+        
         energy = U + K
         if not check_dim(energy,'[energy]'):
             raise ValueError("'energy' has the wrong unit")
@@ -440,8 +455,8 @@ class NormalModes():
             if not check_dim(energy,'[energy]'):
                 raise ValueError("'energy' has the wrong unit")
             
-        if np.any( energy < 0 ):
-            raise ValueError("negative energies!")
+        # if np.any( energy < 0 ):
+        #     raise ValueError("negative energies!")
             
         #-------------------#
         # amplitudes of the vib. modes
@@ -484,6 +499,8 @@ class NormalModes():
         # output
         out = {
             "energy"        : energy,
+            "kinetic"       : K,
+            "potential"     : U,
             "amplitude"     : amplitude,
             "equipartition" : equipartition,
             "occupation"    : occupation,
