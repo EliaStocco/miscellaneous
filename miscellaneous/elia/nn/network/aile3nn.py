@@ -1,6 +1,6 @@
 import torch
-from .iPIinterface import iPIinterface
-from .SimpleNetwork import SimpleNetwork
+from miscellaneous.elia.nn.network.iPIinterface import iPIinterface
+from miscellaneous.elia.nn.network.SimpleNetwork import SimpleNetwork
 # from .Methods4Training import EDFMethods4Training
 from torch_geometric.data import Data
 from torch.nn import MSELoss

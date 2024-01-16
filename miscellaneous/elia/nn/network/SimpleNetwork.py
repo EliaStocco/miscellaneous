@@ -5,7 +5,7 @@ import torch
 import torch_geometric
 from torch_geometric.nn import radius_graph
 from torch_geometric.data import Data
-from .MessagePassing import MessagePassing
+from miscellaneous.elia.nn.network.MessagePassing import MessagePassing
 from miscellaneous.elia.nn.dataset import compute_edge_vec
 import warnings
 from typing import Dict, Union

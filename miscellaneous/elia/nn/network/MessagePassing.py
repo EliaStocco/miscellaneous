@@ -1,7 +1,7 @@
 from e3nn.nn import Gate, Dropout, BatchNorm
 import torch
 from e3nn import o3
-from .Convolution import Convolution
+from miscellaneous.elia.nn.network.Convolution import Convolution
 from typing import TypeVar
 C = TypeVar('C', bound='Compose')
 T = TypeVar('T', bound='MessagePassing')
