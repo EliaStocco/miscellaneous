@@ -79,9 +79,7 @@ except:
     conversion_possible = False
 
 #---------------------------------------#
-
-def main():
-
+def prepare_args():
     # Define the command-line argument parser with a description
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar":"\b"}
@@ -96,14 +94,19 @@ def main():
     parser.add_argument("-s"  , "--scaled"      ,    **argv,type=str2bool, help="whether to output the scaled positions (default: False)", default=False)
     parser.add_argument("-r"  , "--rotate" ,         **argv,type=str2bool     , help="whether to rotate the cell s.t. to be compatible with i-PI (default: False)", default=False)
 
+    # Parse the command-line arguments
+    return parser.parse_args()
+
+#---------------------------------------#
+def main():
+
+    # Parse the command-line arguments
+    args = prepare_args()
+    end = "" if not DEBUG else ""
+
     # Print the script's description
     print("\n\t{:s}".format(description))
 
-    # Parse the command-line arguments
-    # print("\n\tReading input arguments ... ",end="")
-    args = parser.parse_args()
-    end = "" if not DEBUG else ""
-    # print("done")
     print("\n\t{:s}:".format(input_arguments))
     for k in args.__dict__.keys():
         print("\t{:>20s}:".format(k),getattr(args,k))

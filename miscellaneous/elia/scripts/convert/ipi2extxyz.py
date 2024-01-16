@@ -93,30 +93,30 @@ def main():
 
     ###
     # atomic structures
-    if args.format == "i-pi" :
+    # if args.format == "i-pi" :
 
-        if args.positions_file is None:
-            if args.prefix is None or args.prefix == "":
-                raise ValueError("Please provide a prefix for the i-PI output files (--prefix) or a file with the atomic structures (--positions).")
-            else :
-                try :
-                    args.positions_file = get_one_file_in_folder(folder=args.folder,ext="xyz",pattern="positions")
-                except:
-                    raise ValueError("Problem deducing the atomic structures file from the i-PI prefix.\n\
-                                    Please check that the folder (-f,--folder) and the prefix (-i,--prefix) are correct.\n\
-                                    Otherwise we can also directly specify the atomic structures file (-q,--positions).")
-        elif not os.path.exists(args.positions_file):
-            raise ValueError("File '{:s}' does not exist.".format(args.positions_file))
+    if args.positions_file is None:
+        if args.prefix is None or args.prefix == "":
+            raise ValueError("Please provide a prefix for the i-PI output files (--prefix) or a file with the atomic structures (--positions).")
+        else :
+            try :
+                args.positions_file = get_one_file_in_folder(folder=args.folder,ext="xyz",pattern="positions")
+            except:
+                raise ValueError("Problem deducing the atomic structures file from the i-PI prefix.\n\
+                                Please check that the folder (-f,--folder) and the prefix (-i,--prefix) are correct.\n\
+                                Otherwise we can also directly specify the atomic structures file (-q,--positions).")
+    elif not os.path.exists(args.positions_file):
+        raise ValueError("File '{:s}' does not exist.".format(args.positions_file))
 
-        print("\tReading atomic structures from file '{:s}' ... ".format(args.positions_file), end="")
-        with suppress_output(not DEBUG):
-            atoms = trajectory(args.positions_file,format="i-pi")
-        print("done")
-    else :
-        raise ValueError("to be implemented yet")
-        print("\tReading atomic structures from file '{:s}' using the 'ase.io.read' ... ".format(args.positions_file), end="")
-        atoms = read(args.positions_file,format=args.format,index=":")
-        print("done")
+    print("\tReading atomic structures from file '{:s}' ... ".format(args.positions_file), end="")
+    with suppress_output(not DEBUG):
+        atoms = trajectory(args.positions_file,format=args.format)
+    print("done")
+    # else :
+    #     raise ValueError("to be implemented yet")
+    #     print("\tReading atomic structures from file '{:s}' using the 'ase.io.read' ... ".format(args.positions_file), end="")
+    #     atoms = read(args.positions_file,format=args.format,index=":")
+    #     print("done")
 
     if not args.pbc:
         print("\n\tRemoving lattice vectors from all the atomic structures ... ", end="")

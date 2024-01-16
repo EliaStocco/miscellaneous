@@ -14,7 +14,7 @@ def main():
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar":"\b"}
     parser.add_argument("-i"  , "--input"        ,   **argv,type=str      , help="input file with the cell")
-    parser.add_argument("-n"  , "--normalize"    ,   **argv,type=str2bool , help="whether to normalize the vector (default: True)")
+    parser.add_argument("-n"  , "--normalize"    ,   **argv,type=str2bool , help="whether to normalize the vector (default: true)",default=True)
     parser.add_argument("-v" , "--vector"        ,   **argv,type=size_type, help="vector components in lattice coordinates")
     parser.add_argument("-a" , "--amplitude"     ,   **argv,type=float    , help="amplitude of the output vector (default: 1)",default=1.)
     parser.add_argument("-d" , "--digit"         ,   **argv,type=int      , help="digit of the final result (default: 8)",default=8)
@@ -53,7 +53,7 @@ def main():
     print()
     print("\t{:>20s}:".format("Required vector"),out)
     if args.normalize:
-        out /= np.linalg.norm(out)
+        out /= np.linalg.norm(out,axis=1)
         print("\t{:>20s}:".format("Normalized vector"),out)
 
     if args.amplitude != 1.:

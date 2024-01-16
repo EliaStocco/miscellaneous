@@ -34,6 +34,7 @@ def prepare_args():
     argv = {"metavar" : "\b",}
     parser.add_argument("-i" , "--input"        , **argv,type=str, help="input file")
     parser.add_argument("-if", "--input_format" , **argv,type=str, help="input file format (default: 'None')" , default=None)
+    parser.add_argument("-k"  , "--keyword"     , **argv,type=str, help="keyword (default: 'dipole')" , default="dipole")
     parser.add_argument("-o" , "--output"       , **argv,type=str, help="txt output file (default: 'quanta.txt')", default="quanta.txt")
     parser.add_argument("-of", "--output_format", **argv,type=str, help="output format for np.savetxt (default: '%%24.18e')", default='%24.18e')
     return parser.parse_args()
@@ -61,8 +62,8 @@ def main():
 
     #---------------------------------------#
     # dipole
-    print("\tExtracting the dipoles from the trajectory ... ", end="")
-    dipole = atoms.call(lambda e:e.info["dipole"])
+    print("\tExtracting '{:s}' from the trajectory ... ".format(args.keyword), end="")
+    dipole = atoms.call(lambda e:e.info[args.keyword])
     print("done")
 
     #---------------------------------------#
@@ -70,6 +71,12 @@ def main():
     print("\tExtracting the lattice vectors from the trajectory ... ", end="")
     lattices = atoms.call(lambda e:e.get_cell())
     print("done")
+
+    #---------------------------------------#
+    # pbc
+    pbc = atoms.call(lambda e:e.pbc)
+    if not np.all(pbc):
+        raise ValueError("the system is not periodic: it's not")
 
     #---------------------------------------#
     # quanta
