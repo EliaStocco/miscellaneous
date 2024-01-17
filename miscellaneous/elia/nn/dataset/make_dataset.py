@@ -3,7 +3,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 from ase.neighborlist import neighbor_list
 from miscellaneous.elia.functions import add_default
-from miscellaneous.elia.nn.functions.get_type_onehot_encoding import symbols2x
+from miscellaneous.elia.nn.functions import symbols2x
 from ase import Atoms
 import numpy as np
 
