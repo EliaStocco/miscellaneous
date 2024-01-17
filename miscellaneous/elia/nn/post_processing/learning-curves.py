@@ -6,12 +6,12 @@ import os
 import torch
 import pandas as pd
 import numpy as np
-from scipy.stats import pearsonr
-from copy import deepcopy
+# from scipy.stats import pearsonr
+# from copy import deepcopy
 import time
 import matplotlib.pyplot as plt
 from miscellaneous.elia.nn.functions.functions import get_model
-from miscellaneous.elia.functions import plot_bisector
+# from miscellaneous.elia.functions import plot_bisector
 from miscellaneous.elia.nn.dataset import make_dataloader
 
 #####################
