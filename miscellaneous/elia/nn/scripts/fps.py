@@ -14,35 +14,58 @@ import argparse
 from miscellaneous.elia.functions import add_default
 from miscellaneous.elia.show import show_dict
 from miscellaneous.elia.functions import convert
+from miscellaneous.elia.input import str2bool
 
-def main():
+#---------------------------------------#
+# Description of the script's purpose
+description = "Process atomic structures and select a diverse subset using the Farthest Point Sampling (FPS) algorithm."
+error = "***Error***"
+closure = "Job done :)"
+input_arguments = "Input arguments"
 
-    description = "Process atomic structures and select a diverse subset using the Farthest Point Sampling (FPS) algorithm."
+#---------------------------------------#
+# colors
+try :
+    import colorama
+    from colorama import Fore, Style
+    colorama.init(autoreset=True)
+    description     = Fore.GREEN    + Style.BRIGHT + description             + Style.RESET_ALL
+    error           = Fore.RED      + Style.BRIGHT + error.replace("*","")   + Style.RESET_ALL
+    closure         = Fore.BLUE     + Style.BRIGHT + closure                 + Style.RESET_ALL
+    input_arguments = Fore.GREEN    + Style.NORMAL + input_arguments         + Style.RESET_ALL
+except:
+    pass
 
-    message = "!Pay attention that the provided positions should be in atomic unit!"
-
+#---------------------------------------#
+def prepare_args():
     # Define the command-line argument parser with a description
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=description)
     argv = {"metavar" : "\b"}
-    parser.add_argument("-i" , "--input"          ,  type=str  , **argv, help="input file")
-    parser.add_argument("-o" , "--output"         ,  type=str  , **argv, help="output file with the selected structures ")
+    parser.add_argument("-i" , "--input"          ,  type=str  , **argv, help="input file [au]")
+    parser.add_argument("-o" , "--output"         ,  type=str  , **argv, help="output file with the selected structures")
     parser.add_argument("-oi", "--output_indices" ,  type=str  , **argv, help="output file with indices of the selected structures (default: 'indices.txt')",default='indices.txt')
     parser.add_argument("-if", "--input_format"   ,  type=str  , **argv, help="input file format (default: 'None')" , default=None)
     parser.add_argument("-of", "--output_format"  ,  type=str  , **argv, help="output file format (default: 'None')", default=None)
     parser.add_argument("-ff", "--features_file"  ,  type=str  , **argv, help="features output file [*.npy] (default: 'None')", default=None)
     parser.add_argument("-n" , "--number"         ,  type=int  , **argv, help="number of desired structure (default: '100')", default=None)
-    parser.add_argument("-rc", "--cutoff_radius"  ,  type=float, **argv, help="cutoff radius in atomic unit (default: 6)", default=6)
+    parser.add_argument("-s" , "--sort"           ,  type=str2bool , **argv, help="whether to sort the indices (default: true)", default=True)
+    parser.add_argument("-rc", "--cutoff_radius"  ,  type=float, **argv, help="cutoff radius [au] (default: 6)", default=6)
     parser.add_argument("-sh", "--soap_hyper"     ,  type=str  , **argv, help="JSON file with the SOAP hyperparameters", default=None)
+    return parser.parse_args()
+
+def main():
+
+    #------------------#
+    # Parse the command-line arguments
+    args = prepare_args()
 
     # Print the script's description
     print("\n\t{:s}".format(description))
 
-    # Parse the command-line arguments
-    print("\n\tReading input arguments ... ",end="")
-    args = parser.parse_args()
-    print("done")
-
-    print("\t{:s}".format(message))
+    print("\n\t{:s}:".format(input_arguments))
+    for k in args.__dict__.keys():
+        print("\t{:>20s}:".format(k),getattr(args,k))
+    print()
 
     #
     print("\n\tReading positions from file '{:s}' ... ".format(args.input),end="")
@@ -137,25 +160,35 @@ def main():
     print("\n\tFPS selected indices: {:d}".format(struct_idx.shape[0]))
     print(f"\tOriginal: {X.shape} ---> FPS: {X_fps.shape}")
 
+    indices = np.asarray([ int(i) for i in struct_idx],dtype=int)
+
+    if args.sort:
+        print("\n\tSorting indices ... ",end="")
+        indices = np.sort(indices)
+        print("done")
+
+    # Saving the fps selected structure
+    if args.output_indices :
+        print("\n\tSaving indices of selected structures to file '{:s}' ... ".format(args.output_indices),end="")
+        np.savetxt(args.output_indices,indices,fmt='%d')
+        print("done")
+
     # Saving the fps selected structure
     if args.output is not None :
         print("\n\tSaving FPS selected structures to file '{:s}' ... ".format(args.output),end="")
-        frames_fps = [frames[i] for i in struct_idx]
+        frames_fps = [frames[i] for i in indices]
         write(args.output, frames_fps, format=args.output_format)
         print("done")
     # else :
     #     print("\tOutput file (-o/--output) for the selected structures not specified: they will not be saved to file")
 
-    # Saving the fps selected structure
-    if args.output_indices :
-        print("\n\tSaving indices of selected structures to file '{:s}' ... ".format(args.output_indices),end="")
-        indices = np.asarray([ int(i) for i in struct_idx],dtype=int)
-        np.savetxt(args.output_indices,indices,fmt='%d')
-        print("done")
+
     # else :
     #     print("\tOutput file (-oi/--output_indices) for the indeces of the selected structures not specified: they will not be saved to file")
 
-    print("\n\tJob done :)\n")
+    #------------------#
+    # Script completion message
+    print("\n\t{:s}\n".format(closure))
 
     return
 
