@@ -80,8 +80,8 @@ class SimpleNetwork(torch.nn.Module):
 
         self.factor = torch.nn.Parameter(torch.ones((1))) 
         self.use_shift = use_shift
-        # if self.use_shift:
-        self.shift = torch.nn.Parameter(torch.ones((3)))
+        if self.use_shift:
+            self.shift = torch.nn.Parameter(torch.ones((3)))
 
         self.irreps_in = self.mp.irreps_in
         self.irreps_out = self.mp.irreps_out
