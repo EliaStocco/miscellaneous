@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 import numpy as np
 import os
-from tqdm import tqdm
 from miscellaneous.elia.nn.functions import get_model
 from miscellaneous.elia.functions import suppress_output
-from miscellaneous.elia.input import str2bool
-from miscellaneous.elia.trajectory import trajectory as Trajectory
 from ase.io import read
-from e3nn.util.test import assert_equivariant
+from e3nn.o3 import rand_matrix
 
 #---------------------------------------#
 # Description of the script's purpose
@@ -61,13 +58,13 @@ def main():
     print("done")
 
     #------------------#
-    print("\tLoading model ... ",end="")
+    # print("\tLoading model ... ",end="")
     file_in = os.path.normpath("{:s}".format(args.instructions))
     file_pa = os.path.normpath("{:s}".format(args.parameters)) if args.parameters is not None else None
     with suppress_output(not DEBUG):
         model = get_model(file_in,file_pa)
         model.store_chemical_species(atoms=atoms)
-    print("done")
+    # print("done")
 
     #------------------#
     pbc = np.all(atoms.get_pbc())
@@ -80,19 +77,56 @@ def main():
         else:
             cell = None
             pos = array
-        return model.get(pos=pos.reshape((-1,3)),cell=cell) 
+        y,_ = model.get(pos=pos.reshape((-1,3)),cell=cell)
+        return y.detach().numpy()
     
     if pbc:
         array = np.concatenate([cell,pos])
     else:
         array = pos
 
-    d,X = func(array)
-    #irreps_in  = "{:d}x1o".format(array.shape[0])
-    irreps_in = "1o + 1o + 1o"
-    irreps_out = "1x1o"
+    #------------------#
+    print("\n\tGenerating {:d} random rotation matrices ... ".format(args.number),end="")
+    allR = rand_matrix(args.number)
+    print("done")
+
+    print("\tComparing 'outputs from rotated inputs' with 'rotated outputs' ... ",end="")
+    y = func(array)
+    norm = np.zeros(len(allR))
+    for n,R in enumerate(allR):
+        R = R.numpy()
+        tmp = ( R @ array.T ).T
+        Rx2y = func(tmp) # Rotated input (x) to output (y)
+        Ry = R @ y       # Rotated output (y)
+        norm[n] = np.linalg.norm(Rx2y - Ry)
+    print("done")
     
-    assert_equivariant(func,array,irreps_in,irreps_out)
+    print("\tSummary of the norm between 'outputs from rotated inputs' and 'rotated outputs'")
+    print("\t{:>20s}: {:.4e}".format("min norm",norm.min()))
+    print("\t{:>20s}: {:.4e}".format("max norm",norm.max()))
+    print("\t{:>20s}: {:.4e}".format("mean norm",norm.mean()))
+
+    #------------------#
+    print("\n\tGenerating {:d} random translation vectors ... ".format(args.number),end="")
+    allT = np.random.rand(args.number, 3)
+    print("done")
+
+    print("\tComparing 'outputs from rotated inputs' with 'rotated outputs' ... ",end="")
+    y = func(array)
+    norm = np.zeros(len(allT))
+    for n,T in enumerate(allT):
+        if pbc:
+            tmp = np.concatenate([cell,pos+T])
+        else:
+            tmp = pos+T 
+        Tx2y = func(tmp) # Translated input (x) to output (y)
+        norm[n] = np.linalg.norm(Tx2y - y)
+    print("done")
+    
+    print("\tSummary of the norm between 'outputs from translated inputs' and 'outputs'")
+    print("\t{:>20s}: {:.4e}".format("min norm",norm.min()))
+    print("\t{:>20s}: {:.4e}".format("max norm",norm.max()))
+    print("\t{:>20s}: {:.4e}".format("mean norm",norm.mean()))
 
     #------------------#
     # Script completion message
