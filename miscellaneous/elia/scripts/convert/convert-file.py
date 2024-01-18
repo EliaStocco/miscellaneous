@@ -93,6 +93,8 @@ def prepare_args():
     parser.add_argument("-ou" , "--output_unit" ,    **argv,type=str     , help="output unit (default: atomic_unit)", default=None)
     parser.add_argument("-s"  , "--scaled"      ,    **argv,type=str2bool, help="whether to output the scaled positions (default: False)", default=False)
     parser.add_argument("-r"  , "--rotate" ,         **argv,type=str2bool     , help="whether to rotate the cell s.t. to be compatible with i-PI (default: False)", default=False)
+    parser.add_argument("-n"  , "--index" ,         **argv,type=lambda x: int(x) if x.isdigit() else x     , help="index to be read from input file (default: ':')", default=':')
+
 
     # Parse the command-line arguments
     return parser.parse_args()
@@ -119,7 +121,10 @@ def main():
             from ase.io.formats import filetype
             args.input_format = filetype(args.input, read=isinstance(args.input, str))
 
-        atoms = read(args.input,format=args.input_format,index=":")
+        atoms = read(args.input,format=args.input_format,index=args.index)
+        if type(args.index) == int:
+            atoms = [atoms]
+            
     if not DEBUG:
         print("done")
 
