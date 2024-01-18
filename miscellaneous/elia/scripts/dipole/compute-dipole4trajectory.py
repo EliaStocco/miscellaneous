@@ -9,7 +9,7 @@ from miscellaneous.elia.trajectory import trajectory as Trajectory
 
 #---------------------------------------#
 # Description of the script's purpose
-description = "Create a correlation plot of the dipole components from two datasets."
+description = "Compute the dipole values for a trajectory using a neural network"
 closure = "Job done :)"
 input_arguments = "Input arguments"
 
@@ -79,7 +79,7 @@ def main():
     if args.compute_BEC:
         Z = np.full((N,3*len(trajectory[0].positions),3),np.nan)
 
-    with tqdm(enumerate(trajectory),bar_format='\t{l_bar}{bar:10}{r_bar}{bar:-10b}') as bar:
+    with tqdm(enumerate(trajectory),bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}') as bar:
         for n,atoms in bar:
             pos = atoms.positions
             cell = np.asarray(atoms.cell).T if np.all(atoms.get_pbc()) else None
