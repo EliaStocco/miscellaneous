@@ -86,19 +86,11 @@ def get_model(instructions,parameters:str):
     # total_parameters = sum(p.numel() for p in model.parameters())
 
     # Load the parameters from the saved file
-    checkpoint = torch.load(parameters)
+    if parameters is not None:
+        checkpoint = torch.load(parameters)
+        # https://stackoverflow.com/questions/63057468/how-to-ignore-and-initialize-missing-keys-in-state-dict
+        model.load_state_dict(checkpoint,strict=False)
 
-    # # Initialize a variable to store the total number of parameters
-    # total_parameters = 0
-
-    # # Iterate through the state_dict and sum the sizes of the tensors
-    # for key, value in checkpoint.items():
-    #     total_parameters += value.numel()
-
-    # Update the model's state dictionary with the loaded parameters
-    # del checkpoint["_mean"]
-    # del checkpoint["_std"]
-    model.load_state_dict(checkpoint)
     model.eval()
 
     # Store the chemical species that will be used during the simulation.
