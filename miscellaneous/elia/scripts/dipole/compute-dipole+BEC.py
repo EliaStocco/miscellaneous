@@ -7,11 +7,6 @@ from ase.io import read
 # from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.nn.functions import get_model
 
-class MyHelpFormatter(argparse.HelpFormatter):
-    def format_description(self, description):
-        # Increase the space between lines by adding additional newlines
-        return description.replace('\n\n', '\n')
-
 #####################
 
 description = "Compute dipole and BEC tensors for a given atomic structure.\n"
@@ -19,7 +14,7 @@ description = "Compute dipole and BEC tensors for a given atomic structure.\n"
 def get_args():
     """Prepare parser of user input arguments."""
 
-    parser = argparse.ArgumentParser(description=description,formatter_class=argparse.RawDescriptionHelpFormatter,width=120)
+    parser = argparse.ArgumentParser(description=description)
 
     argv = {"metavar":"\b"}
     parser.add_argument(
