@@ -124,7 +124,7 @@ def main():
         pos = modes.sum("mode")#+ nm.reference
         pos, _ = remove_unit(pos)
         pos = np.asarray(pos).reshape((Natoms,3)) + nm.reference.positions
-        atoms[n] = Atoms(positions=pos,symbols=symbols)
+        atoms[n] = Atoms(positions=pos,symbols=symbols,cell=nm.reference.get_cell(),pbc=reference.get_pbc())
     print("done")
 
     #---------------------------------------#
