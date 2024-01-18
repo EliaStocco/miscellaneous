@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import re
 import numpy as np
+from miscellaneous.elia.functions import convert
 
 #---------------------------------------#
 # Description of the script's purpose
@@ -53,6 +54,7 @@ def main():
 
     #------------------#
     # Open the input file for reading and the output file for writing
+    factor = convert(1,"length","angstrom","atomic_unit")
     n = 0 
     pattern = re.compile(r'Total dipole moment.*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?).*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?).*?([-+]?\d*\.\d+(?:[eE][-+]?\d+)?)')
     with open(args.input, 'r') as input_file, open(args.output, 'w') as output_file:
@@ -70,7 +72,7 @@ def main():
                 if matches:
                     float_values = [float(match) for match in matches.groups()[:3]]
                     float_values = np.asarray(float_values).reshape((1,3))
-                    np.savetxt(output_file,float_values,fmt=args.output_format)
+                    np.savetxt(output_file,factor*float_values,fmt=args.output_format)
                     n += 1 
                     # output_file.write(','.join(map(str, float_values)) + '\n')  # Save the values as a comma-separated line
     print("\tN. of dipole values found: ",n)
