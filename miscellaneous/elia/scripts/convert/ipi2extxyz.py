@@ -132,7 +132,7 @@ def main():
                 file = get_one_file_in_folder(folder=args.folder,ext="xyz",pattern=k)
             except:
                 raise ValueError("No file provided or found for array '{:s}'".format(k))
-            print("\tReading additional array '{:s}' from file '{:s}' using the 'ase.io.read' ... ".format(k,file), end="")
+            print("\tReading additional array '{:s}' from file '{:s}' ... ".format(k,file), end="")
             tmp = read(file,index=":")
             arrays[k] = np.zeros((len(tmp)),dtype=object)
             for n in range(len(tmp)):
