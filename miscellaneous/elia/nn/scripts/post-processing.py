@@ -20,43 +20,12 @@ def get_args():
     """Prepare parser of user input arguments."""
 
     parser = argparse.ArgumentParser(description=description)
-
-    # Argument for "input"
-    parser.add_argument(
-        "-t","--training", action="store", type=str,
-        help="training input file", default="input.json"
-    )
-
-    # Argument for "instructions"
-    parser.add_argument(
-        "-i","--instructions", action="store", type=str,
-        help="model input file", default="instructions.json"
-    )
-
-    parser.add_argument(
-        "-f","--folder", action="store", type=str,
-        help="folder", default="."
-    )
-
-    # Argument for "instructions"
-    parser.add_argument(
-        "-bs","--batch_size", action="store", type=int,
-        help="batch size"
-    )
-
-    # Argument for "instructions"
-    parser.add_argument(
-        "-lr","--learning_rate", action="store", type=float,
-        help="learning rate"
-    )
-
-    # Argument for "instructions"
-    parser.add_argument(
-        "-b","--best_only", action="store", type=bool,
-        help="search the best file only"
-    )
-
-
+    parser.add_argument("-t","--training",  type=str,help="training input file (default: 'input.json')", default="input.json")
+    parser.add_argument("-i","--instructions",  type=str,help="model input file (default: 'instructions.json')", default="instructions.json")
+    parser.add_argument("-f","--folder",  type=str,help="folder (default: '.')", default=".")
+    parser.add_argument("-bs","--batch_size",  type=int,help="batch size")
+    parser.add_argument("-lr","--learning_rate",  type=float, help="learning rate")
+    parser.add_argument("-b","--best_only",  type=bool,help="search the best file only (default=true)", default=True)
     return parser.parse_args()
 
 def main():

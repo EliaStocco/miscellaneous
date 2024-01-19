@@ -74,21 +74,22 @@ def main():
 
     #------------------#
     line = " and BEC" if args.compute_BEC else ""
-    print("\tComputing dipole{:s} ... ".format(line),end="")
+    print("\tComputing dipole{:s} ... ".format(line))
     D = np.full((N,3),np.nan)
     if args.compute_BEC:
         Z = np.full((N,3*len(trajectory[0].positions),3),np.nan)
 
-    with tqdm(enumerate(trajectory),bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}') as bar:
-        for n,atoms in bar:
-            pos = atoms.positions
-            cell = np.asarray(atoms.cell).T if np.all(atoms.get_pbc()) else None
-            if args.compute_BEC:
-                d,z,x = model.get_value_and_jac(pos=pos.reshape((-1,3)),cell=cell)
-                Z[n,:,:] = z.detach().numpy()#.flatten()
-            else:
-                d,x = model.get(pos=pos.reshape((-1,3)),cell=cell)
-            D[n,:] = d.detach().numpy()#.flatten()
+    #with tqdm(enumerate(trajectory)) as bar:
+    for n,atoms in enumerate(trajectory):
+        print("\t{:>6d}/{:<d}".format(n+1,N),end="\r")
+        pos = atoms.positions
+        cell = np.asarray(atoms.cell).T if np.all(atoms.get_pbc()) else None
+        if args.compute_BEC:
+            d,z,x = model.get_value_and_jac(pos=pos.reshape((-1,3)),cell=cell)
+            Z[n,:,:] = z.detach().numpy()#.flatten()
+        else:
+            d,x = model.get(pos=pos.reshape((-1,3)),cell=cell)
+        D[n,:] = d.detach().numpy()#.flatten()
         
     #------------------#
     print("\tSaving dipoles to file '{:s}' ... ".format(args.output),end="")
@@ -98,7 +99,9 @@ def main():
     #------------------#
     if args.compute_BEC:
         print("\tSaving BECs to file '{:s}' ... ".format(args.output_BEC),end="")
-        np.savetxt(args.output,Z.reshape((N,9)))
+        with open(args.output_BEC,"w") as f:
+            for n in range(N):
+                np.savetxt(f,Z[n,:,:],header="step: {:d}".format(n))
         print("done")
     
 
