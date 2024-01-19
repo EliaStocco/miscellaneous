@@ -8,7 +8,7 @@ from miscellaneous.elia.input import size_type
 
 #---------------------------------------#
 # Description of the script's purpose
-description = "Evaluate the dipole values according to a linear model given a reference configuration and the its BEC tensors and dipole."
+description = "Evaluate the dipole values according to a linear model\ngiven a reference configuration, and its BEC tensors and dipole."
 warning = "***Warning***"
 error = "***Error***"
 closure = "Job done :)"
