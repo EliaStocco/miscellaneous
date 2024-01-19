@@ -137,9 +137,13 @@ def prepare_parser():
         help="output file ", default="Efield.pdf"
     )
     parser.add_argument(
-        "-t", "--t_max", action="store", type=float,
-        help="max time",
+        "-n", "--n_steps", action="store", type=int,
+        help="max. number of steps",
     )
+    # parser.add_argument(
+    #     "-t", "--t_max", action="store", type=float,
+    #     help="max time",
+    # )
     parser.add_argument(
         "-dt", "--time_spacing", action="store", type=float,
         help="max time",default=1
@@ -150,6 +154,8 @@ def prepare_parser():
     )
        
     options = parser.parse_args()
+
+    options.t_max = options.time_spacing * options.n_steps
 
     return options
 
