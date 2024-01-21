@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import argparse
 import numpy as np
 from ase.io import write, read
 from copy import copy
@@ -22,23 +21,13 @@ DEBUG=False
 #             raise ValueError("You should provide 3 integers") 
 
 def prepare_args():
-
+    import argparse
     parser = argparse.ArgumentParser(description=description)
-
     argv = {"metavar" : "\b",}
-
-    parser.add_argument("-i", "--input", type=str, **argv,
-                        help="input 'extxyz' file")
-    
-    parser.add_argument("-o", "--output", type=str, default='shifted-and-fixed.extxyz', **argv,
-                        help="output 'extxyz' file (default: 'shifted-and-fixed.extxyz')")
-    
-    parser.add_argument("-j", "--jumps", type=str, default=None, **argv,
-                        help="output txt file with jumps indeces (default: 'None')")
-
-    parser.add_argument("-s", "--shift",  type=lambda s: size_type(s,dtype=float), default=None, **argv,
-                        help="additional vector to be added to the output file (default: [0,0,0])")
-    
+    parser.add_argument("-i", "--input", type=str, **argv, help="input 'extxyz' file")
+    parser.add_argument("-o", "--output", type=str, default='shifted-and-fixed.extxyz', **argv, help="output 'extxyz' file (default: 'shifted-and-fixed.extxyz')")
+    parser.add_argument("-j", "--jumps", type=str, default=None, **argv, help="output txt file with jumps indeces (default: 'None')")
+    parser.add_argument("-s", "--shift",  type=lambda s: size_type(s,dtype=float), default=None, **argv, help="additional vector to be added to the output file (default: [0,0,0])")
     return parser.parse_args()
 
 def main():
