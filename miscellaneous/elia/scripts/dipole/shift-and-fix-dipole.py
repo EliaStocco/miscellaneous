@@ -3,7 +3,7 @@ import numpy as np
 from ase.io import write, read
 from copy import copy
 from miscellaneous.elia.functions import cart2lattice, lattice2cart
-from miscellaneous.elia.input import size_type
+from miscellaneous.elia.input import size_type, str2bool
 
 description = "Fix the dipole jumps and shift the values of some multitples of the dipole quantum.\n"
 message = "\t!Attention:\n"+\
@@ -26,6 +26,7 @@ def prepare_args():
     argv = {"metavar" : "\b",}
     parser.add_argument("-i", "--input", type=str, **argv, help="input 'extxyz' file")
     parser.add_argument("-o", "--output", type=str, default='shifted-and-fixed.extxyz', **argv, help="output 'extxyz' file (default: 'shifted-and-fixed.extxyz')")
+    parser.add_argument("-f", "--fix_only", type=str2bool, default=False, **argv, help="whether to fix only the jumps, without shifting (default: false")
     parser.add_argument("-j", "--jumps", type=str, default=None, **argv, help="output txt file with jumps indeces (default: 'None')")
     parser.add_argument("-s", "--shift",  type=lambda s: size_type(s,dtype=float), default=None, **argv, help="additional vector to be added to the output file (default: [0,0,0])")
     return parser.parse_args()
@@ -81,15 +82,16 @@ def main():
     #         phases[:,i] -= shift[i]
     #     print("done")
 
-    shift = np.asarray([ int(i) for i in phases.mean(axis=0) ]).astype(float)
-    print("\tThe dipoles (phases) will be shifted by the average value: ",shift)
-    if args.shift is not None:        
-        print("\tAdding the user-defined shift (phases): ",args.shift)
-        shift += args.shift
-    print("\tShifting the dipoles (phases) ... ",shift)
-    for i in range(3):
-        phases[:,i] -= shift[i]
-    print("done")
+    if args.fix_only :
+        shift = np.asarray([ int(i) for i in phases.mean(axis=0) ]).astype(float)
+        print("\tThe dipoles (phases) will be shifted by the average value: ",shift)
+        if args.shift is not None:        
+            print("\tAdding the user-defined shift (phases): ",args.shift)
+            shift += args.shift
+        print("\tShifting the dipoles (phases) ... ",shift)
+        for i in range(3):
+            phases[:,i] -= shift[i]
+        print("done")
 
     print("\tConverting dipoles from lattice to cartesian coordinates ... ", end="")
     for n in range(N):
