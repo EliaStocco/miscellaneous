@@ -7,19 +7,21 @@ from .io import pickleIO
 from warnings import warn
 from miscellaneous.elia.units import *
 import pickle
+from ase import Atoms
 import warnings
 # Disable all UserWarnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 def inv(A:xr.DataArray)->xr.DataArray:
     """Calculate the inverse of a 2D ```xarray.DataArray``` using ```np.linalg.inv``` while preserving the xarray structure."""
-    if A.ndim != 2:
+    _A, unit = remove_unit(A)    
+    if _A.ndim != 2:
         raise ValueError("Input DataArray must be 2D.")
     # Calculate the inverse of the 2D array
-    inv_data = np.linalg.inv(A)
+    inv_data = np.linalg.inv(_A)
     # Create a new DataArray with the inverted values and the original coordinates
-    inv_da = xr.DataArray(inv_data.T, dims=A.dims, coords=A.coords)
-    return inv_da
+    inv_da = xr.DataArray(inv_data.T, dims=_A.dims, coords=_A.coords)
+    return set_unit(inv_da,1/unit) 
 
 def rbc(A:xr.DataArray,B:xr.DataArray,dim:str):
     """Row by column multiplication between two ```xarray.DataArray``` ```A``` and ```B``` along the specified dimension ```dim```"""
@@ -67,7 +69,7 @@ class NormalModes(pickleIO):
     # To DO :
     # - replace ref with as ase.Atoms and then initialize masses with that
 
-    def __init__(self,Nmodes,Ndof=None,ref=None):
+    def __init__(self,Nmodes:int,Ndof:int=None,ref:Atoms=None):
 
         # Nmodes
         self.Nmodes = int(Nmodes)
@@ -88,22 +90,30 @@ class NormalModes(pickleIO):
         self.eigval = xr.DataArray(np.full(self.Nmodes,np.nan), dims=('mode')) 
         self.masses = xr.DataArray(np.full(self.Ndof,np.nan), dims=('dof'))
 
-        self.reference = ref
+        
+        if ref is not None:
+            self.set_reference(ref)
+        else:
+            self.reference = Atoms()
 
         pass
+
+    def set_reference(self,ref:Atoms):
+        # print("setting reference")
+        self.reference = Atoms(positions=ref.get_positions(),symbols=ref.get_chemical_symbols(),pbc=ref.get_pbc())
     
-    def __repr__(self) -> str:
-        line = "" 
-        line += "{:<10s}: {:<10d}\n".format("# modes",self.Nmodes)  
-        line += "{:<10s}: {:<10d}\n".format("# dof",self.Ndof)  
-        line += "{:<10s}: {:<10d}\n".format("# atoms",self.Natoms)  
-        return line
+    # def __repr__(self) -> str:
+    #     line = "" 
+    #     line += "{:<10s}: {:<10d}\n".format("# modes",self.Nmodes)  
+    #     line += "{:<10s}: {:<10d}\n".format("# dof",self.Ndof)  
+    #     line += "{:<10s}: {:<10d}\n".format("# atoms",self.Natoms)  
+    #     return line
     
     def to_dict(self)->dict:
         return nparray2list_in_dict(vars(self))
 
     @classmethod
-    def load(cls,folder=None):    
+    def from_folder(cls,folder=None):    
 
         file = get_one_file_in_folder(folder=folder,ext=".mode")
         tmp = np.loadtxt(file)
@@ -222,7 +232,47 @@ class NormalModes(pickleIO):
         # supercell.eigvec2proj()
 
         return supercell
+    
+    def ed2cp(self,A:xr.DataArray)->Atoms:
+        """eigenvector displacements to cartesian positions (ed2cp)."""
+        B = self.ed2nmd(A)
+        D = self.nmd2cd(B)
+        return self.cd2cp(D)
         
+    def ed2nmd(self,A:xr.DataArray)->xr.DataArray:
+        """eigenvector displacements to normal modes displacements (ed2nd).
+        Convert the coeffients ```A``` [length x mass^{-1/2}] of the ```eigvec``` into the coeffients ```B``` [length] of the ```modes```."""
+        invmode = inv(self.mode)
+        for dim in ["dof","mode"]:
+            test = rbc(invmode,self.mode,dim)
+            if np.any(test.imag != 0.0):
+                warn("'test' matrix should be real.")
+            if not np.allclose(test.to_numpy(),np.eye(len(test))):
+                warn("problem with inverting 'mode' matrix.")
+        M = self.masses * atomic_unit["mass"] # xr.DataArray(self.masses,dims=("dof")) * atomic_unit["mass"]
+        Msqrt = np.sqrt(M)
+        B = dot(invmode,1./Msqrt * dot(self.eigvec,A,"mode"),"dof")
+        return remove_unit(B)[0]
+    
+    def nmd2cd(self,coeff:xr.DataArray)->Atoms:
+        """normal modes displacements to cartesian displacements (nd2cd).
+        Return the cartesian displacements as an ```ase.Atoms``` object given the displacement [length] of the normal modes"""
+        displ = dot(self.mode,coeff,"mode")
+        displ = displ.to_numpy().real
+        pos = self.reference.get_positions()
+        displ = displ.reshape(pos.shape)
+        structure = self.reference.copy()
+        displ = displ.reshape((-1,3))
+        structure.set_positions(displ)
+        return structure
+    
+    def cd2cp(self,displ:Atoms)->Atoms:
+        """cartesian displacements to cartesian positions (cd2cp).
+        Return the cartesian positions as an ```ase.Atoms``` object given the cartesian displacement."""
+        structure = self.reference.copy()
+        structure.set_positions(structure.get_positions()+displ.get_positions())
+        return structure
+
     def project(self,trajectory,warning="**Warning**"):       
 
         #-------------------#

@@ -65,19 +65,18 @@ def main():
     reference = None
     if args.reference is not None:
         print("\tReading reference atomic structure from input '{:s}' ... ".format(args.reference), end="")
-        reference = read(args.reference)
+        reference = read(args.reference,index=0)
         print("done")
 
     #---------------------------------------#
     # phonon modes
     print("\n\tReading normal modes from folder '{:s}' ... ".format(args.folder),end="")
-    gamma = (0,0,0)
     # pm = pd.DataFrame(index=[gamma],columns=["q","freq","modes"])
-    nm = NormalModes.load(args.folder)
+    nm = NormalModes.from_folder(args.folder)
     # pm.at[gamma,"q"]     = gamma
     # pm.at[gamma,"modes"] = nm 
     if reference is not None:
-        nm.reference = reference
+        nm.set_reference(reference)
     print("done")
 
     #---------------------------------------#
