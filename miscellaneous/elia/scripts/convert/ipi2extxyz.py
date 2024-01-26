@@ -5,10 +5,10 @@ import numpy as np
 from copy import copy
 from ase.io import write, read
 from ase import Atoms
-from miscellaneous.elia.properties import properties as Properties
+from miscellaneous.elia.classes.properties import properties as Properties
 from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder, str2bool
 from miscellaneous.elia.input import size_type
-from miscellaneous.elia.trajectory import trajectory
+from miscellaneous.elia.classes import trajectory
 
 DEBUG=False
 # example:
@@ -110,7 +110,7 @@ def main():
 
     print("\tReading atomic structures from file '{:s}' ... ".format(args.positions_file), end="")
     with suppress_output(not DEBUG):
-        atoms = trajectory(args.positions_file,format=args.format)
+        atoms = trajectory(args.positions_file,format=args.format,check=True)
     print("done")
     # else :
     #     raise ValueError("to be implemented yet")

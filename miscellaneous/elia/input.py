@@ -1,6 +1,9 @@
 import numpy as np
 import argparse
 #---------------------------------------#
+def union_type(s:str,dtype):
+    return s
+#---------------------------------------#
 def size_type(s:str,dtype=int,N=None):
     s = s.replace("[","").replace("]","").replace(","," ").split()
     # s = s.split("[")[1].split("]")[0].split(",")

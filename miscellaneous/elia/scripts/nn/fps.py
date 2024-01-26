@@ -9,6 +9,7 @@ from rascal.representations import SphericalInvariants as SOAP
 from skmatter.preprocessing import StandardFlexibleScaler
 from skmatter.feature_selection import FPS
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 from tqdm.auto import tqdm
 import argparse
 from miscellaneous.elia.functions import add_default
@@ -41,16 +42,21 @@ def prepare_args():
     # Define the command-line argument parser with a description
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar" : "\b"}
-    parser.add_argument("-i" , "--input"          ,  type=str  , **argv, help="input file [au]")
-    parser.add_argument("-o" , "--output"         ,  type=str  , **argv, help="output file with the selected structures")
-    parser.add_argument("-oi", "--output_indices" ,  type=str  , **argv, help="output file with indices of the selected structures (default: 'indices.txt')",default='indices.txt')
-    parser.add_argument("-if", "--input_format"   ,  type=str  , **argv, help="input file format (default: 'None')" , default=None)
-    parser.add_argument("-of", "--output_format"  ,  type=str  , **argv, help="output file format (default: 'None')", default=None)
-    parser.add_argument("-ff", "--features_file"  ,  type=str  , **argv, help="features output file [*.npy] (default: 'None')", default=None)
-    parser.add_argument("-n" , "--number"         ,  type=int  , **argv, help="number of desired structure (default: '100')", default=None)
-    parser.add_argument("-s" , "--sort"           ,  type=str2bool , **argv, help="whether to sort the indices (default: true)", default=True)
-    parser.add_argument("-rc", "--cutoff_radius"  ,  type=float, **argv, help="cutoff radius [au] (default: 6)", default=6)
-    parser.add_argument("-sh", "--soap_hyper"     ,  type=str  , **argv, help="JSON file with the SOAP hyperparameters", default=None)
+    parser.add_argument("-i"  , "--input"             , type=str  , **argv, help="input file [au]")
+    parser.add_argument("-o"  , "--output"            , type=str  , **argv, help="output file with the selected structures")
+    parser.add_argument("-oi" , "--output_indices"    , type=str  , **argv, help="output file with indices of the selected structures (default: 'indices.txt')",default='indices.txt')
+    parser.add_argument("-if" , "--input_format"      , type=str  , **argv, help="input file format (default: 'None')" , default=None)
+    parser.add_argument("-of" , "--output_format"     , type=str  , **argv, help="output file format (default: 'None')", default=None)
+    parser.add_argument("-ff" , "--features_file"     , type=str  , **argv, help="features output file [*.npy] (default: 'None')", default=None)
+    parser.add_argument("-n"  , "--number"            , type=int  , **argv, help="number of desired structure (default: '100')", default=100)
+    parser.add_argument("-s"  , "--sort"              , type=str2bool , **argv, help="whether to sort the indices (default: true)", default=True)
+    parser.add_argument("-rc" , "--cutoff_radius"     , type=float, **argv, help="cutoff radius [au] (default: 6)", default=6)
+    parser.add_argument("-sh" , "--soap_hyper"        , type=str  , **argv, help="JSON file with the SOAP hyperparameters", default=None)
+    parser.add_argument("-pca", "--pca"               , type=str2bool  , **argv, help="whether to perform PCA or not (default: true)", default=True)
+    parser.add_argument("-npca", "--number_pca"       , type=int  , **argv, help="number of components to be used in PCA (default: 2)", default=2)
+    parser.add_argument("-fpca", "--feature_pca"      , type=str  , **argv, help="feature to be analysed using PCA (default: 'dipole')", default="dipole")
+    parser.add_argument("-opca", "--output_pca"       , type=str  , **argv, help="output file for PCA (default: 'pca.txt')", default="pca.txt")
+    parser.add_argument("-och" , "--output_chemiscope", type=str  , **argv, help="output file for chemiscope (default: 'chemiscope.json.gz')", default="chemiscope.json.gz")
     return parser.parse_args()
 
 def main():
@@ -100,7 +106,7 @@ def main():
 
     print("\n\tUsing the following SOAP hyperparameters:")
     SOAP_HYPERS = {
-        # "interaction_cutoff": 3.5,
+        "interaction_cutoff": 3.5,
         "max_radial": 8,
         "max_angular": 6,
         "gaussian_sigma_constant": 0.4,
@@ -109,7 +115,7 @@ def main():
     }
 
     SOAP_HYPERS = add_default(user_soap_hyper,SOAP_HYPERS)
-    SOAP_HYPERS["interaction_cutoff"] = args.cutoff_radius
+    # SOAP_HYPERS["interaction_cutoff"] = args.cutoff_radius
     show_dict(SOAP_HYPERS,string="\t\t")
 
     #
@@ -150,11 +156,7 @@ def main():
         print("done")
 
     #
-    if args.number is None :
-        n_FPS = min(100,len(frames)) # number of structures to select
-    else :
-        n_FPS = args.number
-    struct_idx = FPS(n_to_select=n_FPS, progress_bar = True, initialize = 'random').fit(X.T).selected_idx_
+    struct_idx = FPS(n_to_select=args.number, progress_bar = True, initialize = 'random').fit(X.T).selected_idx_
     X_fps = X[struct_idx]
 
     print("\n\tFPS selected indices: {:d}".format(struct_idx.shape[0]))
@@ -186,66 +188,87 @@ def main():
     # else :
     #     print("\tOutput file (-oi/--output_indices) for the indeces of the selected structures not specified: they will not be saved to file")
 
+    # return
+
+    if args.pca is not None:
+        print("\n\tPerforming PCA:")
+
+        X = X[struct_idx]
+        frames_fps = [frames[i] for i in indices]
+        frames = frames_fps.copy()
+
+        #
+        available_structure_properties = list(set([k for frame in frames for k in frame.info.keys()]))
+        available_atom_level_properties = list(set([k for frame in frames for k in frame.arrays.keys()]))
+
+        print("\t\tAvailable structure-level properties:", available_structure_properties)
+        print("\t\t     Available atom-level properties:", available_atom_level_properties)
+
+        # Visualizing using the principal componenets of the selected dataset and the original dataset using the chemiscope
+        print("\t\tStandardyzing features ... ",end="")
+        X = StandardFlexibleScaler(column_wise=False).fit_transform(X)
+        print("done")
+
+        print("\t\tApplying PCA with {:d} components ... ".format(args.number_pca),end="")
+        T = TSNE(n_components=args.number_pca,learning_rate='auto', init='random', perplexity=3).fit_transform(X)
+        print("done")
+
+        #
+        print("\t\tExtracting '{:s}' from the atomic structures ... ".format(args.feature_pca),end="")
+        try :
+            features = np.array([frame.info[args.feature_pca] for frame in frames])
+        except:
+            raise ValueError("encountered problems extracting '{:s}' info from the atomic structures".format(args.feature))
+        print("done")
+
+        tmp = np.concatenate([T, features], axis=1)
+        print("\t\tSaving PCA results to file '{:s}'".format(args.output_pca),end="")
+        np.savetxt(args.output_pca,tmp,fmt='%24.18e')
+        print("done")
+
+        properties = {
+            "PCA": {
+                # change the following line if your map is per-atom
+                "target": "structure",
+                "values": T,
+
+                # change the following line to describe your map
+                "description": "PCA of structure-averaged representation",
+            },
+
+            # this is an example of how to add structure-level properties
+            args.feature_pca: {
+                "target": "structure",
+                "values": features[:,0].tolist(),
+
+                # change the following line to correspond to the units of your property
+                "units": "atomic_unit",
+            },
+
+            # # this is an example of how to add atom-level properties
+            "numbers": {
+                "target": "atom",
+                "values": np.concatenate([frame.arrays['numbers'] for frame in frames]),
+            },
+        }
+
+        print("\tSaving results for chemiscope to file '{:s}' ... ".format(args.output_chemiscope),end="")
+        chemiscope.write_input(
+            path=args.output_chemiscope,
+            frames=frames,
+            properties=properties,
+
+            # # This is required to display properties with `target: "atom"`
+            # # Without this, the chemiscope will show only structure-level properties
+            # environments=chemiscope.all_atomic_environments(frames),
+        )
+        print("done")
+
     #------------------#
     # Script completion message
     print("\n\t{:s}\n".format(closure))
-
-    return
-
-    # Visualizing using the principal componenets of the selected dataset and the original dataset using the chemiscope
-    X = StandardFlexibleScaler(column_wise=False).fit_transform(X)
-    T = PCA(n_components=2).fit_transform(X)
-
-    #
-    np.savetxt('PES_PCA.txt', np.concatenate([T, np.array([frame.info['energy'] for frame in frames]).reshape(-1, 1)], axis=1))
-
-    #
-    available_structure_properties = list(set([k for frame in frames for k in frame.info.keys()]))
-    available_atom_level_properties = list(set([k for frame in frames for k in frame.arrays.keys()]))
-
-    print("Available structure-level properties", available_structure_properties)
-    print("Available atom-level properties", available_atom_level_properties)
-
     #
 
-
-    properties = {
-        "PCA": {
-            # change the following line if your map is per-atom
-            "target": "structure",
-            "values": T,
-
-            # change the following line to describe your map
-            "description": "PCA of structure-averaged representation",
-        },
-
-        # this is an example of how to add structure-level properties
-        "energy": {
-            "target": "structure",
-            "values": [frame.info['energy'] for frame in frames],
-
-            # change the following line to correspond to the units of your property
-            "units": "eV",
-        },
-
-        # this is an example of how to add atom-level properties
-        "numbers": {
-            "target": "atom",
-            "values": np.concatenate([frame.arrays['numbers'] for frame in frames]),
-        },
-    }
-
-    chemiscope.write_input(
-        path=f"PES_PCA-chemiscope.json.gz",
-        frames=frames,
-        properties=properties,
-
-        # # This is required to display properties with `target: "atom"`
-        # # Without this, the chemiscope will show only structure-level properties
-        # environments=chemiscope.all_atomic_environments(frames),
-    )
-
-    #
-
+#---------------------------------------#
 if __name__ == "__main__":
     main()

@@ -3,6 +3,7 @@ from copy import copy
 from itertools import product
 import xarray as xr
 from miscellaneous.elia.functions import get_one_file_in_folder, nparray2list_in_dict
+from .io import pickleIO
 from warnings import warn
 from miscellaneous.elia.units import *
 import pickle
@@ -10,7 +11,56 @@ import warnings
 # Disable all UserWarnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
+def A2B(A,N:xr.DataArray,M:xr.DataArray,E:xr.DataArray):
+    """
+    purpose:
+        convert the A-amplitude [length x mass^{-1/2}] into B-amplitudes [length]
+
+    input :
+        A : A-amplitudes
+        N : normal modes (normalized)
+        M : masses
+        E : eigevectors (of the dynamical matrix)
+
+    output:
+        B : B-amplitudes
+    """
+
+    B = (np.linalg.inv(N) @ MicroState.diag_matrix(M,"-1/2") @ E @ A.T).T
+    if MicroStatePrivate.debug: 
+        print("B shape : ",B.shape)
+
+    return B
+
+def inv(A:xr.DataArray)->xr.DataArray:
+    """Calculate the inverse of a 2D ```xarray.DataArray``` using ```np.linalg.inv``` while preserving the xarray structure."""
+    if A.ndim != 2:
+        raise ValueError("Input DataArray must be 2D.")
+    # Calculate the inverse of the 2D array
+    inv_data = np.linalg.inv(A)
+    # Create a new DataArray with the inverted values and the original coordinates
+    inv_da = xr.DataArray(inv_data.T, dims=A.dims, coords=A.coords)
+    return inv_da
+
+def rbc(A:xr.DataArray,B:xr.DataArray,dim:str):
+    """Row by column multiplication between two ```xarray.DataArray``` ```A``` and ```B``` along the specified dimension ```dim```"""
+    # Check if A and B have at least two dimensions with the same name, and one of them is 'dim'
+    common_dims = set(A.dims).intersection(B.dims)
+    if len(common_dims) < 2 or dim not in common_dims:
+        raise ValueError("Both input arrays must have at least two dimensions with the same name, and one of them must be the specified 'dim'.")
+    # Determine the common dimension that is not 'dim'
+    other_common_dim = next(d for d in common_dims if d != dim)
+    # Rename the common dimension for A and B
+    _A = A.rename({other_common_dim: f'{other_common_dim}-left'})
+    _B = B.rename({other_common_dim: f'{other_common_dim}-right'})
+    # compute
+    _A_,ua = remove_unit(_A)
+    _B_,ub = remove_unit(_B)
+    out = dot(_A_,_B_,dim=dim)
+    return set_unit(out,ua*ub)
+
 def dot(A:xr.DataArray,B:xr.DataArray,dim:str):
+    """Dot product (contraction) between two ```xarray.DataArray``` ```A``` and ```B``` along the specified dimension ```dim```"""
     _A,ua = remove_unit(A)
     _B,ub = remove_unit(B)
     out = _A.dot(_B,dim=dim)
@@ -33,7 +83,10 @@ def diag_matrix(M,exp):
         raise ValueError("'exp' value not allowed")
     return out  
 
-class NormalModes():
+class NormalModes(pickleIO):
+
+    # To DO :
+    # - replace ref with as ase.Atoms and then initialize masses with that
 
     def __init__(self,Nmodes,Ndof=None,ref=None):
 
@@ -70,49 +123,49 @@ class NormalModes():
     def to_dict(self)->dict:
         return nparray2list_in_dict(vars(self))
 
-    def write(self,file,module="pickle",mode="w"):
-        match module:
-            case "pickle":
-                import pickle
-                with open(file, mode) as f:
-                    pickle.dump(self, f)
-            case "pprint":
-                from pprint import pprint
-                with open(file, mode) as f:
-                    pprint(self, f)
-            case "yaml":
-                import yaml
-                with open(file, mode) as f:
-                    yaml.dump(self.to_dict(), f, default_flow_style=False)
-            case "json":
-                import json
-                with open(file, mode) as f:
-                    json.dump(self.to_dict(), f)
-            case _:
-                raise ValueError("saving with module '{:s}' not implemented yet".format(module))
+    # def write(self,file,module="pickle",mode="w"):
+    #     match module:
+    #         case "pickle":
+    #             import pickle
+    #             with open(file, mode) as f:
+    #                 pickle.dump(self, f)
+    #         case "pprint":
+    #             from pprint import pprint
+    #             with open(file, mode) as f:
+    #                 pprint(self, f)
+    #         case "yaml":
+    #             import yaml
+    #             with open(file, mode) as f:
+    #                 yaml.dump(self.to_dict(), f, default_flow_style=False)
+    #         case "json":
+    #             import json
+    #             with open(file, mode) as f:
+    #                 json.dump(self.to_dict(), f)
+    #         case _:
+    #             raise ValueError("saving with module '{:s}' not implemented yet".format(module))
     
-    @classmethod
-    def read(cls,file,module="pickle",mode="r"):
-        match module:
-            case "pickle":
-                import pickle
-                with open(file,'rb') as f:
-                    loaded_data = pickle.load(f)
-            case "yaml":
-                import yaml
-                with open(file,mode) as f:
-                    loaded_data = yaml.load(f)
-            case "json":
-                import json
-                with open(file,mode) as f:
-                    loaded_data = json.load(f)
-        return cls(loaded_data)
+    # @classmethod
+    # def read(cls,file,module="pickle",mode="r"):
+    #     match module:
+    #         case "pickle":
+    #             import pickle
+    #             with open(file,'rb') as f:
+    #                 loaded_data = pickle.load(f)
+    #         case "yaml":
+    #             import yaml
+    #             with open(file,mode) as f:
+    #                 loaded_data = yaml.load(f)
+    #         case "json":
+    #             import json
+    #             with open(file,mode) as f:
+    #                 loaded_data = json.load(f)
+    #     return cls(loaded_data)
 
-    def to_pickle(self,file):
-        # Open the file in binary write mode ('wb')
-        with open(file, 'wb') as file:
-            # Use pickle.dump() to serialize and save the object to the file
-            pickle.dump(self, file)
+    # def to_pickle(self,file):
+    #     # Open the file in binary write mode ('wb')
+    #     with open(file, 'wb') as file:
+    #         # Use pickle.dump() to serialize and save the object to the file
+    #         pickle.dump(self, file)
 
     @classmethod
     def load(cls,folder=None):    
@@ -123,6 +176,7 @@ class NormalModes():
         self = cls(tmp.shape[0],tmp.shape[1])    
 
         # masses
+        # I should remove this
         file = get_one_file_in_folder(folder=folder,ext=".masses")
         self.masses[:] = np.loadtxt(file)
 
@@ -143,6 +197,7 @@ class NormalModes():
         self.eigval[:] = np.loadtxt(file)
 
         # dynmat 
+        # I should remove this. it's useless
         file = get_one_file_in_folder(folder=folder,ext=".dynmat")
         self.dynmat[:,:] = np.loadtxt(file)
 
@@ -214,9 +269,13 @@ class NormalModes():
         self.non_ortho_mode = self.eigvec.copy()
         for i in range(self.non_ortho_mode.sizes['dof']):
             index = {'dof': i}
-            self.non_ortho_mode[index] = self.eigvec[index] * np.sqrt(self.masses[index])
-        self.mode = self.non_ortho_mode / norm_by(self.non_ortho_mode,"dof")
-        pass
+            self.non_ortho_mode[index] = self.eigvec[index] / np.sqrt(self.masses[index])
+        test = self.non_ortho_mode / norm_by(self.non_ortho_mode,"dof")
+        if not np.allclose(test.data,self.mode.data):
+            raise ValueError('some coding error')
+        # self.old_mode = self.mode.copy()
+        # self.mode = self.non_ortho_mode / norm_by(self.non_ortho_mode,"dof")
+        # pass
 
     # def eigvec2proj(self):
     #     self.proj = self.eigvec.T @ NormalModes.diag_matrix(self.masses,"1/2")
@@ -254,6 +313,7 @@ class NormalModes():
         supercell.eigvec /= np.linalg.norm(supercell.eigvec,axis=0)
         supercell.eigval = self.eigval.copy()
         
+        raise ValueError("Elia Stocco, this is a message for yourself of the past. Check again this script, please!")
         supercell.eigvec2modes()
         # supercell.eigvec2proj()
 
@@ -316,6 +376,9 @@ class NormalModes():
     #     # out.eigvec2proj()
         
     #     return out
+
+    def A2B(self,A:xr.DataArray)->xr.DataArray:
+        return A2B(A,self.mode,self.masses,self.eigvec)
     
     def project(self,trajectory,warning="**Warning**"):       
 
@@ -357,18 +420,22 @@ class NormalModes():
         if np.square(test - np.eye(self.Nmodes)).sum() > 1e-8:
             raise ValueError("eigvec is not orthogonal")
         
+        # _mode = np.asarray(self.mode.real.copy())
+        # np.round( _mode.T @ _mode, 2)
+        # _eigvec = np.asarray(eigvec.real)
+        
         #-------------------#
         # masses
-        M = xr.DataArray(self.masses,dims=("dof")) * atomic_unit["mass"]
+        M = self.masses * atomic_unit["mass"] # xr.DataArray(self.masses,dims=("dof")) * atomic_unit["mass"]
         Msqrt = np.sqrt(M)
 
         #-------------------#
         # proj
-        proj = Msqrt * eigvec.T
-        mode = proj / norm_by(proj,"dof")
-        # mode,_ = set_unit(mode,atomic_unit["dimensionless"])
-        if not np.allclose(mode.data.magnitude,self.mode.data):
-            raise ValueError("conflict between 'eigvec' and 'mode'")
+        proj = eigvec.T * Msqrt #np.linalg.inv(Msqrt * eigvec)
+        # mode = proj / norm_by(proj,"dof")
+        # # mode,_ = set_unit(mode,atomic_unit["dimensionless"])
+        # if not np.allclose(mode.data.magnitude,self.mode.data):
+        #     raise ValueError("conflict between 'eigvec' and 'mode'")
         
         #-------------------#
         # proj should be real
@@ -460,12 +527,35 @@ class NormalModes():
             
         #-------------------#
         # amplitudes of the vib. modes
-        vv = 1/np.sqrt(w2) * vn
-        A2 = ( np.square(qn) + np.square(vv) )
-        A  = np.sqrt(A2)
-        amplitude  = dot(dot(mode,1./np.sqrt(M) ,"mode"),eigvec,"dof")* A
-        if not check_dim(amplitude,'[length]'):
-            raise ValueError("'amplitude' have the wrong unit")
+        mode, unit = remove_unit(self.mode)
+        invmode = inv(mode)
+        invmode = set_unit(invmode,1/unit)
+        for dim in ["dof","mode"]:
+            test = rbc(invmode,mode,dim)
+            if np.any(test.imag != 0.0):
+                warn("'test' matrix should be real.")
+            if not np.allclose(test.to_numpy(),np.eye(len(test))):
+                warn("problem with inverting 'mode' matrix.")
+
+        displacements = dot(invmode,q,"dof").real
+        if not check_dim(displacements,"[length]"):
+            raise ValueError("'displacements' has the wrong unit.")
+        
+        B = dot(invmode,1./Msqrt * dot(self.eigvec,qn,"mode"),"dof")
+        if not np.allclose(B,displacements):
+            warn("'B' and 'displacements' should be equal.")
+
+        # AtoB = rbc(invmode,1./Msqrt * self.eigvec,"dof")
+        # B2 = dot(AtoB,qn,"mode")
+        # if not np.allclose(B,B2):
+        #     warn("'B' and 'B2' should be equal.")
+
+        # vv = 1/np.sqrt(w2) * vn
+        # A2 = ( np.square(qn) + np.square(vv) )
+        # A  = np.sqrt(A2)
+        # amplitude  = dot(dot(self.mode,1./np.sqrt(M) ,"mode"),eigvec,"dof")* A
+        # if not check_dim(amplitude,'[length]'):
+        #     raise ValueError("'amplitude' have the wrong unit")
         
         # amplitude_ = np.sqrt( energy / ( 0.5 * M * w2 ) )
         # if not np.allclose(amplitude,amplitude_):
@@ -501,10 +591,10 @@ class NormalModes():
             "energy"        : energy,
             "kinetic"       : K,
             "potential"     : U,
-            "amplitude"     : amplitude,
+            "displacements" : displacements,
             "equipartition" : equipartition,
             "occupation"    : occupation,
-            "phases"        : phases
+            # "phases"        : phases
         }
 
         # self.mode = save

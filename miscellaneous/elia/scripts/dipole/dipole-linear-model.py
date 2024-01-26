@@ -3,7 +3,7 @@ from ase.io import read
 import numpy as np
 from ase import Atoms
 # from miscellaneous.elia.trajectory import info
-from miscellaneous.elia.trajectory import trajectory as Trajectory
+from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
 from miscellaneous.elia.input import size_type
 
 #---------------------------------------#

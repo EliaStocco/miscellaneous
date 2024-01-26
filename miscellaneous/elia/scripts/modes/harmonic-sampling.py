@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import pickle
-from miscellaneous.elia.normal_modes import NormalModes
+from miscellaneous.elia.classes.normal_modes import NormalModes
 from ase.io import read, write
 from miscellaneous.elia.functions import convert
 from miscellaneous.elia.units import remove_unit

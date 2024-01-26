@@ -22,15 +22,15 @@ def import_submodules(package_name):
 #print("\t 'miscellaneous.elia'")
 
 #print("importing 'miscellaneous.elia.functions' ... ",end="")
-from .functions import *
+#from .functions import *
 #print("done")
 
 #print("importing 'miscellaneous.elia.classes' ... ",end="")
-from .classes import *
+#from .classes import *
 #print("done")
 
 #print("\t\timporting 'miscellaneous.elia.functions'")
-from .nn import *
+#from .nn import *
 #print("\t\timported 'miscellaneous.elia.functions'")
 
 #print("imported 'miscellaneous.elia'")

@@ -2,7 +2,7 @@
 import argparse
 import numpy as np
 from miscellaneous.elia.functions import cart2lattice
-from miscellaneous.elia.trajectory import trajectory
+from miscellaneous.elia.classes import trajectory
 
 #---------------------------------------#
 # Description of the script's purpose

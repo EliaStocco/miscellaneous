@@ -36,6 +36,7 @@ def get_args():
         "-o","--output", action="store", type=str, **argv,
         help="prefix for the output files (default: 'test')", default="test"
     )
+    parser.add_argument("-of", "--output_format", **argv,type=str, help="output format for np.savetxt (default: '%%24.18f')", default='%24.18f')
 
     # parser.add_argument(
     #     "-f","--folder", action="store", type=str,
@@ -75,7 +76,7 @@ def main():
     with open('/dev/null', 'w') as devnull:
         sys.stdout = devnull  # Redirect stdout to discard output
         # atoms = MicroState(instructions=instructions)
-        atoms = read(args.positions)
+        atoms = read(args.positions,index=0)
     sys.stdout = original_stdout
 
     model.store_chemical_species(atoms=atoms)
@@ -103,7 +104,7 @@ def main():
     print("\tSaving dipole to file '{:s}' ... ".format(file),end="")
     # with open(file,'w') as f:
     # for n in range(N):
-    np.savetxt(file,D,delimiter='\t')
+    np.savetxt(file,D.reshape((1,3)),fmt=args.output_format)
     print("done")
 
     ######################
@@ -111,7 +112,7 @@ def main():
     print("\tSaving BECs to file '{:s}' ... ".format(file),end="")
     # with open(file,'w') as f:
     # for n in range(N):
-    np.savetxt(file,Z,delimiter='\t')
+    np.savetxt(file,Z,fmt=args.output_format)
     # f.write("\n")
     print("done")
 

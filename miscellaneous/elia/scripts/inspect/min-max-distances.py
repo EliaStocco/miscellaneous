@@ -3,7 +3,7 @@ from ase.io import read
 from scipy.spatial.distance import pdist, squareform
 import numpy as np
 import argparse
-from miscellaneous.elia.trajectory import trajectory as Trajectory
+from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
 from tqdm import tqdm
 
 #---------------------------------------#

@@ -1,4 +1,4 @@
-from miscellaneous.elia.properties import getproperty, get_property_header
+from miscellaneous.elia.classes.properties import getproperty, get_property_header
 from miscellaneous.elia.functions import get_one_file_in_folder
 from miscellaneous.elia.output import output_file
 from miscellaneous.elia.functions import convert, Dict2Obj, get_attributes, merge_attributes, read_comments_xyz

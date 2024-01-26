@@ -710,23 +710,23 @@ def read_comments_xyz(file, Nmax=1000000):
     return result[:k]
 
 
-def segment(A, B, N, start=0, end=1):
-    """This function generates a segment
-    given the initial (A) and final (B) points
-    and put N points in the middle.
+# def segment(A, B, N, start=0, end=1):
+#     """This function generates a segment
+#     given the initial (A) and final (B) points
+#     and put N points in the middle.
 
-    A and B can be any kind of np.ndarray
-    """
-    assert A.shape == B.shape
+#     A and B can be any kind of np.ndarray
+#     """
+#     assert A.shape == B.shape
 
-    sequence = np.zeros((N + 2, *A.shape))
-    T = np.linspace(start, end, N + 2)
-    # N = 0 -> t=0,1
-    # N = 1 -> t=0,0.5,1
-    for n, t in enumerate(T):
-        # t = float(n)/(N+1)
-        sequence[n] = A * (1 - t) + t * B
-    return sequence
+#     sequence = np.zeros((N + 2, *A.shape))
+#     T = np.linspace(start, end, N + 2)
+#     # N = 0 -> t=0,1
+#     # N = 1 -> t=0,0.5,1
+#     for n, t in enumerate(T):
+#         # t = float(n)/(N+1)
+#         sequence[n] = A * (1 - t) + t * B
+#     return sequence
 
 
 import os

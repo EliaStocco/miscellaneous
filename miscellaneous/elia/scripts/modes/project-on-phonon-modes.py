@@ -5,8 +5,8 @@ from ase.io import read
 from ase import Atoms
 import pandas as pd
 from icecream import ic
-from miscellaneous.elia.vectorize import easyvectorize
-from miscellaneous.elia.normal_modes import NormalModes
+from miscellaneous.elia.classes.vectorize import easyvectorize
+from miscellaneous.elia.classes.normal_modes import NormalModes
 # import warnings
 # warnings.filterwarnings("error")
 #---------------------------------------#

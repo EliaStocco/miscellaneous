@@ -3,6 +3,8 @@ import argparse
 from copy import copy
 import numpy as np
 from ase.io import write, read
+from typing import Union, List
+from miscellaneous.elia.input import union_type
 
 # Description of the script's purpose
 description = "Subsample an (ASE readable) MD trajectory given a set of indices."
@@ -22,8 +24,8 @@ def prepare_args():
     parser.add_argument("-f", "--format", type=str, default='extxyz', **argv, 
                         help="file format (default: extxyz)" )
     
-    parser.add_argument("-n", "--indices", type=str, **argv, default='indices.txt',
-                        help="txt file with the subsampling indices (default: 'indices.txt')")
+    parser.add_argument("-n", "--indices", type=lambda s: union_type(s,Union[str,List[int]]), **argv, default='indices.txt',
+                        help="txt file with the subsampling indices, or list of integers (default: 'indices.txt')")
 
     parser.add_argument("-o", "--output", type=str, **argv, 
                         help="output file")
@@ -43,10 +45,16 @@ def main():
     atoms = read(args.input,format=args.format,index=":")
     print("done")
 
-    print("\tReading subsampling indices from file '{:s}' ... ".format(args.indices), end="")
-    indices = np.loadtxt(args.indices).astype(int)
-    indices.sort()
-    print("done")
+    if type(args.indices) == str:
+        print("\tReading subsampling indices from file '{:s}' ... ".format(args.indices), end="")
+        indices = np.loadtxt(args.indices).astype(int)
+        indices.sort()
+        print("done")
+    else:
+        print("\tSubsampling indices: ",args.indice)
+        indices = np.asarray(args.indices).astype(int)
+        indices.sort()
+        print("done")
 
     print("\tSubsampling atomic structures ... ".format(args.indices), end="")
     new_atoms = [None]*len(indices)

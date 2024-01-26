@@ -26,7 +26,7 @@ def prepare_args():
     argv = {"metavar" : "\b",}
     parser.add_argument("-i", "--input", type=str, **argv, help="input 'extxyz' file")
     parser.add_argument("-o", "--output", type=str, default='shifted-and-fixed.extxyz', **argv, help="output 'extxyz' file (default: 'shifted-and-fixed.extxyz')")
-    parser.add_argument("-f", "--fix_only", type=str2bool, default=False, **argv, help="whether to fix only the jumps, without shifting (default: false")
+    parser.add_argument("-f", "--fix_only", type=str2bool, default=False, **argv, help="whether to fix only the jumps, without shifting (default: false)")
     parser.add_argument("-j", "--jumps", type=str, default=None, **argv, help="output txt file with jumps indeces (default: 'None')")
     parser.add_argument("-s", "--shift",  type=lambda s: size_type(s,dtype=float), default=None, **argv, help="additional vector to be added to the output file (default: [0,0,0])")
     return parser.parse_args()
@@ -88,7 +88,7 @@ def main():
         if args.shift is not None:        
             print("\tAdding the user-defined shift (phases): ",args.shift)
             shift += args.shift
-        print("\tShifting the dipoles (phases) ... ",shift)
+        print("\tShifting the dipoles phases by ",shift, " ... ",end="")
         for i in range(3):
             phases[:,i] -= shift[i]
         print("done")

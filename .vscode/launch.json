@@ -8,13 +8,14 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/nn/scripts/check-E3-equivariance.py",
-            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/dipole/compute-dipole4trajectory.py",
-            "cwd" : "/home/stoccoel/google-personal/works/water/check-E3/",
+            //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/dipole/extxyz2bec.py",
+            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/modes/project-on-normal-modes.py",
+            "cwd" : "/home/stoccoel/google-personal/works/water/benchmark-2/",
             "console": "integratedTerminal",
             "justMyCode": false,
-            //"args" : ["-s", "start.au.xyz"]
-            "args" : ["-t", "../second-pp/trajectory.extxyz",  "-z", "true"]
+            "args" : ["-t", "data/traj.extxyz","-nm","normal-modes.pickle","-of","nm"]
+            //"args" : ["-a", "standard.new-cell.extxyz", "-b", "z-1x1x1.au.extxyz"],
+            //"args" : ["-i", "standard.new-cell.extxyz", "-m", "matrix.txt", "-o", "supercell.standard.new-cell.extxyz"]
         }
     ]
 }

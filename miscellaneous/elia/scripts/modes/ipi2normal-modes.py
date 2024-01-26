@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from miscellaneous.elia.normal_modes import NormalModes
+from miscellaneous.elia.classes.normal_modes import NormalModes
 # from miscellaneous.elia.formatting import matrix2str
 # from miscellaneous.elia.functions import convert
 # from miscellaneous.elia.functions import output_folder

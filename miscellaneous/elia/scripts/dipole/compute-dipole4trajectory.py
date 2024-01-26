@@ -5,7 +5,7 @@ from tqdm import tqdm
 from miscellaneous.elia.nn.functions import get_model
 from miscellaneous.elia.functions import suppress_output
 from miscellaneous.elia.input import str2bool
-from miscellaneous.elia.trajectory import trajectory as Trajectory
+from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
 
 #---------------------------------------#
 # Description of the script's purpose

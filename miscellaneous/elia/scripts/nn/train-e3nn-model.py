@@ -234,7 +234,7 @@ def main():
     pfile = parameters["init-parameters"]
     if pfile is not None:
         print("Reading initial parameters from file '{:s}'".format(pfile))
-        net.load_state_dict(torch.load(pfile))
+        net.load_state_dict(torch.load(pfile),strict=False)
 
     ##########################################
     # choose the loss function

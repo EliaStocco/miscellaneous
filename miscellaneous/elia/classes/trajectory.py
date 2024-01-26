@@ -1,14 +1,15 @@
 from ase.io import read
 from ase import Atoms
-from miscellaneous.elia.vectorize import easyvectorize
+from .vectorize import easyvectorize
 from miscellaneous.elia.functions import read_comments_xyz
 import re
 import ipi.utils.mathtools as mt
 import numpy as np
 
 deg2rad = np.pi / 180.0
-abcABC = re.compile(r"CELL[\(\[\{]abcABC[\)\]\}]: ([-+0-9\.Ee ]*)\s*")
-abcABCunits = r'\{([^}]+)\}'
+abcABC      = re.compile(r"CELL[\(\[\{]abcABC[\)\]\}]: ([-+0-9\.Ee ]*)\s*")
+abcABCunits = re.compile(r'\{([^}]+)\}')
+step        = re.compile(r"Step:\s+(\d+)")
 
 # Example
 # trajectory = Trajectory(file)
@@ -21,7 +22,7 @@ def info(t,name):
 def array(t,name):
     return t.call(lambda e:e.arrays[name])
     
-def trajectory(file,format:str=None):
+def trajectory(file,format:str=None,check:bool=True):
 
     format = format.lower() if format is not None else None
     f = None if format in ["i-pi","ipi"] else format
@@ -43,6 +44,16 @@ def trajectory(file,format:str=None):
             a, b, c = [float(x) for x in cell.group(1).split()[:3]]
             alpha, beta, gamma = [float(x) * deg2rad for x in cell.group(1).split()[3:6]]
             cells[n] = mt.abc2h(a, b, c, alpha, beta, gamma)
+
+        if check:
+            strings = [ step.search(comment).group(1) for comment in comments ]
+            steps = np.asarray([int(i) for i in strings],dtype=int)
+            _, indices = np.unique(steps, return_index=True)
+            if len(indices) != len(steps):
+                pass
+            atoms = [atoms[index] for index in indices]
+            # for n in range(len(atoms)):
+            #     atoms[n].info["step"] = indices[n]
 
         # matches = re.findall(abcABCunits,comments[0])
         # if len(matches) != 2 :

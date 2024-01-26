@@ -22,6 +22,7 @@ dtype = Union[xr.DataArray,np.ndarray]
 utype = pint.Unit
 
 def remove_unit(array:dtype)->dtype:
+    """Returns a tuple with the input array without the ```pint``` unit, and the removed ```pint``` unit."""
     out = array.copy()
     unit = get_unit(out)
     try:
@@ -34,6 +35,7 @@ def remove_unit(array:dtype)->dtype:
     return out,unit
 
 def get_unit(array:dtype)->utype:
+    """Return the ```pint``` unit of the input array."""
     out = array.copy()
     if isinstance(out,pint.Quantity):
         return out.units
@@ -44,6 +46,7 @@ def get_unit(array:dtype)->utype:
 
 
 def set_unit(array:dtype,unit:utype)->dtype:
+    """Return the input array with the input ```pint``` unit."""
     out = array.copy()
     if isinstance(out,xr.DataArray):
         tmp = set_unit(out.data,unit)
