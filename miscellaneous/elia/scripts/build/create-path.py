@@ -65,7 +65,7 @@ def main():
         raise ValueError("The two structures do not have the same cell.")
 
     #-------------------#
-    print("\n\tComputing the path positions '{:s}' ... ", end="")
+    print("\n\tComputing the path positions ... ", end="")
     pathpos = segment(A.positions,B.positions,N=args.number)
     print("done")
 
@@ -74,7 +74,7 @@ def main():
     print("\tn. of structures in the path: '{:d}'".format(N))
 
     #-------------------#
-    print("\tCreating the path '{:s}' ... ", end="")
+    print("\tCreating the path ... ", end="")
     path = [None]*N
     for n in range(N):
         path[n] = A.copy()

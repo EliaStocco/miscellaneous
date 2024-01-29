@@ -5,6 +5,7 @@
 import argparse
 import numpy as np
 from miscellaneous.elia.formatting import matrix2str
+from miscellaneous.elia.tools import find_transformation
 from ase.cell import Cell
 from ase import Atoms
 from ase.io import write
@@ -34,11 +35,11 @@ try :
 except:
     pass
 
-#---------------------------------------#
-def find_trasformation(A:Atoms,B:Atoms):
-    M = np.asarray(B.cell).T @ np.linalg.inv(np.asarray(A.cell).T)
-    size = M.round(0).diagonal().astype(int)
-    return size, M
+# #---------------------------------------#
+# def find_trasformation(A:Atoms,B:Atoms):
+#     M = np.asarray(B.cell).T @ np.linalg.inv(np.asarray(A.cell).T)
+#     size = M.round(0).diagonal().astype(int)
+#     return size, M
 
 #---------------------------------------#
 def str2bool(v):
@@ -118,9 +119,15 @@ def main():
     print("done")
     info = info.replace("System Info","\nOriginal structure information:")
     info = info.replace("\n","\n\t")
+    info = info.replace("Lattice parameters <br> ","")
+    info = info.replace("(a, b, c, α, β, γ)","{:<30}".format("(a, b, c, α, β, γ) [ang,deg]"))
     print("\t"+info)
 
-    print("\tCell:")
+    print("\tAdditional information:")
+    print("\t{:<30}:".format("volume [ang^3]"),structure.get_volume())
+    print("\t{:<30}:".format("chemical symbols"),structure.get_chemical_symbols())
+
+    print("\n\tCell [angstrom]:")
     line = matrix2str(structure.cell.array.T,col_names=["1","2","3"],cols_align="^",width=6)
     print(line)
 
@@ -148,16 +155,22 @@ def main():
         print("done")    
         info = info.replace("System Info","\nPrimitive cell structure information:")
         info = info.replace("\n","\n\t")
+        info = info.replace("Lattice parameters <br> ","")
+        info = info.replace("(a, b, c, α, β, γ)","{:<30}".format("(a, b, c, α, β, γ) [ang,deg]"))
         print("\t"+info)
 
-        print("\tCell:")
+        print("\tAdditional information:")
+        print("\t{:<30}:".format("volume [ang^3]"),primive_structure.get_volume())
+        print("\t{:<30}:".format("chemical symbols"),primive_structure.get_chemical_symbols())
+
+        print("\n\tCell [angstrom]:")
         line = matrix2str(primive_structure.cell.array.T,col_names=["1","2","3"],cols_align="^",width=6)
         print(line)
         
         #---------------------------------------#
         # trasformation
         print("\n\t{:s}".format(divisor))
-        size, M = find_trasformation(primive_structure,structure)
+        size, M = find_transformation(primive_structure,structure)
         print("\tTrasformation matrix from primitive to original cell:")
         line = matrix2str(M.round(2),col_names=["1","2","3"],cols_align="^",width=6)
         print(line)

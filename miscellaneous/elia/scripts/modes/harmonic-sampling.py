@@ -86,6 +86,9 @@ def main():
         print("\n\t{:s}: no reference structure provided.\nSpecify it with -r,--reference.".format(error))
         return
     
+    if np.any(nm.eigval) < -1e-4:
+        raise NotImplementedError("this script has not implemented yet for negative eigenvalues.")
+    
     # nm.eigvec2modes()
 
     #---------------------------------------#
@@ -95,8 +98,8 @@ def main():
 
     #---------------------------------------#
     
-    symbols = nm.reference.get_chemical_symbols()
-    Natoms = nm.reference.positions.shape[0]
+    # symbols = nm.reference.get_chemical_symbols()
+    # Natoms = nm.reference.positions.shape[0]
     atoms = [None]*args.number
     w2 = np.absolute(nm.eigval)
     Amp = np.sqrt( 2 * T / w2 )
@@ -114,12 +117,12 @@ def main():
     print("\t|{:s}|".format(line))
 
     print("\n\tSampling datastructure ... ",end="")
-    displ = Amp * nm.mode.T.real
+    # displ = Amp * nm.mode.T.real
     # displ = Amp[args.dof:] * nm.mode.T.real[args.dof:]
     for n in range(args.number):
         # cos = np.random.uniform(-1, 1, size=nm.Nmodes)
         # cos = np.cos(np.random.uniform(0,2*np.pi, size=nm.Nmodes))
-        xsi = np.random.normal(0, 1, size=len(displ))
+        xsi = np.random.normal(0, 1, size=len(Amp))
         xsi = xr.DataArray(xsi, dims=('mode'))
         A = xsi * Amp
         A[:args.dof] = 0

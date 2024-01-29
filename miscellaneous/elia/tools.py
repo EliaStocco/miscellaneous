@@ -1,5 +1,7 @@
 import numpy as np
 from ase import Atoms
+from scipy.spatial.distance import cdist
+from scipy.optimize import linear_sum_assignment
 
 #---------------------------------------#
 def find_transformation(A: Atoms, B: Atoms):
@@ -39,3 +41,26 @@ def segment(A:np.ndarray, B:np.ndarray, N:int, start:int=0, end:int=1):
         # t = float(n)/(N+1)
         sequence[n] = A * (1 - t) + t * B
     return sequence
+
+#---------------------------------------#
+def get_sorted_atoms_indices(reference:Atoms,structure:Atoms):
+    """Calculate pairwise distances and obtain optimal sorting indices."""
+    # Calculate the pairwise distances between atoms in the two structures
+    distances = cdist(reference.get_positions(), structure.get_positions())
+    # Solve the assignment problem using the Hungarian algorithm
+    row_ind, col_ind = linear_sum_assignment(distances)
+    return col_ind
+
+#---------------------------------------#
+def sort_atoms(reference:Atoms,structure:Atoms):
+    """Sort atoms in the second structure by minimizing the distances w.r.t. the atoms in the first structure."""
+    indices = get_sorted_atoms_indices(reference, structure)
+    sorted = structure[indices]
+    return sorted, indices
+
+#---------------------------------------#
+def find_transformation(A:Atoms,B:Atoms):
+    """Compute the transformation matrix between the lattice vectors of two atomic structures."""
+    M = np.asarray(B.cell).T @ np.linalg.inv(np.asarray(A.cell).T)
+    size = M.round(0).diagonal().astype(int)
+    return size, M

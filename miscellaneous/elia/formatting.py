@@ -27,18 +27,20 @@ def matrix2str(matrix,
     # Determine the format string for each element in the matrix
     exp = "e" if exp else "f" 
     format_str = f'{{:{num_align}{width}.{digits}{exp}}}'
+    format_str_all = [format_str]*matrix.shape[1]
+    hello = f'{{:s}}| {{:s}} |' + f'{{:s}}'*matrix.shape[1] + f' |\n'
     # Find the maximum length of row names for formatting
     L = max([ len(i) for i in row_names ])
     row_str = f'{{:>{L}s}}'
     # Construct the header with column names
-    text = '{:s}| ' + row_str + ' |' + (f'{{:{cols_align}{width}s}}')*3 + ' |\n'
+    text = '{:s}| ' + row_str + ' |' + (f'{{:{cols_align}{width}s}}')*matrix.shape[1] + ' |\n'
     text = text.format(prefix,"",*list(col_names))
     division = prefix + "|" + "-"*(len(text) - len(prefix) - 3) + "|\n"
     text = division + text + division 
     # Add row entries to the text
     for i, row in enumerate(matrix):
         name_str = row_str.format(row_names[i]) if row_names is not None else ""
-        formatted_row = "{:s}| {:s} |{:s}{:s}{:s} |\n".format(prefix,name_str,format_str,format_str,format_str)
+        formatted_row = hello.format(prefix,name_str,*format_str_all)
         line = formatted_row.format(*list(row))
         text += line
     # Add a final divider and print the formatted matrix
