@@ -5,7 +5,7 @@ import numpy as np
 import xml.etree.ElementTree as xmlet
 import os
 #import ast 
-from miscellaneous.elia.functions import convert
+from miscellaneous.elia.tools import convert
 
 class ElectricField:
 

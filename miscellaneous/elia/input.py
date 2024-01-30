@@ -11,6 +11,10 @@ def size_type(s:str,dtype=int,N=None):
         raise ValueError("You should provide {:d} values".format(N)) 
     else:
         return np.asarray([ dtype(k) for k in s ])
+    
+flist = lambda s:size_type(s,float) # float list
+ilist = lambda s:size_type(s,int)   # integer list
+slist = lambda s:size_type(s,str)   # string list
 #---------------------------------------#
 def str2bool(v):
     if isinstance(v, bool):

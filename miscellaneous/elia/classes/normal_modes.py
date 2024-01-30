@@ -100,7 +100,10 @@ class NormalModes(pickleIO):
 
     def set_reference(self,ref:Atoms):
         # print("setting reference")
-        self.reference = Atoms(positions=ref.get_positions(),symbols=ref.get_chemical_symbols(),pbc=ref.get_pbc())
+        self.reference = Atoms( positions=ref.get_positions(),\
+                                cell=ref.get_cell(),\
+                                symbols=ref.get_chemical_symbols(),\
+                                pbc=ref.get_pbc())
     
     # def __repr__(self) -> str:
     #     line = "" 
@@ -233,6 +236,12 @@ class NormalModes(pickleIO):
 
         return supercell
     
+    def nmd2cp(self,A:xr.DataArray)->Atoms:
+        """Normal Modes Displacements to Cartesian Positions (nmd2cp)."""
+        D = self.nmd2cd(A)
+        P = self.cd2cp(D)
+        return P
+    
     def ed2cp(self,A:xr.DataArray)->Atoms:
         """eigenvector displacements to cartesian positions (ed2cp)."""
         B = self.ed2nmd(A)
@@ -255,7 +264,7 @@ class NormalModes(pickleIO):
         return remove_unit(B)[0]
     
     def nmd2cd(self,coeff:xr.DataArray)->Atoms:
-        """normal modes displacements to cartesian displacements (nd2cd).
+        """Normal Modes Displacements to Cartesian Displacements (nmd2cd).
         Return the cartesian displacements as an ```ase.Atoms``` object given the displacement [length] of the normal modes"""
         displ = dot(self.mode,coeff,"mode")
         displ = displ.to_numpy().real

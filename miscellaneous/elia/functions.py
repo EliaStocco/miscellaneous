@@ -20,7 +20,6 @@ import contextlib
 import sys
 
 # from ipi.engine.properties import Properties
-from ipi.utils.units import unit_to_internal, unit_to_user
 from scipy.ndimage import gaussian_filter1d, generic_filter
 
 # __all__ = ['flatten_list', 'get_all_system_permutations', 'get_all_permutations',
@@ -616,14 +615,6 @@ def search_family(what):
         raise ValueError('family {:s} not found. \
                             But you can add it to the "families" dict :) \
                             to improve the code '.format(what))
-
-def convert(what, family=None, _from="atomic_unit", _to="atomic_unit"):
-    if family is not None:
-        factor = unit_to_internal(family, _from, 1)
-        factor *= unit_to_user(family, _to, 1)
-        return what * factor
-    else :
-        return what
 
 
 # def get_family(name):

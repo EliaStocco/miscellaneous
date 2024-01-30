@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import re
 import numpy as np
-from miscellaneous.elia.functions import convert
+from miscellaneous.elia.tools import convert
 
 #---------------------------------------#
 # Description of the script's purpose

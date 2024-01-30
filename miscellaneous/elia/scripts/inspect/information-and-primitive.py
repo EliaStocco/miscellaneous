@@ -6,11 +6,12 @@ import argparse
 import numpy as np
 from miscellaneous.elia.formatting import matrix2str
 from miscellaneous.elia.tools import find_transformation
+from miscellaneous.elia.input import str2bool
+from miscellaneous.elia.tools import convert
 from ase.cell import Cell
 from ase import Atoms
 from ase.io import write
 from gims.structure import Structure, read
-from gims.structure_info import StructureInfo
 
 #---------------------------------------#
 description     = "Show general information of a given atomic structure and find its primitive cell structure using GIMS."
@@ -34,24 +35,37 @@ try :
     divisor         = Fore.CYAN   + Style.NORMAL + divisor         + Style.RESET_ALL
 except:
     pass
-
-# #---------------------------------------#
-# def find_trasformation(A:Atoms,B:Atoms):
-#     M = np.asarray(B.cell).T @ np.linalg.inv(np.asarray(A.cell).T)
-#     size = M.round(0).diagonal().astype(int)
-#     return size, M
-
-#---------------------------------------#
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ("yes", "true", "t", "y", "1"):
-        return True
-    elif v.lower() in ("no", "false", "f", "n", "0"):
-        return False
-    else:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
     
+#---------------------------------------#
+def print_info(structure:Atoms,threshold:float,title:str):
+    from gims.structure_info import StructureInfo
+    strinfo = StructureInfo(structure,threshold)
+    info = str(strinfo)
+    print("done")    
+    info = info.replace("System Info","\n{:s}".format(title))
+    info = info.replace("\n","\n\t")
+    info = info.replace("Lattice parameters <br> ","")
+    info = info.replace("(a, b, c, α, β, γ)","{:<30}".format("(a, b, c, α, β, γ) [ang,deg]"))
+    print("\t"+info)
+
+    print("\tAdditional information:")
+    V = structure.get_volume()
+    print("\t{:<30}:".format("volume [ang^3]"),V)
+    factor = convert(1,"length","angstrom","atomic_unit")**3
+    print("\t{:<30}:".format("volume [au^3]"),V*factor)
+    print("\t{:<30}:".format("chemical symbols"),structure.get_chemical_symbols())
+
+    from icecream import ic
+    # ic(structure.get_cell().cellpar)
+    try:
+        ic(strinfo.equivalent_atoms)
+    except:
+        pass
+
+    print("\n\tCell [angstrom]:")
+    line = matrix2str(structure.cell.array.T,col_names=["1","2","3"],cols_align="^",width=6)
+    print(line)
+
 #---------------------------------------#
 def prepare_parser():
     parser = argparse.ArgumentParser(description=description)
@@ -113,23 +127,8 @@ def main():
             print("done")
 
     print("\n\tComputing general information of the atomic structure using GIMS ... ",end="")
-    #  = StructureInfo(atoms,1e-3).get_info()
     structure = Structure(atoms)
-    info = str(StructureInfo(structure,args.threshold))
-    print("done")
-    info = info.replace("System Info","\nOriginal structure information:")
-    info = info.replace("\n","\n\t")
-    info = info.replace("Lattice parameters <br> ","")
-    info = info.replace("(a, b, c, α, β, γ)","{:<30}".format("(a, b, c, α, β, γ) [ang,deg]"))
-    print("\t"+info)
-
-    print("\tAdditional information:")
-    print("\t{:<30}:".format("volume [ang^3]"),structure.get_volume())
-    print("\t{:<30}:".format("chemical symbols"),structure.get_chemical_symbols())
-
-    print("\n\tCell [angstrom]:")
-    line = matrix2str(structure.cell.array.T,col_names=["1","2","3"],cols_align="^",width=6)
-    print(line)
+    print_info(structure,args.threshold,"Original structure information:")
 
     if args.primitive:
         #---------------------------------------#
@@ -151,21 +150,7 @@ def main():
                 print("done")    
 
         print("\n\tComputing general information of the primitive structure using GIMS ... ",end="")
-        info = str(StructureInfo(primive_structure,args.threshold))
-        print("done")    
-        info = info.replace("System Info","\nPrimitive cell structure information:")
-        info = info.replace("\n","\n\t")
-        info = info.replace("Lattice parameters <br> ","")
-        info = info.replace("(a, b, c, α, β, γ)","{:<30}".format("(a, b, c, α, β, γ) [ang,deg]"))
-        print("\t"+info)
-
-        print("\tAdditional information:")
-        print("\t{:<30}:".format("volume [ang^3]"),primive_structure.get_volume())
-        print("\t{:<30}:".format("chemical symbols"),primive_structure.get_chemical_symbols())
-
-        print("\n\tCell [angstrom]:")
-        line = matrix2str(primive_structure.cell.array.T,col_names=["1","2","3"],cols_align="^",width=6)
-        print(line)
+        print_info(primive_structure,args.threshold,"Primitive cell structure information:")
         
         #---------------------------------------#
         # trasformation

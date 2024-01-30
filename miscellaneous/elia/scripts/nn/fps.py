@@ -14,7 +14,7 @@ from tqdm.auto import tqdm
 import argparse
 from miscellaneous.elia.functions import add_default
 from miscellaneous.elia.show import show_dict
-from miscellaneous.elia.functions import convert
+from miscellaneous.elia.tools import convert
 from miscellaneous.elia.input import str2bool
 
 #---------------------------------------#

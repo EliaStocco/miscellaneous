@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
-from miscellaneous.elia.functions import convert
+from miscellaneous.elia.tools import convert
 from miscellaneous.elia.classes.trajectory import info, array
 
 trajectory = Trajectory("trajectory.extxyz")

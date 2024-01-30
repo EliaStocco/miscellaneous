@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import numpy as np
-from miscellaneous.elia.classes import trajectory
+from miscellaneous.elia.classes.trajectory import trajectory
 
 #---------------------------------------#
 

@@ -3,9 +3,7 @@ import argparse
 import pickle
 from miscellaneous.elia.classes.normal_modes import NormalModes
 from ase.io import read, write
-from miscellaneous.elia.functions import convert
-from miscellaneous.elia.units import remove_unit
-from ase import Atoms
+from miscellaneous.elia.tools import convert
 import numpy as np
 import xarray as xr
 
@@ -46,7 +44,6 @@ def prepare_args():
     parser.add_argument("-d" , "--dof"         , type=int  , **argv, help="dof to be skipped (default: 3)", default=3)
     parser.add_argument("-t" , "--temperature" , type=float, **argv, help="temperature [K] (default: 300)", default=300)
     parser.add_argument("-n" , "--number"      , type=int  , **argv, help="number of samples (default: 100)", default=100)
-    # parser.add_argument("-s" , "--std"         , type=float, **argv, help="standard deviation of the normal distribution (default: 1)", default=1.)
     parser.add_argument("-o" , "--output"      , type=str  , **argv, help="output file (default: 'output.xyz')", default='output.xyz')
     return parser.parse_args()
 
@@ -65,12 +62,9 @@ def main():
     print()
 
     #---------------------------------------#
-    # read phonon modes ('phonon-modes.pickle')
     print("\tReading phonon modes from file '{:s}' ... ".format(args.normal_modes), end="")
     nm = NormalModes.from_pickle(args.normal_modes)
     print("done")
-    # if type(nm) != NormalModes:
-    #     raise TypeError("Loaded object is of wrong type, it should be a 'NormalModes' object")
     
     #---------------------------------------#
     # read reference atomic structure
@@ -88,8 +82,6 @@ def main():
     
     if np.any(nm.eigval) < -1e-4:
         raise NotImplementedError("this script has not implemented yet for negative eigenvalues.")
-    
-    # nm.eigvec2modes()
 
     #---------------------------------------#
     # temperature
@@ -97,9 +89,6 @@ def main():
     print("\n\tConverting temperature: {:.2f}K = {:.2e}au".format(args.temperature,T))
 
     #---------------------------------------#
-    
-    # symbols = nm.reference.get_chemical_symbols()
-    # Natoms = nm.reference.positions.shape[0]
     atoms = [None]*args.number
     w2 = np.absolute(nm.eigval)
     Amp = np.sqrt( 2 * T / w2 )
@@ -117,27 +106,13 @@ def main():
     print("\t|{:s}|".format(line))
 
     print("\n\tSampling datastructure ... ",end="")
-    # displ = Amp * nm.mode.T.real
-    # displ = Amp[args.dof:] * nm.mode.T.real[args.dof:]
     for n in range(args.number):
-        # cos = np.random.uniform(-1, 1, size=nm.Nmodes)
-        # cos = np.cos(np.random.uniform(0,2*np.pi, size=nm.Nmodes))
         xsi = np.random.normal(0, 1, size=len(Amp))
         xsi = xr.DataArray(xsi, dims=('mode'))
         A = xsi * Amp
         A[:args.dof] = 0
-        # Bcoeff = nm.ed2nmd(A)
-        # # Bcoeff[:args.dof] = 0
-        # displ = nm.nmd2cd(Bcoeff)
-        # 
         structure = nm.ed2cp(A)
         atoms[n] = structure.copy()
-
-        # # modes = modes[args.dof:]
-        # # pos = modes.sum("mode")#+ nm.reference
-        # pos, _ = remove_unit(pos)
-        # pos = np.asarray(pos).reshape((Natoms,3)) + nm.reference.positions
-        # atoms[n] = Atoms(positions=pos,symbols=symbols,cell=nm.reference.get_cell(),pbc=reference.get_pbc())
     print("done")
 
     #---------------------------------------#

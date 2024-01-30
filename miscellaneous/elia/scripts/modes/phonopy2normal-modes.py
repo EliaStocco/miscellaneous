@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from miscellaneous.elia.classes.normal_modes import NormalModes
 from miscellaneous.elia.formatting import matrix2str
-from miscellaneous.elia.functions import convert
+from miscellaneous.elia.tools import convert
 from miscellaneous.elia.output import output_folder
 from miscellaneous.elia.input import size_type
 from miscellaneous.elia.functions import phonopy2atoms

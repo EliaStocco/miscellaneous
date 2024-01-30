@@ -5,7 +5,7 @@ import numpy as np
 from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
 from miscellaneous.elia.classes.trajectory import info, array
 from miscellaneous.elia.functions import plot_bisector
-from miscellaneous.elia.functions import convert
+from miscellaneous.elia.tools import convert
 
 trajectory = Trajectory("trajectory.extxyz")
 time = info(trajectory,"time") * convert(1,"time","atomic_unit","femtosecond")

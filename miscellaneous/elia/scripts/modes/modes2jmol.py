@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from miscellaneous.elia.classes.normal_modes import NormalModes
 from miscellaneous.elia.formatting import matrix2str
-from miscellaneous.elia.functions import convert
+from miscellaneous.elia.tools import convert
 import argparse
 from ase.io import read
 import numpy as np
