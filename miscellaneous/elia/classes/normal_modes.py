@@ -502,3 +502,10 @@ class NormalModes(pickleIO):
         # self.mode = save
 
         return out
+    
+    def Zmodes(self,Z:xr.DataArray)->xr.DataArray:
+        """Compute the Born Effective Charges of each Normal Mode."""
+        dZdN = dot(Z,self.mode,dim="dof").real
+        norm = norm_by(dZdN,"dir")
+        dZdN = xr.concat([dZdN, xr.DataArray(norm, dims='mode')], dim='dir')
+        return remove_unit(dZdN)[0]
