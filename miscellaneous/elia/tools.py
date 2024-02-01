@@ -1,5 +1,6 @@
 import numpy as np
 from ase import Atoms
+from ase.cell import Cell
 from ase.geometry import distance
 from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
@@ -80,6 +81,64 @@ def convert(what:Union[np.ndarray,float], family:str=None, _from:str="atomic_uni
         return what * factor
     else :
         return what
+
+#---------------------------------------#
+# Decorator to convert ase.Cell to np.array and transpose
+def ase_cell_to_np_transpose(func):
+    """Decorator to convert an ASE cell to NumPy array and transpose for use in the decorated function."""
+    def wrapper(cell, *args, **kwargs):
+        if isinstance(cell, Cell):
+            cell = np.asarray(cell).T
+        return func(cell, *args, **kwargs)
+    return wrapper
+
+#---------------------------------------# 
+@ase_cell_to_np_transpose
+def cart2lattice(cell:Union[np.ndarray,Cell]): #,*argc,**argv):
+    """ Cartesian to lattice coordinates rotation matrix
+    
+    Input:
+        cell: lattice parameters, 
+            where the i^th basis vector is stored in the i^th columns
+            (it's the opposite of ASE, QE, FHI-aims)
+            lattice : 
+                | a_1x a_2x a_3x |
+                | a_1y a_2y a_3y |
+                | a_1z a_2z a_3z |
+    Output:
+        rotation matrix
+    """
+    matrix = lattice2cart(cell)
+    matrix = np.linalg.inv( matrix )
+    return matrix
+
+#---------------------------------------#
+@ase_cell_to_np_transpose
+def lattice2cart(cell:Union[np.ndarray,Cell]): #,*argc,**argv):
+    """ Lattice to Cartesian coordinates rotation matrix
+    
+    Input:
+        cell: lattice parameters, 
+            where the i^th basis vector is stored in the i^th columns
+            (it's the opposite of ASE, QE, FHI-aims)
+            lattice : 
+                | a_1x a_2x a_3x |
+                | a_1y a_2y a_3y |
+                | a_1z a_2z a_3z |
+    Output:
+        rotation matrix
+    """
+
+    if cell.shape != (3,3):
+        raise ValueError("lattice with wrong shape:",cell.shape)
+    from copy import copy
+    # I have to divide normalize the lattice parameters
+    length = np.linalg.norm(cell,axis=0)
+    matrix = copy(cell)
+    # normalize the columns
+    for i in range(3):
+        matrix[:,i] /= length[i]
+    return matrix
 
 #---------------------------------------#
 def distance(s1:Atoms, s2:Atoms, permute=True):
