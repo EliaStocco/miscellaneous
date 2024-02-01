@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 from ase.io import write, read
 from copy import copy
-from miscellaneous.elia.functions import cart2lattice
+from miscellaneous.elia.tools import cart2lattice
 from miscellaneous.elia.input import size_type
 
 description = "Compute the best dipole quantum to be shifted to a dataset.\n"

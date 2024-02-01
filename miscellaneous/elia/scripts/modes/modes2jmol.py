@@ -68,7 +68,7 @@ def main():
     #---------------------------------------#
     # read input file
     print("\tReading atomic structure from file '{:s}' ... ".format(args.input), end="")
-    atoms = read(args.input,format='xyz')
+    atoms = read(args.input)
     print("done")
 
     #---------------------------------------#
@@ -77,7 +77,7 @@ def main():
     modes = np.loadtxt(args.modes)
     print("done")
 
-    if atoms.positions.flatten().shape != modes.shape[0]:
+    if atoms.positions.flatten().shape[0] != modes.shape[0]:
         raise ValueError("positions and modes shapes do not match.")
 
     #---------------------------------------#
@@ -91,7 +91,7 @@ def main():
         eigvals = np.zeros(modes.shape[0])
         print("done")
 
-    if eigvals.shape != modes.shape[0]:
+    if eigvals.shape[0] != modes.shape[0]:
         raise ValueError("eigvals and modes shapes do not match.")
 
     #---------------------------------------#
