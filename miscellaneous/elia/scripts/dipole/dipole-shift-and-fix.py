@@ -2,7 +2,7 @@
 import numpy as np
 from ase.io import write, read
 from copy import copy
-from miscellaneous.elia.functions import cart2lattice, lattice2cart
+from miscellaneous.elia.tools import cart2lattice, lattice2cart
 from miscellaneous.elia.input import size_type, str2bool
 
 description = "Fix the dipole jumps and shift the values of some multitples of the dipole quantum.\n"
