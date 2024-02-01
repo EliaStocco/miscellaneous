@@ -7,6 +7,7 @@ import numpy as np
 # Description of the script's purpose
 description = "Fold the atomic structures into the primitive cell."
 error = "***Error***"
+warning         = "***Warning***"
 closure = "Job done :)"
 input_arguments = "Input arguments"
 
@@ -20,6 +21,7 @@ try :
     error           = Fore.RED      + Style.BRIGHT + error.replace("*","")   + Style.RESET_ALL
     closure         = Fore.BLUE   + Style.BRIGHT + closure                 + Style.RESET_ALL
     input_arguments = Fore.GREEN  + Style.NORMAL + input_arguments         + Style.RESET_ALL
+    warning         = Fore.MAGENTA    + Style.BRIGHT + warning.replace("*","") + Style.RESET_ALL
 except:
     pass
 
@@ -92,6 +94,7 @@ def main():
     unfolded = len(index) > 0 
     tf = bool2str(unfolded)
     print("\n\tNumber of structures that have been unfolded: {:d}".format(len(index)))
+    print("\t{:s}: this estimation is wrong".format(warning))
     # print("\n\tAt least one coordinate has been unfolded: {:s}".format(tf))
     # if unfolded:
     #     modified = (np.sqrt(np.square(a-b).sum(axis=1)) > 0.1) # whether they have been modified
