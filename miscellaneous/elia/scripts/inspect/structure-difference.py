@@ -5,6 +5,7 @@
 import argparse
 import numpy as np
 from ase.io import read
+from ase.geometry import get_distances
 from miscellaneous.elia.formatting import matrix2str
 from miscellaneous.elia.tools import find_transformation
 from miscellaneous.elia.input import str2bool
@@ -39,7 +40,7 @@ def prepare_parser():
     argv = {"metavar":"\b"}
     parser.add_argument("-a", "--structure_A",  type=str    ,**argv,help="atomic structure A [au]")
     parser.add_argument("-b", "--structure_B",  type=str     ,**argv,help="atomic structure B [au]")
-    parser.add_argument("-s", "--sort"       ,  type=str2bool,**argv,help="whether to sort the second structure (dafault: true)", default=True)
+    parser.add_argument("-s", "--sort"       ,  type=str2bool,**argv,help="whether to sort the second structure (dafault: false)", default=False)
     return parser.parse_args()
 
 #---------------------------------------#
@@ -81,11 +82,20 @@ def main():
 
     #---------------------------------------#
     # positions
-    print("\n\tPositions differences:")
-    diff = A.positions - B.positions
-    M = np.concatenate([diff,np.linalg.norm(diff,axis=1)[:, np.newaxis]], axis=1)
+    print("\n\tPositions differences (cartesian, norm, and fractional):")
+    # get_distances(A,B,mic=True)
+    # diff = A.positions - B.positions
+    a,b = get_distances(A.positions,B.positions,cell=A.get_cell(),pbc=A.get_pbc())
+    diff = np.asarray([ a[i,i,:] for i in range(len(a))])
+    d = np.diag(b)
+    # np.allclose(np.linalg.norm(a,axis=2),b)
+    # from icecream import ic
+    # ic(d.shape)
+    # M = np.concatenate([diff,np.linalg.norm(diff,axis=1)[:, np.newaxis]], axis=1)
+    fractional = ( np.linalg.inv(A.get_cell().T) @ diff.T ).T
+    M = np.concatenate([diff,d[:, np.newaxis],fractional], axis=1)
     #M = np.concatenate(A.positions - B.positions],
-    line = matrix2str(M,digits=3,col_names=["x","y","z","norm"],cols_align="^",width=8,row_names=A.get_chemical_symbols())
+    line = matrix2str(M,digits=3,col_names=["Rx","Ry","Rz","norm","fx","fy","fz"],cols_align="^",width=8,row_names=A.get_chemical_symbols())
     print(line)
     
     #-------------------#
