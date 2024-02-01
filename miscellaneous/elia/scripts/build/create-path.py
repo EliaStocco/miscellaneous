@@ -66,7 +66,19 @@ def main():
 
     #-------------------#
     print("\n\tComputing the path positions ... ", end="")
-    pathpos = segment(A.positions,B.positions,N=args.number)
+    N=args.number
+    pathpos = np.zeros((N + 2, *A.positions.shape))
+    # pm = np.full(A.positions.shape,1)
+    As = A.get_scaled_positions()
+    Bs = B.get_scaled_positions()
+    As[( As - Bs ) > +0.5] -= 1
+    As[( As - Bs ) < -0.5] += 1
+    T = np.linspace(0, 1, N + 2)
+    # N = 0 -> t=0,1
+    # N = 1 -> t=0,0.5,1
+    for n, t in enumerate(T):
+        # t = float(n)/(N+1)
+        pathpos[n] = As * (1 - t) + t * Bs
     print("done")
 
     #-------------------#
@@ -78,7 +90,7 @@ def main():
     path = [None]*N
     for n in range(N):
         path[n] = A.copy()
-        path[n].set_positions(pathpos[n])
+        path[n].set_scaled_positions(pathpos[n])
     print("done")
 
     #-------------------#
