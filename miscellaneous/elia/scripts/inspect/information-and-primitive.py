@@ -49,23 +49,38 @@ def print_info(structure:Atoms,threshold:float,title:str):
     print("\t"+info)
 
     print("\tAdditional information:")
-    V = structure.get_volume()
-    print("\t{:<30}:".format("volume [ang^3]"),V)
-    factor = convert(1,"length","angstrom","atomic_unit")**3
-    print("\t{:<30}:".format("volume [au^3]"),V*factor)
-    print("\t{:<30}:".format("chemical symbols"),structure.get_chemical_symbols())
-
-    from icecream import ic
-    # ic(structure.get_cell().cellpar)
     try:
-        ic(strinfo.equivalent_atoms)
+        V = structure.get_volume()
+        print("\t{:<30}:".format("volume [ang^3]"),V)
+        factor = convert(1,"length","angstrom","atomic_unit")**3
+        print("\t{:<30}:".format("volume [au^3]"),V*factor)
     except:
         pass
+    print("\t{:<30}:".format("chemical symbols"),structure.get_chemical_symbols())
 
-    print("\n\tCell [angstrom]:")
-    line = matrix2str(structure.cell.array.T,col_names=["1","2","3"],cols_align="^",width=6)
-    print(line)
+    # from icecream import ic
+    # # ic(structure.get_cell().cellpar)
+    # try:
+    #     ic(strinfo.equivalent_atoms)
+    # except:
+    #     pass
 
+    if np.all(structure.get_pbc()):
+        print("\n\tCell:")
+        line = matrix2str(structure.cell.array.T,col_names=["1","2","3"],cols_align="^",width=6)
+        print(line)
+
+        print("\n\tPositions (cartesian and fractional):")
+        cartesian = structure.get_positions()
+        fractional = ( np.linalg.inv(structure.get_cell().T) @ cartesian.T ).T
+        M = np.concatenate([cartesian,fractional], axis=1)
+        line = matrix2str(M,digits=3,col_names=["Rx","Ry","Rz","fx","fy","fy"],cols_align="^",width=8,row_names=structure.get_chemical_symbols())
+        print(line)
+    else:
+        print("\n\tPositions (cartesian):")
+        line = matrix2str(structure.get_positions(),digits=3,col_names=["Rx","Ry","Rz"],cols_align="^",width=8,row_names=structure.get_chemical_symbols())
+        print(line)
+    return
 #---------------------------------------#
 def prepare_parser():
     parser = argparse.ArgumentParser(description=description)
