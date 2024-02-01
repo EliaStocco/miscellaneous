@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import numpy as np
-from miscellaneous.elia.functions import cart2lattice
+from miscellaneous.elia.tools import cart2lattice
 from miscellaneous.elia.classes import trajectory
 
 #---------------------------------------#
@@ -85,7 +85,7 @@ def main():
     quanta = np.zeros((N,3))
     for n in range(N):
         cell = lattices[n].T
-        R = cart2lattice(cell)
+        R = cart2lattice(lattices[n])
         lenght = np.linalg.norm(cell,axis=0)
         quanta[n,:] = R @ dipole[n] / lenght
     print("done")
