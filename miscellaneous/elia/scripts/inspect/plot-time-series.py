@@ -41,7 +41,7 @@ def plot_array(input_file, output_file):
 
     # Get the number of rows and columns from the array shape
     rows, cols = data.shape
-    if cols == 1:
+    if rows == 1:
         data = data.T
         cols = rows
 
