@@ -2,7 +2,7 @@
 import argparse
 import numpy as np
 from ase.io import write
-from miscellaneous.elia.classes import trajectory
+from miscellaneous.elia.classes.trajectory import trajectory
 
 #---------------------------------------#
 # Description of the script's purpose
