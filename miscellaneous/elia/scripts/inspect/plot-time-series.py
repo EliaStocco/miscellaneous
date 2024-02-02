@@ -37,7 +37,7 @@ def prepare_args():
 #---------------------------------------#
 def plot_array(input_file, output_file):
     # Load the numpy array from the input file
-    data = np.loadtxt(input_file)
+    data = np.atleast_2d(np.loadtxt(input_file))
 
     # Get the number of rows and columns from the array shape
     rows, cols = data.shape
