@@ -41,6 +41,9 @@ def plot_array(input_file, output_file):
 
     # Get the number of rows and columns from the array shape
     rows, cols = data.shape
+    if cols == 1:
+        data = data.T
+        cols = rows
 
     # Create a plot for each row in the array
     fig,ax = plt.subplots(figsize=(15,5))
