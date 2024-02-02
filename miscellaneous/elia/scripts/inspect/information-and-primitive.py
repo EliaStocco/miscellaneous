@@ -41,7 +41,9 @@ def print_info(structure:Atoms,threshold:float,title:str):
     from gims.structure_info import StructureInfo
     strinfo = StructureInfo(structure,threshold)
     info = str(strinfo)
-    print("done")    
+    # print("done")    
+
+    print("\t{:s}:\n\tthe positions are assumed to be stored in angstrom in the input file".format(warning))
     info = info.replace("System Info","\n{:s}".format(title))
     info = info.replace("\n","\n\t")
     info = info.replace("Lattice parameters <br> ","")
@@ -143,6 +145,7 @@ def main():
 
     print("\n\tComputing general information of the atomic structure using GIMS ... ",end="")
     structure = Structure(atoms)
+    print("done") 
     print_info(structure,args.threshold,"Original structure information:")
 
     if args.primitive:
@@ -165,6 +168,7 @@ def main():
                 print("done")    
 
         print("\n\tComputing general information of the primitive structure using GIMS ... ",end="")
+        print("done") 
         print_info(primive_structure,args.threshold,"Primitive cell structure information:")
         
         #---------------------------------------#

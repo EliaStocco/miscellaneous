@@ -8,7 +8,7 @@ from ase import Atoms
 from miscellaneous.elia.classes.properties import properties as Properties
 from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder, str2bool
 from miscellaneous.elia.input import size_type
-from miscellaneous.elia.classes import trajectory
+from miscellaneous.elia.classes.trajectory import trajectory
 
 DEBUG=False
 # example:
