@@ -14,7 +14,7 @@ def main():
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar":"\b"}
     parser.add_argument("-i"  , "--input"        ,   **argv,type=str      , help="input file with the cell")
-    parser.add_argument("-n"  , "--normalize"    ,   **argv,type=str2bool , help="whether to normalize the vector (default: true)",default=True)
+    parser.add_argument("-n"  , "--normalize"    ,   **argv,type=str2bool , help="whether to normalize the lattice vectors (default: true)",default=True)
     parser.add_argument("-v" , "--vector"        ,   **argv,type=size_type, help="vector components in lattice coordinates")
     parser.add_argument("-a" , "--amplitude"     ,   **argv,type=float    , help="amplitude of the output vector (default: 1)",default=1.)
     parser.add_argument("-d" , "--digit"         ,   **argv,type=int      , help="digit of the final result (default: 8)",default=8)
@@ -48,13 +48,13 @@ def main():
         print(line)
     print(_end_line_)
 
+    if args.normalize:
+        cell /= np.linalg.norm(cell,axis=0)
+
     out = cell[:,0]*args.vector[0] + cell[:,1]*args.vector[1] + cell[:,2]*args.vector[2]
 
     print()
     print("\t{:>20s}:".format("Required vector"),out)
-    if args.normalize:
-        out /= np.linalg.norm(out)
-        print("\t{:>20s}:".format("Normalized vector"),out)
 
     if args.amplitude != 1.:
         out *= args.amplitude
