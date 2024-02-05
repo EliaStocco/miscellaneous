@@ -61,8 +61,8 @@ class dipoleLM(pickleIO):
                 model  = np.full((N,3),np.nan)
                 for n in range(N):
                     R = pos[n]#.reshape((-1,3))
-                    dD = self.bec.T @ np.asarray(R - self.ref.positions).flatten()
-                    model[n,:] = dD.flatten() + self.dipole
+                    dD = self.bec.T @ np.asarray(R - self.ref.positions).reshape(3*self.Natoms)
+                    model[n,:] = dD + self.dipole
                 return model, None, None
         
             case _ :

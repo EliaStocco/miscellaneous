@@ -6,6 +6,7 @@ from ase.io import write, read
 from typing import Union, List
 from miscellaneous.elia.input import union_type
 
+
 # Description of the script's purpose
 description = "Subsample an (ASE readable) MD trajectory given a set of indices."
 
@@ -67,7 +68,7 @@ def main():
     # Write the data to the specified output file with the specified format
     print("\tWriting subsampled atomic structures to file '{:s}' with format '{:s}' ... ".format(args.output, args.format), end="")
     try:
-        write(args.output, new_atoms, format=args.format)
+        write(args.output, new_atoms, format=args.format) # fmt)
         print("done")
     except Exception as e:
         print(f"\n\tError: {e}")

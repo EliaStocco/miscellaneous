@@ -509,3 +509,19 @@ class NormalModes(pickleIO):
         norm = norm_by(dZdN,"dir")
         dZdN = xr.concat([dZdN, xr.DataArray(norm, dims='mode')], dim='dir')
         return remove_unit(dZdN)[0]
+
+    def sort(self,criterion="value"):
+        match criterion:
+            case "value":
+                sorted_indices = np.argsort(self.eigval)
+            case "absolute":
+                sorted_indices = np.argsort(np.absolute(self.eigval))
+            case _:
+                raise ValueError("not implemented yet")
+        for attr_name, attr_value in vars(self).items():
+            if isinstance(attr_value, (np.ndarray, xr.DataArray)):
+                if len(attr_value.shape) == 1:
+                    setattr(self, attr_name, attr_value[sorted_indices])
+                elif len(attr_value.shape) == 2:
+                    setattr(self, attr_name, attr_value[:, sorted_indices])
+        return

@@ -3,6 +3,7 @@ import numpy as np
 from ase.io import read, write
 from miscellaneous.elia.tools import sort_atoms
 
+
 #---------------------------------------#
 # Description of the script's purpose
 description = "Sort atoms of an atomic structure depending on the interatomic distances w.r.t. another structure."
@@ -76,7 +77,7 @@ def main():
     # Write the data to the specified output file with the specified format
     print("\n\tWriting sorted atomic structure to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(args.output, sorted, format=args.format)
+        write(args.output, sorted, format=args.format) # fmt)
         print("done")
     except Exception as e:
         print(f"\n\tError: {e}")

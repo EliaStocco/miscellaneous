@@ -13,6 +13,7 @@ from ase import Atoms
 from ase.io import write
 from gims.structure import Structure, read
 
+
 #---------------------------------------#
 description     = "Show general information of a given atomic structure and find its primitive cell structure using GIMS."
 warning         = "***Warning***"
@@ -185,7 +186,8 @@ def main():
             print("\n\t{:s}".format(divisor))
             print("\n\tWriting primitive structure to file '{:s}' ... ".format(args.output), end="")
             try:
-                write(images=primive_structure,filename=args.output, format=args.output_format)
+                write(images=primive_structure,filename=args.output, \
+                      format=args.output_format) # fmt)
                 print("done")
             except Exception as e:
                 print("\n\tError: {:s}".format(e))

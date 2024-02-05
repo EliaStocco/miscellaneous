@@ -4,7 +4,7 @@ import numpy as np
 from ase import Atoms
 from miscellaneous.elia.classes.dipole import dipoleLM
 from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
-from miscellaneous.elia.input import size_type
+from miscellaneous.elia.input import flist
 
 #---------------------------------------#
 # Description of the script's purpose
@@ -38,7 +38,8 @@ def prepare_args():
     parser.add_argument("-i", "--input"    , **argv,type=str, help="file with the atomic configurations [a.u]")
     parser.add_argument("-n", "--index"    , **argv,type=int, help="index of the reference configuration",default=None)
     parser.add_argument("-r", "--reference", **argv,type=str, help="file with the reference configuration [a.u.,xyz]")
-    parser.add_argument("-d", "--dipole"   , **argv,type=lambda a:size_type(a,float,3), help="dipole of the reference configuration [a.u.] (default: None --> specify -n,--index)",default=None)
+    parser.add_argument("-d", "--dipole"   , **argv,type=flist, help="dipole of the reference configuration [a.u.] (default: None --> specify -n,--index)",default=None)
+    parser.add_argument("-k", "--keyword"  , **argv,type=str, help="keyword for the dipole (default: 'dipole')", default='dipole')
     parser.add_argument("-z", "--bec"      , **argv,type=str, help="file with the BEC tensors of the reference configuration [txt] (default: None --> specify -n,--index)",default=None)
     parser.add_argument("-f", "--frame"    , **argv,type=str, help="frame [eckart,global] (default: global)", default="global")
     parser.add_argument("-o", "--output"   , **argv,type=str, help="output file with the dipole linear model (default: 'dipoleLM.pickle')", default="dipoleLM.pickle")
@@ -70,22 +71,26 @@ def main():
     ref = None
     bec = None
     dipole = None
+
+    if args.reference is not None:
+        ref = read(args.reference)#.get_positions()
+    if args.bec is not None:
+        bec = np.loadtxt(args.bec)
+    if args.dipole is not None:
+        dipole = np.loadtxt(args.dipole).reshape(3)
+
     if args.index is not None:
         reference = trajectory[args.index]
-        try: bec = np.asarray(reference.arrays["bec"]) 
-        except: pass
-        try: dipole = np.asarray(reference.info["dipole"])
-        except: pass
-        try: ref = Atoms(reference)#.get_positions()
-        except: pass
+        if ref is None:
+            try: ref = Atoms(reference)#.get_positions()
+            except: pass
+        if bec is None:
+            try: bec = np.asarray(reference.arrays["bec"]) 
+            except: pass
+        if dipole is None:
+            try: dipole = np.asarray(reference.info[args.keyword])
+            except: pass
         del reference
-
-    if ref is None:
-        ref = read(args.reference)#.get_positions()
-    if bec is None:
-        bec = np.loadtxt(args.bec)
-    if dipole is None:
-        dipole = np.loadtxt(args.dipole).reshape(3)
 
     #------------------#
     print("\n\tCreating the linear model for the dipole ... ", end="")

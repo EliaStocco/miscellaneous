@@ -9,11 +9,11 @@
             "type": "python",
             "request": "launch",
             //"program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/dipole/extxyz2bec.py",
-            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/dipole/fix-dipole-with-linear-model.py",
-            "cwd" : "/home/stoccoel/google-personal/works/LiNbO3/dataset/",
+            "program": "/home/stoccoel/google-personal/miscellaneous/miscellaneous/elia/scripts/nn/pca.py",
+            "cwd" : "/home/stoccoel/google-personal/works/LiNbO3/path/path/",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["-i", "trajectory.extxyz","-f","tmp"]
+            "args" : ["-i", "hs-sym.extxyz","-pca","true"]
             //"args" : ["-a", "standard.new-cell.extxyz", "-b", "z-1x1x1.au.extxyz"],
             //"args" : ["-i", "standard.new-cell.extxyz", "-m", "matrix.txt", "-o", "supercell.standard.new-cell.extxyz"]
         }

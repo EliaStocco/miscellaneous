@@ -34,7 +34,7 @@ def main():
         # sprint(df)
 
         file = os.path.normpath("{:s}.csv".format(args.output))
-        df.to_csv(file,index=False,float_format="%15.6f",sep=",",na_rep=np.nan)
+        df.to_csv(file,index=False,fmt="%15.6f",sep=",",na_rep=np.nan)
     
     if 'j' in args.what:
         folder  = os.path.dirname(os.path.abspath(__file__))

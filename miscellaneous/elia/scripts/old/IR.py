@@ -149,7 +149,7 @@ def main():
     df["IR"] = results.IR
     df["w [THz]"] = df["w [THz]"].fillna(0)
     #np.savetxt(options.output,results.IR)
-    df.to_csv(options.output,index=False,float_format="%22.12f")
+    df.to_csv(options.output,index=False,fmt="%22.12f")
     
     # produce plot of the IR intesities
     if options.plot is not None :

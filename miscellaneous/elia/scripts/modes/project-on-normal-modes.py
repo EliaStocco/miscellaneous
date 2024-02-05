@@ -130,7 +130,7 @@ def main():
             # arr = arr.reorder_levels(['time',*dims])
 
             df = arr.T.to_pandas()
-            df.to_csv(file,index=False,header=False,na_rep="nan",float_format="%24.16f")
+            df.to_csv(file,index=False,header=False,na_rep="nan",fmt="%24.16f")
             print("done")
 
         print("\n\tHow to read the csv files:")

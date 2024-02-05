@@ -8,6 +8,7 @@ from miscellaneous.elia.input import flist
 import numpy as np
 import xarray as xr
 
+
 #---------------------------------------#
 # Description of the script's purpose
 description = "Displace an atomic structure along a normal mode with different amplitudes."
@@ -99,7 +100,7 @@ def main():
     # Write the data to the specified output file with the specified format
     print("\n\tWriting data to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(images=atoms,filename=args.output,format=args.output_format)
+        write(images=atoms,filename=args.output,format=args.output_format) # fmt)
         print("done")
     except Exception as e:
         print("\n\tError: {:s}".format(e))

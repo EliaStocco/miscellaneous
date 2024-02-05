@@ -4,6 +4,7 @@ import numpy as np
 from ase.io import write
 from miscellaneous.elia.classes.trajectory import trajectory
 
+
 #---------------------------------------#
 # Description of the script's purpose
 description = "Add data to an extxyz file."
@@ -55,6 +56,7 @@ def main():
     print("\tReading atomic structures from file '{:s}' ... ".format(args.input), end="")
     atoms = trajectory(args.input)
     print("done")
+    print("\tn. of atomic structures: ",len(atoms))
 
     #---------------------------------------#
     # data
@@ -93,7 +95,7 @@ def main():
     #---------------------------------------#
     print("\n\tWriting trajectory to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(args.output, list(atoms))
+        write(args.output, list(atoms)) # fmt)
         print("done")
     except Exception as e:
         print(f"\n\t{error}: {e}")

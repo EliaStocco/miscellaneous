@@ -1,3 +1,64 @@
+# esff = '%24.18e' # Elia Stocco float format
+
+#---------------------------------------#
+error           = "***Error***"
+warning         = "***Warning***"
+closure         = "Job done :)"
+input_arguments = "Input arguments"
+
+#---------------------------------------#
+# colors
+try :
+    import colorama
+    from colorama import Fore, Style
+    colorama.init(autoreset=True)
+    error           = Fore.RED      + Style.BRIGHT + error.replace("*","")   + Style.RESET_ALL
+    closure         = Fore.BLUE   + Style.BRIGHT + closure                 + Style.RESET_ALL
+    input_arguments = Fore.GREEN  + Style.NORMAL + input_arguments         + Style.RESET_ALL
+    warning         = Fore.MAGENTA    + Style.BRIGHT + warning.replace("*","") + Style.RESET_ALL
+except:
+    pass
+
+def esfmt(prepare_parser:callable, description:str=None):
+    """Decorator for the 'main' function of many scripts."""
+
+    from contextlib import contextmanager
+
+    #---------------------------------------#
+    # Description of the script's purpose
+    description = description if description is not None else "Script without description"
+    try: description = Fore.GREEN  + Style.BRIGHT + description + Style.RESET_ALL
+    except: pass
+    # print(description)
+
+    @contextmanager
+    def print_header(args):
+        print("\n\t{:s}".format(description))
+        print("\n\t{:s}:".format(input_arguments))
+        for k in args.__dict__.keys():
+            print("\t{:>20s}:".format(k), getattr(args, k))
+        print()
+        yield
+
+    def wrapper(main: callable):
+        def wrapped_main():
+            # Call the specified prepare_parser function
+
+            args = prepare_parser(description)
+
+            # Print the script's description and input arguments
+            with print_header(args):
+                # main
+                main(args)
+
+            #------------------#
+            # Script completion message
+            print("\n\t{:s}\n".format(closure))
+
+        return wrapped_main
+
+    return wrapper
+
 def matrix2str(matrix,
                  row_names=["x","y","z"], 
                  col_names=["1","2","3"], 

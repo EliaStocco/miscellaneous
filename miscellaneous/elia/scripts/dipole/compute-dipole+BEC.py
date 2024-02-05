@@ -6,12 +6,13 @@ import sys
 from ase.io import read
 # from miscellaneous.elia.classes import MicroState
 from miscellaneous.elia.nn.functions import get_model
+from miscellaneous.elia.formatting import esfmt
 
 #####################
 
 description = "Compute dipole and BEC tensors for a given atomic structure.\n"
 
-def get_args():
+def prepare_parser(description):
     """Prepare parser of user input arguments."""
 
     parser = argparse.ArgumentParser(description=description)
@@ -45,17 +46,8 @@ def get_args():
 
     return parser.parse_args()
 
-def main():
-
-    #####################
-    # Print the script's description
-    print("\n\t{:s}".format(description))
-    
-    #####################
-    # Parse the command-line arguments
-    print("\tReading input arguments ... ",end="")
-    args = get_args()
-    print("done")
+@esfmt(prepare_parser, description)
+def main(args):
 
     #####################
     # load the model
@@ -115,8 +107,6 @@ def main():
     np.savetxt(file,Z,fmt=args.output_format)
     # f.write("\n")
     print("done")
-
-    print("\n\tJob done :)\n")
 
 #####################
 

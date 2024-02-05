@@ -3,6 +3,7 @@ import numpy as np
 from ase.io import read, write
 from miscellaneous.elia.tools import segment
 
+
 #---------------------------------------#
 description     = "Create a path bridging two atomic structures (useful for NEB calculations)."
 warning         = "***Warning***"
@@ -96,7 +97,7 @@ def main():
     #-------------------#
     print("\n\tSaving the path to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(images=path,filename=args.output)
+        write(images=path,filename=args.output) # fmt)
     except Exception as e:
         print("\n\tError: {:s}".format(e))
     print("done")

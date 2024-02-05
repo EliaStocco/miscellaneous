@@ -4,6 +4,7 @@ from ase.io import read, write
 from miscellaneous.elia.tools import sort_atoms
 from miscellaneous.elia.input import size_type, str2bool
 
+
 #---------------------------------------#
 # Description of the script's purpose
 description = "Invert the positions (R --> -R) along the specified crystal/cartesian axes."
@@ -107,7 +108,7 @@ def main():
     # Write the data to the specified output file with the specified format
     print("\n\tWriting inverted atomic structure to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(args.output, structure, format=args.format)
+        write(args.output, structure, format=args.format) # fmt)
         print("done")
     except Exception as e:
         print(f"\n\tError: {e}")

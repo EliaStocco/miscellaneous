@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 from miscellaneous.elia.classes.bec import bec as BEC
 from miscellaneous.elia.classes.trajectory import array
-from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
-from ase.io import read, write
+from miscellaneous.elia.classes.trajectory import trajectory as Trajectory 
 
 #---------------------------------------#
 # Description of the script's purpose

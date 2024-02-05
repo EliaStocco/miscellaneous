@@ -48,7 +48,7 @@ def main():
 
     file = options.output
     print("\tSaving dataframe to file '{:s}'".format(file))
-    df.to_csv(file, float_format=options.format,index=False)
+    df.to_csv(file, fmt=options.format,index=False)
 
     print("\n\tJob done :)\n")
 

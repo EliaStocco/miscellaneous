@@ -7,6 +7,7 @@ from miscellaneous.elia.tools import convert
 import numpy as np
 import xarray as xr
 
+
 #---------------------------------------#
 # Documentation:
 # - https://vibes-developers.gitlab.io/vibes/Tutorial/4_statistical_sampling/
@@ -45,6 +46,7 @@ def prepare_args():
     parser.add_argument("-t" , "--temperature" , type=float   , **argv, help="temperature [K] (default: 300)", default=300)
     parser.add_argument("-n" , "--number"      , type=int     , **argv, help="number of samples (default: 100)", default=100)
     parser.add_argument("-s" , "--seed"        , type=int     , **argv, help="seed of the random number generator: specify a number for reproducibility (default: None)", default=None)
+    parser.add_argument("-a" , "--absolute"    , type=str2bool, **argv, help="consider the absolute value of the eigenvalues (default: false)", default=False)
     parser.add_argument("-o" , "--output"      , type=str     , **argv, help="output file (default: 'output.xyz')", default='output.xyz')
     return parser.parse_args()
 
@@ -86,8 +88,18 @@ def main():
         print("\n\t{:s}: no reference structure provided.\nSpecify it with -r,--reference.".format(error))
         return
     
-    if np.any(nm.eigval) < -1e-4:
-        raise NotImplementedError("this script has not implemented yet for negative eigenvalues.")
+    if np.any(nm.eigval[args.dof:] < 0.0):
+        print("\t{:s}: found negative eigenvalues within the non discared modes".format(warning))
+        # raise NotImplementedError("this script has not implemented yet for negative eigenvalues.")
+    
+    #---------------------------------------#
+    # sort and absolute 
+    if args.absolute:
+        print("\tSorting the modes according to the eigenvalues absolute value.")
+        nm.sort("absolute")
+    else:
+        print("\tSorting the modes according to the eigenvalues.")
+        nm.sort("value")
 
     #---------------------------------------#
     # temperature
@@ -112,6 +124,7 @@ def main():
         print("\t|{:>3d}  |{:>8.3f}   |{:^6s}|{:>8.3f}   |".format(n,f,yesno,A))
     print("\t|{:s}|".format(line))
 
+    print("\n\t{:s}: this 'for' loop can be optimized.".format(warning))
     print("\n\tSampling atomic structures ... ",end="\r")
     for n in range(args.number):
         print("\tSampling atomic structures ...  {:d}/{:d}".format(n+1,args.number),end="\r")
@@ -121,7 +134,7 @@ def main():
         A[:args.dof] = 0
         structure = nm.ed2cp(A)
         atoms[n] = structure.copy()
-    print("\tSampling atomic structures ... done")
+    print("\tSampling atomic structures ... done                 ")
 
     #---------------------------------------#
     print(  "\n\t{:s} in case you were dealing with a periodic structure:" \
@@ -134,7 +147,7 @@ def main():
     # Write the data to the specified output file with the specified format
     print("\n\tWriting data to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(images=atoms,filename=args.output)
+        write(images=atoms,filename=args.output) # fmt)
         print("done")
     except Exception as e:
         print("\n\tError: {:s}".format(e))

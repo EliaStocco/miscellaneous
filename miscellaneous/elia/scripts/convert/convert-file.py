@@ -8,6 +8,7 @@ import contextlib
 import sys
 import os
 
+
 DEBUG = False
 
 #---------------------------------------#
@@ -192,7 +193,7 @@ def main():
     # Write the data to the specified output file with the specified format
     print("\n\tWriting data to file '{:s}' ... ".format(args.output), end=end)
     try:
-        write(images=atoms,filename=args.output, format=args.output_format)
+        write(images=atoms,filename=args.output, format=args.output_format) # fmt)
         if not DEBUG:
             print("done")
     except Exception as e:

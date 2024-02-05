@@ -3,6 +3,7 @@ import numpy as np
 from ase.io import read, write
 from miscellaneous.elia.input import str2bool
 
+
 #---------------------------------------#
 description     = "Replace the cell of a structure with the cell of another one, by keeping the fractional coordinates fixed."
 warning         = "***Warning***"
@@ -79,7 +80,7 @@ def main():
 
         print("\n\tSaving the path to file '{:s}' ... ".format(args.output), end="")
         try:
-            write(images=A,filename=args.output)
+            write(images=A,filename=args.output) # fmt)
         except Exception as e:
             print("\n\tError: {:s}".format(e))
         print("done")

@@ -10,6 +10,7 @@ from miscellaneous.elia.functions import suppress_output, get_one_file_in_folder
 from miscellaneous.elia.input import size_type
 from miscellaneous.elia.classes.trajectory import trajectory
 
+
 DEBUG=False
 # example:
 # python ipi2extxyz.py -p i-pi -f data -aa forces,data/i-pi.forces_0.xyz -ap dipole,potential -o test.extxyz
@@ -223,7 +224,7 @@ def main():
     # writing
     print("\n\tWriting output to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(args.output, list(atoms), format="extxyz")
+        write(args.output, list(atoms), format="extxyz") # fmt)
         print("done")
     except Exception as e:
         print(f"\n\t{error}: {e}")

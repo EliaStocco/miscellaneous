@@ -3,6 +3,7 @@ from ase.io import read, write
 import argparse
 import numpy as np
 
+
 #---------------------------------------#
 # Description of the script's purpose
 description = "Fold the atomic structures into the primitive cell."
@@ -103,7 +104,7 @@ def main():
     #------------------#
     print("\n\tWriting unfolded structures to output file '{:s}' ... ".format(args.output), end="")
     try:
-        write(args.output, atoms, format=args.output_format)
+        write(args.output, atoms, format=args.output_format) # fmt)
         print("done")
     except Exception as e:
         print(f"\n\t{error}: {e}")

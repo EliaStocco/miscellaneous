@@ -5,6 +5,7 @@ from miscellaneous.elia.formatting import matrix2str
 from ase.build import make_supercell
 from scipy.spatial.transform import Rotation
 
+
 #---------------------------------------#
 description     = "Create a path bridgin two atomic structures (useful for NEB calculations)."
 warning         = "***Warning***"
@@ -115,7 +116,7 @@ def main():
     # Write the data to the specified output file with the specified format
     print("\n\tWriting data to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(images=supercell,filename=args.output, format=args.output_format)
+        write(images=supercell,filename=args.output, format=args.output_format) # fmt)
         print("done")
     except Exception as e:
         print("\n\tError: {:s}".format(e))

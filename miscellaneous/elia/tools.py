@@ -141,6 +141,17 @@ def lattice2cart(cell:Union[np.ndarray,Cell]): #,*argc,**argv):
     return matrix
 
 #---------------------------------------#
+def string2function(input_string:str)->callable:
+    """Converts a Python code string into a callable function."""
+    import ast
+    # Parse the input string as Python code
+    parsed_code = ast.parse(input_string, mode='eval')
+    # Create a function from the parsed code
+    code_object = compile(parsed_code, filename='<string>', mode='eval')
+    function = eval(code_object)
+    return function
+
+#---------------------------------------#
 def distance(s1:Atoms, s2:Atoms, permute=True):
     """Get the distance between two structures s1 and s2.
     
