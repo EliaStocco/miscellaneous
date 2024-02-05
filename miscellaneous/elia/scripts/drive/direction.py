@@ -53,7 +53,7 @@ def main():
     print()
     print("\t{:>20s}:".format("Required vector"),out)
     if args.normalize:
-        out /= np.linalg.norm(out,axis=1)
+        out /= np.linalg.norm(out)
         print("\t{:>20s}:".format("Normalized vector"),out)
 
     if args.amplitude != 1.:
