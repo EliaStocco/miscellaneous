@@ -2,7 +2,6 @@ from e3nn.math import soft_one_hot_linspace
 from torch_scatter import scatter
 from e3nn import o3
 import torch
-import torch_geometric
 from torch_geometric.nn import radius_graph
 from torch_geometric.data import Data
 from miscellaneous.elia.nn.network.MessagePassing import MessagePassing
@@ -123,7 +122,7 @@ class SimpleNetwork(torch.nn.Module):
             )        
         return batch, data["x"], edge_src, edge_dst, edge_vec
 
-    def forward(self, data: Union[torch_geometric.data.Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
+    def forward(self, data: Union[Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
         batch, node_inputs, edge_src, edge_dst, edge_vec = self.preprocess(data)
         edge_attr = self._sh(edge_vec)
         edge_length = edge_vec.norm(dim=1)

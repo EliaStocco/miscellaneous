@@ -56,7 +56,7 @@ def my_neighbor_list(lattice,pos,max_radius,pbc):
 
 #----------------------------------------------------------------#
 
-def preprocess(lattice, positions, symbols, max_radius, default_dtype, pbc, requires_grad=None):
+def preprocess(lattice, positions:torch.Tensor, symbols:list, max_radius, default_dtype, pbc, requires_grad=None):
 
     # lattice has to be in 'ase' format:
     # | a_1x a_1y a_1z |
@@ -145,6 +145,9 @@ def make_dataset(systems:Atoms,max_radius:float,disable:bool=False):
                             pbc = pbc,
                             default_dtype=torch.float64,
                             requires_grad={"pos":True,"lattice":True})
+            
+            fractional_wrapped   = torch.tensor(crystal.get_scaled_positions(wrap=True))
+            fractional_unwrapped = torch.tensor(crystal.get_scaled_positions(wrap=False))
         
             data_dict = {
                 "pos": pos,
@@ -157,6 +160,8 @@ def make_dataset(systems:Atoms,max_radius:float,disable:bool=False):
                 "edge_index": edge_index,
                 "edge_vec": edge_vec,
                 "Natoms": int(crystal.get_global_number_of_atoms()),
+                "fractional-wrapped": fractional_wrapped,
+                "fractional-unwrapped": fractional_unwrapped,
             }
 
             for k in ["numbers","positions"]:
@@ -175,96 +180,6 @@ def make_dataset(systems:Atoms,max_radius:float,disable:bool=False):
             dataset[n] = data
 
     return dataset
-
-# #----------------------------------------------------------------#
-
-# def make_dataset(data:MicroState,
-#                  max_radius:float,
-#                  output:str,
-#                  pbc:bool,
-#                  indices:list=None,
-#                  default_dtype=torch.float64,
-#                  requires_grad:bool=True):#,\
-#                  #output_method:callable=None):
-    
-#     # species = data.all_types()
-#     # type_onehot, type_encoding = get_type_onehot_encoding(species)    
-
-#     # if output_method is None:
-#     #     # ELIA: modify 'same_lattice' to 'false'
-#     #     output_method = lambda : data.get_dipole(same_lattice=True)
-
-#     if indices is not None :
-#         indices = np.loadtxt(indices).astype(int)
-#         indices = list(indices)
-#         data = data.subsample(indices)
-
-#     systems = data.to_ase()
-
-#     if "E" in output:
-#         energy = torch.from_numpy(data.properties["potential"])
-    
-#     if "D" in output:
-#         dipole = torch.from_numpy(data.properties["dipole"]) #torch.tensor(output_method())
-
-#     if "F" in output :
-#         forces = torch.from_numpy(data.forces)
-
-#     dataset = [None] * len(systems)
-#     n = 0 
-#     for n in tqdm(range(len(systems)),bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
-
-#         crystal = systems[n]
-
-#     # for crystal, e, d, f in tqdm(zip(systems,energy,dipole,forces),
-#     #                              total=len(systems), 
-#     #                              bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
-        
-#         # edge_src and edge_dst are the indices of the central and neighboring atom, respectively
-#         # edge_shift indicates whether the neighbors are in different images / copies of the unit cell
-#         # edge_src, edge_dst, edge_shift = \
-#         #     neighbor_list("ijS", a=crystal, cutoff=max_radius, self_interaction=True)
-
-#         lattice = torch.from_numpy(crystal.cell.array) if pbc else None
-
-#         pos, lattice, x, edge_vec, edge_index, edge_shift = \
-#             preprocess( lattice=lattice,
-#                         positions=torch.from_numpy(crystal.get_positions()),#.flatten(),
-#                         symbols=crystal.get_chemical_symbols(),
-#                         max_radius=max_radius,
-#                         pbc = pbc,
-#                         default_dtype=default_dtype,
-#                         requires_grad={"pos":requires_grad,"lattice":requires_grad})
-
-#         # if 'pbc' == True then 'lattice' should be 'None'
-    
-#         data_dict = {
-#             "pos": pos,
-#             "lattice": lattice,       # it should be None if pbc=False
-#             "edge_shift": edge_shift, # it should be None if pbc=False
-#             "x": x,
-#             "max_radius": max_radius,
-#             "symbols": crystal.get_chemical_symbols(),
-#             "edge_index": edge_index,
-#             "edge_vec": edge_vec,
-#             "Natoms": torch.tensor(crystal.get_global_number_of_atoms()).to(int),  # valid only if all the structures have the same number of atoms
-#             "index" : n # to be able to reconstruct the dataset
-#         }
-
-#         # if pbc :
-#         #     data_dict["lattice"] = lattice
-#         if "E" in output :
-#             data_dict["energy"] = energy[n]
-#         if "D" in output :
-#             data_dict["dipole"] = dipole[n]    
-#         if "F" in output :
-#             data_dict["forces"] = forces[n]
-
-#         data = Data(**data_dict)
-
-#         dataset[n] = data
-#         # n += 1
-#     return dataset
 
 #----------------------------------------------------------------#
 

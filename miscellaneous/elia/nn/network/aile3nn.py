@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 from torch.nn import MSELoss
 from scipy.stats import pearsonr
 import numpy as np
-from typing import TypeVar
+from typing import TypeVar, Union, Dict
 T = TypeVar('T', bound='aile3nn')
 # See https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self for the use
 # of `T` to annotate `self`. Many methods of `Module` return `self` and we want those return values to be
@@ -25,9 +25,6 @@ class aile3nn(SimpleNetwork,iPIinterface):
         SimpleNetwork.__init__(self, **kwargs)
         iPIinterface.__init__(self, **kwargs)
         pass
-
-    def n_parameters(self:T):
-        return sum(p.numel() for p in self.parameters())
 
     # @staticmethod
     # def batch(X):
@@ -158,3 +155,29 @@ class aile3nn(SimpleNetwork,iPIinterface):
 
         return out
         
+
+class aile3nnOxN(aile3nn):
+    """Add a fixed charges (oxidation number) contribution to the dipole to let 'aile3nn' learn only the 'non trivial' behavior."""
+
+    def __init__(self: T,**kwargs) -> None:
+        # call the __init__ methods of both parent classes explicitly
+        aile3nn.__init__(self, **kwargs)
+        if self.output != "D":
+            raise ValueError("'aile3nnOxN' can only predict dipoles.")
+        self.Nchem = int(str(self.irreps_in).split("x")[0])
+        self.oxidation_numbers = torch.nn.Parameter(torch.rand((self.Nchem))) 
+        self._x2index = torch.arange(self.Nchem,requires_grad=False)
+        pass
+
+    def get_charges(self,data: Union[Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
+        """Return the fixed charges of the system such that their sum is zero."""
+        index = (data["x"] * self._x2index).sum(axis=1)
+        charges = self.oxidation_numbers[index.to(int)]
+        return charges - charges.mean()
+
+    def forward(self, data: Union[Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
+        # git@github.com:ACEsuit/mace.git
+        y = super().forward(data)
+        charges = self.get_charges(data)
+        fixed_charges_dipole = data["pos"] * charges.unsqueeze(1)
+        return y + fixed_charges_dipole.sum(axis=0)

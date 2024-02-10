@@ -74,4 +74,6 @@ class iPIinterface(ABC):
         jac,X = self.get_jac(pos,cell,y=y,X=X)
         return y.detach(),jac.detach(),X
 
+    def n_parameters(self:T):
+        return sum(p.numel() for p in self.parameters())
 

@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from typing import Tuple
 
 def vectorize(A:callable,min_shape=1,init=torch.zeros):
     def B(x):
@@ -17,7 +18,7 @@ def vectorize(A:callable,min_shape=1,init=torch.zeros):
     return B
 
 
-def get_type_onehot_encoding(species)->(torch.tensor,dict):
+def get_type_onehot_encoding(species:list)->Tuple[torch.Tensor,dict]:
     type_encoding = {}
     for n,s in enumerate(species):
         type_encoding[s] = n
