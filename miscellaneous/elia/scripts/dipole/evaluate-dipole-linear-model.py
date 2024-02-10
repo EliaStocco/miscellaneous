@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import numpy as np
+from ase.io import read
 from miscellaneous.elia.classes.dipole import dipoleLM
-from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
+# from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
 
 #---------------------------------------#
 # Description of the script's purpose
@@ -34,6 +35,7 @@ def prepare_args():
     argv = {"metavar" : "\b",}
     parser.add_argument("-i", "--input"    , **argv,type=str, help="file with the atomic configurations [a.u]")
     parser.add_argument("-m", "--model"    , **argv,type=str, help="pickle file with the dipole linear model (default: 'dipoleLM.pickle')", default='dipoleLM.pickle')
+    parser.add_argument("-f", "--frame"    , **argv,type=str, help="frame type [eckart,global] (default: global)", default="global", choices=["eckart", "global"])
     parser.add_argument("-o", "--output"   , **argv,type=str, help="output file with the dipole values (default: 'dipole.linear-model.txt')", default="dipole.linear-model.txt")
     return parser.parse_args()
 
@@ -55,7 +57,7 @@ def main():
     #------------------#
     # trajectory
     print("\tReading atomic structures from file '{:s}' ... ".format(args.input), end="")
-    trajectory = Trajectory(args.input)
+    trajectory = read(args.input,index=":")
     print("done")
 
     #------------------#
@@ -66,8 +68,8 @@ def main():
 
     #------------------#
     # dipole
-    print("\tComputing the dipoles using the linear model ... ", end="")
-    dipoles = model.get(trajectory.positions)
+    print("\tComputing the dipoles using the linear model using the '{:s}' frame ... ".format(args.frame), end="")
+    dipoles = model.get(trajectory,frame=args.frame)
     print("done")
 
     #------------------#

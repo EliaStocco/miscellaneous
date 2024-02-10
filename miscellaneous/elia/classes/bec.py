@@ -1,7 +1,7 @@
 import xarray as xr
 import numpy as np
 from .io import pickleIO
-
+from typing import Union
 class bec(xr.DataArray,pickleIO):
     __slots__ = ('_data', '_dtype', '_file', '_other_attribute')  # Add any additional attributes you may have
 
@@ -49,3 +49,18 @@ class bec(xr.DataArray,pickleIO):
         
         obj = xr.DataArray(array.copy(), dims=('structure', 'dof', 'dir'))
         return cls(obj)
+
+    @property
+    def natoms(self)->int:
+        return self.shape[1]/3
+
+    def norm2(self,reference:Union[xr.DataArray,np.ndarray]):
+        """Computes the norm squared per atom of the difference w.r.t. a reference BEC."""
+        if not isinstance(reference,xr.DataArray):
+            reference = xr.DataArray(reference,dims=('dof','dir'))
+        delta = self - reference
+        delta = np.square(delta)
+        delta = delta.sum(dim=('dof','dir'))
+        delta = delta/self.natoms
+        # delta = np.sqrt(delta)
+        return delta

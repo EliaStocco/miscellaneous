@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
-from miscellaneous.elia.functions import plot_bisector
+from miscellaneous.elia.plot import plot_bisector
 
 #---------------------------------------#
 # Description of the script's purpose

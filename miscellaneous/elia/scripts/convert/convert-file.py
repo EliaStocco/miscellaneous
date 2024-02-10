@@ -2,6 +2,7 @@
 from ase.io import read, write
 from ase.cell import Cell
 # from miscellaneous.elia.functions import str2bool, suppress_output, convert
+from miscellaneous.elia.classes.trajectory import trajectory
 import argparse
 import numpy as np
 import contextlib
@@ -85,9 +86,8 @@ def prepare_args():
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar":"\b"}
     parser.add_argument("-i"  , "--input"        ,   **argv,type=str     , help="input file")
-    parser.add_argument("-o"  , "--output"       ,   **argv,type=str     , help="output file")
     parser.add_argument("-if" , "--input_format" ,   **argv,type=str     , help="input file format (default: 'None')" , default=None)
-    parser.add_argument("-of" , "--output_format",   **argv,type=str     , help="output file format (default: 'None')", default=None)
+    parser.add_argument("-pbc", "--pbc"          ,   **argv,type=str2bool, help="whether pbc should be removed, enforced, or nothig (default: 'None')", default=None)
     # parser.add_argument("-d"  , "--debug"        ,   **argv,type=str2bool, help="debug (default: False)"              , default=False)
     parser.add_argument("-iu" , "--input_unit"   ,   **argv,type=str     , help="input positions unit (default: atomic_unit)"  , default=None)
     parser.add_argument("-iuc", "--input_unit_cell", **argv,type=str, help="input cell unit (default: atomic_unit)"  , default=None)
@@ -95,8 +95,8 @@ def prepare_args():
     parser.add_argument("-s"  , "--scaled"      ,    **argv,type=str2bool, help="whether to output the scaled positions (default: False)", default=False)
     parser.add_argument("-r"  , "--rotate" ,         **argv,type=str2bool     , help="whether to rotate the cell s.t. to be compatible with i-PI (default: False)", default=False)
     parser.add_argument("-n"  , "--index" ,         **argv,type=lambda x: int(x) if x.isdigit() else x     , help="index to be read from input file (default: ':')", default=':')
-
-
+    parser.add_argument("-o"  , "--output"       ,   **argv,type=str     , help="output file")
+    parser.add_argument("-of" , "--output_format",   **argv,type=str     , help="output file format (default: 'None')", default=None)
     # Parse the command-line arguments
     return parser.parse_args()
 
@@ -122,10 +122,9 @@ def main():
             from ase.io.formats import filetype
             args.input_format = filetype(args.input, read=isinstance(args.input, str))
 
-        atoms = read(args.input,format=args.input_format,index=args.index)
-        if type(args.index) == int:
-            atoms = [atoms]
-            
+        atoms = trajectory(args.input,format=args.input_format,index=args.index,pbc=args.pbc)
+        atoms = list(atoms)
+
     if not DEBUG:
         print("done")
 
@@ -142,8 +141,19 @@ def main():
                     "\n\t{:s}\n".format(keywords))
 
     pbc = np.any( [ np.all(atoms[n].get_pbc()) for n in range(len(atoms)) ] )
-
     print("\tThe atomic structure is {:s}periodic.".format("" if pbc else "not "))
+
+    if args.pbc is not None:
+        if args.pbc and not pbc:
+            raise ValueError("You required the structures to be periodic, but they are not.")
+        elif not args.pbc and pbc:
+            print("\tYou required to remove periodic boundary conditions.")
+            print("\tRemoving cells from all the structures ... ",end="")
+            for n in range(len(atoms)):
+                atoms[n].set_cell(None)
+                atoms[n].set_pbc(False)
+            print("done")
+            pbc = False
 
     if args.output_unit is not None :
         if not conversion_possible:

@@ -1,68 +1,42 @@
 #!/usr/bin/env python
-from ase.io import read, write
+from ase.io import write
+from ase import Atoms
+from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
+from miscellaneous.elia.formatting import esfmt
+
 #---------------------------------------#
 # Description of the script's purpose
-description = "Template for a script."
-error = "***Error***"
-closure = "Job done :)"
-input_arguments = "Input arguments"
+description = "Create a linar model for the dipole of a system given the Born Effective Charges of a reference configuration."
 
 #---------------------------------------#
-# colors
-try :
-    import colorama
-    from colorama import Fore, Style
-    colorama.init(autoreset=True)
-    description     = Fore.GREEN    + Style.BRIGHT + description             + Style.RESET_ALL
-    error           = Fore.RED      + Style.BRIGHT + error.replace("*","")   + Style.RESET_ALL
-    closure         = Fore.BLUE     + Style.BRIGHT + closure                 + Style.RESET_ALL
-    input_arguments = Fore.GREEN    + Style.NORMAL + input_arguments         + Style.RESET_ALL
-except:
-    pass
-
-#---------------------------------------#
-def prepare_args():
-    # Define the command-line argument parser with a description
+def prepare_args(description):
     import argparse
     parser = argparse.ArgumentParser(description=description)
-    argv = {"metavar" : "\b"}
-    parser.add_argument("-i"  , "--input"        ,   **argv,type=str     , help="input file")
-    parser.add_argument("-o"  , "--output"       ,   **argv,type=str     , help="output file")
-    parser.add_argument("-if" , "--input_format" ,   **argv,type=str     , help="input file format (default: 'None')" , default=None)
-    parser.add_argument("-of" , "--output_format",   **argv,type=str     , help="output file format (default: 'None')", default=None)
+    argv = {"metavar" : "\b",}
+    parser.add_argument("-i" , "--input"         , **argv, required=True , type=str, help="file with an atomic structure")
+    parser.add_argument("-if", "--input_format"  , **argv, required=False, type=str, help="input file format (default: 'None')" , default=None)
+    parser.add_argument("-o" , "--output"        , **argv, required=False, type=str, help="output file with the oxidation numbers (default: 'oxidation-numbers.extxyz')", default="oxidation-numbers.extxyz")
+    parser.add_argument("-of" , "--output_format", **argv, required=False, type=str, help="output file format (default: 'None')", default=None)
     return parser.parse_args()
 
-def main():
+#---------------------------------------#
+@esfmt(prepare_args,description)
+def main(args):
 
     #------------------#
-    # Parse the command-line arguments
-    args = prepare_args()
-
-    # Print the script's description
-    print("\n\t{:s}".format(description))
-
-    print("\n\t{:s}:".format(input_arguments))
-    for k in args.__dict__.keys():
-        print("\t{:>20s}:".format(k),getattr(args,k))
-    print()
-
-    #
-    print("\n\tReading positions from file '{:s}' ... ".format(args.input),end="")
-    atoms = read(args.input, index=':', format=args.input_format)  #eV
+    # trajectory
+    print("\tReading the first atomic structure from file '{:s}' ... ".format(args.input), end="")
+    atoms:Atoms = Trajectory(args.input,format=args.input_format,index=0)[0]
     print("done")
-
-    # Write the data to the specified output file with the specified format
-    print("\n\tWriting data to file '{:s}' ... ".format(args.output), end="")
+    
+       
+    print("\n\tWriting oxidation numbers as 'info' to file '{:s}' ... ".format(args.output), end="")
     try:
-        write(images=atoms,filename=args.output, format=args.output_format)
+        write(images=atoms,filename=args.output) # fmt)
         print("done")
     except Exception as e:
         print("\n\tError: {:s}".format(e))
-
-    #------------------#
-    # Script completion message
-    print("\n\t{:s}\n".format(closure))
-    #
+    
 
 #---------------------------------------#
 if __name__ == "__main__":

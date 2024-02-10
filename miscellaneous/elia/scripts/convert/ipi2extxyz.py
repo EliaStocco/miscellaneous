@@ -145,7 +145,7 @@ def main():
             for n in range(len(arrays[k])):
                 atoms[n].arrays[k] = arrays[k][n]
 
-    if args.additional_properties is not None and "none" not in args.additional_properties:
+    if args.additional_properties is not None or "none" not in args.additional_properties:
         properties = list(args.additional_properties)
         print("\n\tYou specified the following properties to be added to the output file: ",properties)
 

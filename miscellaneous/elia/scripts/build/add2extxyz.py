@@ -1,32 +1,16 @@
 #!/usr/bin/env python
-import argparse
 import numpy as np
 from ase.io import write
 from miscellaneous.elia.classes.trajectory import trajectory
-
+from miscellaneous.elia.formatting import warning, error, esfmt
 
 #---------------------------------------#
 # Description of the script's purpose
 description = "Add data to an extxyz file."
-error = "***Error***"
-closure = "Job done :)"
-input_arguments = "Input arguments"
 
 #---------------------------------------#
-# colors
-try :
-    import colorama
-    from colorama import Fore, Style
-    colorama.init(autoreset=True)
-    description     = Fore.GREEN    + Style.BRIGHT + description             + Style.RESET_ALL
-    error           = Fore.RED      + Style.BRIGHT + error.replace("*","")   + Style.RESET_ALL
-    closure         = Fore.BLUE     + Style.BRIGHT + closure                 + Style.RESET_ALL
-    input_arguments = Fore.GREEN    + Style.NORMAL + input_arguments         + Style.RESET_ALL
-except:
-    pass
-
-#---------------------------------------#
-def prepare_args():
+def prepare_args(description):
+    import argparse
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar" : "\b",}
     parser.add_argument("-i" , "--input" , **argv,type=str, help="input file [extxyz]")
@@ -37,26 +21,16 @@ def prepare_args():
     return parser.parse_args()
 
 #---------------------------------------#
-def main():
-
-    #------------------#
-    # Parse the command-line arguments
-    args = prepare_args()
-
-    # Print the script's description
-    print("\n\t{:s}".format(description))
-
-    print("\n\t{:s}:".format(input_arguments))
-    for k in args.__dict__.keys():
-        print("\t{:>20s}:".format(k),getattr(args,k))
-    print()
+@esfmt(prepare_args,description)
+def main(args):
 
     #---------------------------------------#
     # atomic structures
     print("\tReading atomic structures from file '{:s}' ... ".format(args.input), end="")
     atoms = trajectory(args.input)
     print("done")
-    print("\tn. of atomic structures: ",len(atoms))
+    N = len(atoms) 
+    print("\tn. of atomic structures: ",N)
 
     #---------------------------------------#
     # data
@@ -67,8 +41,11 @@ def main():
     print("\tData shape: ",data.shape)
 
     #---------------------------------------#
+    if data.shape[0] != N:
+        print("\t{:s}: shapes do not match --> keeping only the last {:d} elements of the array to be stored".format(warning,N))
+        data = data[-N:]
+    #---------------------------------------#
     # reshape
-    N = len(atoms)
     Natoms = atoms[0].positions.shape[0]
     if args.what in ['a','arrays','array']:
         data = data.reshape((N,Natoms,-1))
@@ -99,10 +76,6 @@ def main():
         print("done")
     except Exception as e:
         print(f"\n\t{error}: {e}")
-
-    #------------------#
-    # Script completion message
-    print("\n\t{:s}\n".format(closure))
 
 if __name__ == "__main__":
     main()

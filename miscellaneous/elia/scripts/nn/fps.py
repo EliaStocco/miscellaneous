@@ -106,7 +106,7 @@ def main(args):
     if str(args.soap_descriptors).endswith("npy"):
         X = np.load(args.soap_descriptors)
     elif str(args.soap_descriptors).endswith("txt"):
-        X = np.loadxt(args.soap_descriptors)
+        X = np.loadtxt(args.soap_descriptors)
     print("done")
 
     #

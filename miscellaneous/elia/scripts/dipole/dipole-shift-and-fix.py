@@ -3,49 +3,28 @@ import numpy as np
 from ase.io import write, read
 from copy import copy
 from miscellaneous.elia.tools import cart2lattice, lattice2cart
-from miscellaneous.elia.input import size_type, str2bool
+from miscellaneous.elia.input import flist, str2bool
+from miscellaneous.elia.formatting import esfmt
 
+#---------------------------------------#
 description = "Fix the dipole jumps and shift the values of some multitples of the dipole quantum.\n"
-message = "\t!Attention:\n"+\
-    "\t- you need to provide the data as a 'extxyz' file\n"+\
-    "\t- the atomic structure have to represent an MD trajectory (the order matters!)"+\
-    "\n"
-DEBUG=False
 
-# def size_type(s):
-#     s = s.split("[")[1].split("]")[0].split(",")
-#     match len(s):
-#         case 3:
-#             return np.asarray([ int(k) for k in s ])
-#         case _:
-#             raise ValueError("You should provide 3 integers") 
-
-def prepare_args():
+#---------------------------------------#
+def prepare_args(description):
     import argparse
     parser = argparse.ArgumentParser(description=description)
     argv = {"metavar" : "\b",}
-    parser.add_argument("-i", "--input", type=str, **argv, help="input 'extxyz' file")
-    parser.add_argument("-o", "--output", type=str, default='shifted-and-fixed.extxyz', **argv, help="output 'extxyz' file (default: 'shifted-and-fixed.extxyz')")
-    parser.add_argument("-f", "--fix_only", type=str2bool, default=False, **argv, help="whether to fix only the jumps, without shifting (default: false)")
-    parser.add_argument("-j", "--jumps", type=str, default=None, **argv, help="output txt file with jumps indeces (default: 'None')")
-    parser.add_argument("-s", "--shift",  type=lambda s: size_type(s,dtype=float), default=None, **argv, help="additional vector to be added to the output file (default: [0,0,0])")
+    parser.add_argument("-i", "--input"   , type=str     , **argv, required=True , help="input 'extxyz' file")
+    parser.add_argument("-n" , "--name"   , type=str     , **argv, required=False, help="name of the info to be handled (default: 'dipole')", default="dipole")
+    parser.add_argument("-f", "--fix_only", type=str2bool, **argv, required=False, help="whether to fix only the jumps, without shifting (default: false)", default=False)
+    parser.add_argument("-j", "--jumps"   , type=str     , **argv, required=False, help="output txt file with jumps indeces (default: 'None')", default=None)
+    parser.add_argument("-s", "--shift"   , type=flist   , **argv, required=False, help="additional vector to be added to the output file (default: [0,0,0])", default=None)
+    parser.add_argument("-o", "--output"  , type=str     , **argv, required=True , help="output 'extxyz' file")
     return parser.parse_args()
 
-def main():
-
-    ###
-    # Parse the command-line arguments
-    args = prepare_args()
-
-    ###
-    # Print the script's description
-    print("\n\t{:s}".format(description))
-
-    if args.shift is not None:
-        if len(args.shift) != 3 :
-            raise ValueError("You should provide 3 integer numbers as shift vectors")
-    
-    print(message)
+#---------------------------------------#
+@esfmt(prepare_args,description)
+def main(args):
 
     ###
     # read the MD trajectory from file
@@ -53,7 +32,7 @@ def main():
     atoms = read(args.input,format='extxyz',index=":")
     print("done")
 
-    print("\n\tConverting dipoles from cartesian to lattice coordinates ... ", end="")
+    print("\n\tConverting '{:s}' from cartesian to lattice coordinates ... ".format(args.name), end="")
     N = len(atoms)
     phases = np.full((N,3),np.nan)
     lenght = np.full((N,3),np.nan)
@@ -63,12 +42,11 @@ def main():
         cell = np.asarray(atoms[n].cell.array).T
         lenght[n,:] = np.linalg.norm(cell,axis=0)
         R = cart2lattice(cell)
-        dipole = R @ atoms[n].info["dipole"]
+        dipole = R @ atoms[n].info[args.name]
         phases[n,:] = dipole / lenght[n,:]
-        # old[n,:] = copy(atoms[n].info["dipole"])
     print("done")
 
-    print("\tFixing the dipole jumps ... ", end="")
+    print("\tFixing the '{:s}' jumps ... ".format(args.name), end="")
     old = phases.copy()
     for i in range(3):
         phases[:,i] = np.unwrap(phases[:,i],period=1)
@@ -97,7 +75,7 @@ def main():
     for n in range(N):
         cell = np.asarray(atoms[n].cell.array).T
         R = lattice2cart(cell)
-        atoms[n].info["dipole"] = R @ ( phases[n,:] * lenght[n,:] )
+        atoms[n].info[args.name] = R @ ( phases[n,:] * lenght[n,:] )
     print("done")
 
     index = np.where(np.diff(old-phases,axis=0))[0]
@@ -115,9 +93,6 @@ def main():
         print("done")
     except Exception as e:
         print(f"\n\tError: {e}")
-
-    # Script completion message
-    print("\n\tJob done :)\n")
 
 if __name__ == "__main__":
     main()

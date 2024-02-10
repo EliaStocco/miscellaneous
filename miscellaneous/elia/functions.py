@@ -171,65 +171,6 @@ def remove_files_in_folder(folder, extension):
     return
 
 
-def square_plot(ax):
-    x = ax.get_xlim()
-    y = ax.get_ylim()
-
-    l, r = min(x[0], y[0]), max(x[1], y[1])
-
-    ax.set_xlim(l, r)
-    ax.set_ylim(l, r)
-    return ax
-
-
-def plot_bisector(ax, shiftx=0, shifty=0, argv=None):
-    default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
-    argv = add_default(argv,default)
-
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-
-    # x1 = min(x.min(),y.min())
-    # y2 = max(x.max(),y.max())
-    x1 = min(xlim[0], ylim[0])
-    y2 = max(xlim[1], ylim[1])
-    bis = np.linspace(x1, y2, 1000)
-
-    ax.plot(bis + shiftx, bis + shifty, **argv)
-
-    ax.set_xlim(*xlim)
-    ax.set_ylim(*ylim)
-    return
-
-def straigh_line(ax,shift,argv,get_lim,func,set_lim):
-
-    default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
-    argv = add_default(argv,default)
-
-    xlim = get_lim()
-    
-    func(shift,xlim[0],xlim[1],**argv)
-
-    set_lim(xlim[0],xlim[1])
-
-    return ax
-
-def hzero(ax, shift=0, argv=None):
-    return straigh_line(ax,shift,argv,ax.get_xlim,ax.hlines,ax.set_xlim)
-
-def vzero(ax, shift=0, argv=None):
-    return straigh_line(ax,shift,argv,ax.get_ylim,ax.vlines,ax.set_ylim)
-
-    # default = {"color": "black", "alpha": 0.5, "linestyle": "dashed"}
-    # argv = add_default(argv,default)
-
-    # xlim = ax.get_xlim()
-    
-    # ax.hlines(shift,xlim[0],xlim[1],**argv)
-
-    # return ax
-
-
 def recursive_copy(source_dict: dict, target_dict: dict) -> dict:
     """
     Recursively copy keys and values from a source dictionary to a target dictionary, if they are not present in the target.
@@ -617,7 +558,7 @@ def merge_attributes(A, B):
     return A
 
 
-def read_comments_xyz(file, Nmax=1000000):
+def read_comments_xyz(file,Nmax=1000000,Nread=None):
     from ase import io
 
     first = io.read(file)
@@ -649,12 +590,14 @@ def read_comments_xyz(file, Nmax=1000000):
             if k >= Nmax:
                 restart = True
                 break
+            if k >= Nread and Nread is not None:
+                break 
 
             line = fp.readline()
             i += 1
 
     if restart:
-        return read_comments_xyz(file, Nmax * 2)
+        return read_comments_xyz(file, Nmax * 2, Nread=Nread)
 
     return result[:k]
 

@@ -1,4 +1,4 @@
-# esff = '%24.18e' # Elia Stocco float format
+float_format = '%24.12e' # Elia Stocco float format
 
 #---------------------------------------#
 error           = "***Error***"

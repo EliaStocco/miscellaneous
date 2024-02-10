@@ -41,7 +41,7 @@ def prepare_args():
     parser.add_argument("-d", "--dipole"   , **argv,type=flist, help="dipole of the reference configuration [a.u.] (default: None --> specify -n,--index)",default=None)
     parser.add_argument("-k", "--keyword"  , **argv,type=str, help="keyword for the dipole (default: 'dipole')", default='dipole')
     parser.add_argument("-z", "--bec"      , **argv,type=str, help="file with the BEC tensors of the reference configuration [txt] (default: None --> specify -n,--index)",default=None)
-    parser.add_argument("-f", "--frame"    , **argv,type=str, help="frame [eckart,global] (default: global)", default="global")
+    # parser.add_argument("-f", "--frame"    , **argv,type=str, help="frame [eckart,global] (default: global)", default="global")
     parser.add_argument("-o", "--output"   , **argv,type=str, help="output file with the dipole linear model (default: 'dipoleLM.pickle')", default="dipoleLM.pickle")
     return parser.parse_args()
 

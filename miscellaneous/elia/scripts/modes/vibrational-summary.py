@@ -84,10 +84,10 @@ def main():
         zm = nm.Zmodes(bec)
 
         ir = pd.DataFrame()
-        ir["Z*x"] = zm.loc[0,:]
-        ir["Z*y"] = zm.loc[1,:]
-        ir["Z*z"] = zm.loc[2,:]
-        ir["|Z|"] = zm.loc[3,:]
+        ir["Z*x"] = np.absolute(zm.loc[0,:])
+        ir["Z*y"] = np.absolute(zm.loc[1,:])
+        ir["Z*z"] = np.absolute(zm.loc[2,:])
+        ir["|Z|"] = np.absolute(zm.loc[3,:])
 
         df = pd.concat([df,ir],axis=1)
 

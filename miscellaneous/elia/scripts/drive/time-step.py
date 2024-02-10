@@ -4,7 +4,7 @@ from miscellaneous.elia.tools import convert
 
 #---------------------------------------#
 # Description of the script's purpose
-description = "Compute a good time step for the dynamics given the angular frequency of the drivin pulse (or phonon mode)."
+description = "Compute a good time step for the dynamics given the angular frequency of the driving pulse (or phonon mode)."
 closure = "Job done :)"
 input_arguments = "Input arguments"
 

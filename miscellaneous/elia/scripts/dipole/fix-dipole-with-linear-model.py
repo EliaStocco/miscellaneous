@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
-from miscellaneous.elia.functions import plot_bisector
+from miscellaneous.elia.plot import plot_bisector
 from miscellaneous.elia.classes.dipole import dipoleLM
 from miscellaneous.elia.classes.trajectory import info
 from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
@@ -109,7 +109,7 @@ def main():
     #------------------#
     # dipole
     print("\tComputing the dipoles using the linear model ... ", end="")
-    linear = model.get(trajectory.positions)
+    linear = model.get(list(trajectory))
     print("done")
 
     #------------------#
