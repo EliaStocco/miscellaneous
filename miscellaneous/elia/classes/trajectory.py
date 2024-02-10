@@ -22,22 +22,25 @@ def info(t,name):
 def array(t,name):
     return t.call(lambda e:e.arrays[name])
     
-def trajectory(file,format:str=None,check:bool=True):
+def trajectory(file,format:str=None,check:bool=True,index=":",pbc=True):
 
     format = format.lower() if format is not None else None
-    f = None if format in ["i-pi","ipi"] else format
+    f = "xyz" if format in ["i-pi","ipi"] else format
 
-    atoms = read(file,index=":",format=f)
+    atoms = read(file,index=index,format=f)
+    if type(atoms) != list:
+        atoms = [atoms]
     for n in range(len(atoms)):
         # atoms[n].info = dict()
         atoms[n].set_calculator(None)
 
-    if format in ["i-pi","ipi"]:
+    pbc = pbc if pbc is not None else True
+    if format in ["i-pi","ipi"] and pbc:
         for n in range(len(atoms)):
             atoms[n].info = dict()
 
         # try : 
-        comments = read_comments_xyz(file)
+        comments = read_comments_xyz(file,Nread=len(atoms))
         strings = [ abcABC.search(comment) for comment in comments ]
         cells = np.zeros((len(strings),3,3))
         for n,cell in enumerate(strings):
