@@ -91,10 +91,22 @@ def ase_cell_to_np_transpose(func):
             cell = np.asarray(cell).T
         return func(cell, *args, **kwargs)
     return wrapper
+#---------------------------------------#
+def return_transformed_components(func):
+    """Decorator to automatically compute the matrix multiplication if a vector is provided."""
+    def wrapper(cell:Union[np.ndarray,Cell],v:np.ndarray=None, *args, **kwargs):
+        matrix = func(cell=cell,v=None,*args, **kwargs)
+        if v is None:
+            return matrix
+        else:
+            v = np.asarray(v).reshape((-1,3))
+            return (matrix @ v.T).T
+    return wrapper
 
 #---------------------------------------# 
+@return_transformed_components
 @ase_cell_to_np_transpose
-def cart2lattice(cell:Union[np.ndarray,Cell]): #,*argc,**argv):
+def cart2lattice(cell:Union[np.ndarray,Cell],v:np.ndarray=None): #,*argc,**argv):
     """ Cartesian to lattice coordinates rotation matrix
     
     Input:
@@ -113,8 +125,9 @@ def cart2lattice(cell:Union[np.ndarray,Cell]): #,*argc,**argv):
     return matrix
 
 #---------------------------------------#
+@return_transformed_components
 @ase_cell_to_np_transpose
-def lattice2cart(cell:Union[np.ndarray,Cell]): #,*argc,**argv):
+def lattice2cart(cell:Union[np.ndarray,Cell],v:np.ndarray=None): #,*argc,**argv):
     """ Lattice to Cartesian coordinates rotation matrix
     
     Input:
@@ -122,9 +135,9 @@ def lattice2cart(cell:Union[np.ndarray,Cell]): #,*argc,**argv):
             where the i^th basis vector is stored in the i^th columns
             (it's the opposite of ASE, QE, FHI-aims)
             lattice : 
-                | a_1x a_2x a_3x |
-                | a_1y a_2y a_3y |
-                | a_1z a_2z a_3z |
+                | a_1x a_2x a_3x |\n
+                | a_1y a_2y a_3y |\n
+                | a_1z a_2z a_3z |\n
     Output:
         rotation matrix
     """

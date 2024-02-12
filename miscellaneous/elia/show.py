@@ -1,8 +1,9 @@
 import pandas as pd
 
-def show_dict(obj:dict,string:str=""):
+def show_dict(obj:dict,string:str="",width=30):
+    fmt = "{:<s}{:" + str(width) + "s} : "
     for k in obj.keys():
-        print("{:s}{:30s}:".format(string,k),obj[k])
+        print(fmt.format(string,k),obj[k])
 
 def print_df(df:pd.DataFrame)->str:
     column_names = ''.join(['{:>12}'.format(col) for col in df.columns])
