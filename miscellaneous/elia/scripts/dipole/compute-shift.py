@@ -55,7 +55,7 @@ def main():
     R = cart2lattice(cell)
     lenght = np.linalg.norm(cell,axis=0)
     shift = R @ args.shift / lenght
-    print("\tConverted the shift from cartesian to lattice coordinates: ",shift.astype(int))
+    print("\tConverted the shift from cartesian to lattice coordinates: ",np.round(shift,0))
     print("\tShift with all digits: ",shift)
     
     # Script completion message
