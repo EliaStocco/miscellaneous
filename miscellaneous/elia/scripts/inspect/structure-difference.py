@@ -75,10 +75,12 @@ def main():
 
     #-------------------#
     # cells
-    _ , M = find_transformation(A,B)
-    print("\n\tTrasformation matrix M(A->B):")
-    line = matrix2str(M,digits=2,col_names=["1","2","3"],cols_align="^",width=6)
-    print(line)
+    pbc = np.all(A.get_pbc()) and np.all(B.get_pbc())
+    if pbc:
+        _ , M = find_transformation(A,B)
+        print("\n\tTrasformation matrix M(A->B):")
+        line = matrix2str(M,digits=2,col_names=["1","2","3"],cols_align="^",width=6)
+        print(line)
 
     #---------------------------------------#
     # positions
@@ -92,10 +94,14 @@ def main():
     # from icecream import ic
     # ic(d.shape)
     # M = np.concatenate([diff,np.linalg.norm(diff,axis=1)[:, np.newaxis]], axis=1)
-    fractional = ( np.linalg.inv(A.get_cell().T) @ diff.T ).T
-    M = np.concatenate([diff,d[:, np.newaxis],fractional], axis=1)
-    #M = np.concatenate(A.positions - B.positions],
-    line = matrix2str(M,digits=3,col_names=["Rx","Ry","Rz","norm","fx","fy","fz"],cols_align="^",width=8,row_names=A.get_chemical_symbols())
+    M = np.concatenate([diff,d[:, np.newaxis]], axis=1)
+    col_names=["Rx","Ry","Rz","norm"]
+    if pbc:
+        fractional = ( np.linalg.inv(A.get_cell().T) @ diff.T ).T
+        M = np.concatenate([M,fractional], axis=1)
+        col_names += ["fx","fy","fz"]
+        #M = np.concatenate(A.positions - B.positions],
+    line = matrix2str(M,digits=3,col_names=col_names,cols_align="^",width=8,row_names=A.get_chemical_symbols())
     print(line)
     
     #-------------------#
