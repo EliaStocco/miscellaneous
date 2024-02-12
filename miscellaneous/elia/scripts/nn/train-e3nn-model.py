@@ -10,8 +10,9 @@ import torch
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 from miscellaneous.elia.nn.training import hyper_train_at_fixed_model
-from miscellaneous.elia.nn.network import aile3nn
+# from miscellaneous.elia.nn.network import aile3nn
 from miscellaneous.elia.functions import add_default, str2bool
+from miscellaneous.elia.nn.functions import get_class
 
 #----------------------------------------------------------------#
 # Documentation
@@ -24,6 +25,8 @@ description = "train a 'e3nn' model"
 
 #--------------------------------#
 default_values = {
+        "class"            : "aile3nn",
+        "module"           : "miscellaneous.elia.nn.network",
         "mul"              : 2,
         "layers"           : 6,
         "lmax"             : 2,
@@ -216,16 +219,18 @@ def main():
 
     #####################
 
+    cls = get_class(mod=parameters["module"],cls=parameters["class"])
+
     instructions = {
             "kwargs"           : copy(kwargs),
-            "class"            : "aile3nn",
-            "module"           : "miscellaneous.elia.nn.network",
+            "class"            : parameters["class"],
+            "module"           : parameters["module"],
         }
     
     with open("instructions.json", "w") as json_file:
         json.dump(instructions, json_file, indent=4)
 
-    net = aile3nn(**kwargs)
+    net = cls(**kwargs)
     N = net.n_parameters()
     print("Tot. number of parameters: ",N)
 
