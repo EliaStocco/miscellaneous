@@ -27,7 +27,7 @@ def prepare_parser(description):
     # parser.add_argument("-rc" , "--cutoff_radius"     , type=float, **argv, help="cutoff radius [au] (default: 6)", default=6)
     parser.add_argument("-sh" , "--soap_hyper"        , type=str  , **argv, help="JSON file with the SOAP hyperparameters (default: 'None')", default=None)
     # parser.add_argument("-oi" , "--output_indices"    , type=str  , **argv, help="output file with indices of the selected structures (default: 'indices.txt')",default='indices.txt')
-    parser.add_argument("-o"  , "--output"            , type=str  , **argv, help="output file with the selected structures")
+    parser.add_argument("-o"  , "--output"            , type=str  , **argv, help="output file with SOAP descriptors.")
     # parser.add_argument("-of" , "--output_format"     , type=str  , **argv, help="output file format (default: 'None')", default=None)
     return parser.parse_args()
 
