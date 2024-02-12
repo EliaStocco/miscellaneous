@@ -295,7 +295,7 @@ def train(
         checkpoint = torch.load(checkpoint_file)
 
         start_epoch = checkpoint["epoch"] + 1
-        model.load_state_dict(checkpoint["model_state_dict"])
+        model.load_state_dict(checkpoint["model_state_dict"],strict=False)
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         if scheduler is not None :
             if 'scheduler_state_dict' not in checkpoint:
