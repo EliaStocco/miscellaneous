@@ -219,7 +219,7 @@ def main():
 
     #####################
 
-    cls = get_class(mod=parameters["module"],cls=parameters["class"])
+    cls = get_class(parameters["module"],parameters["class"])
 
     instructions = {
             "kwargs"           : copy(kwargs),
