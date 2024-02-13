@@ -5,8 +5,7 @@ import json
 from ase import Atoms
 from miscellaneous.elia.classes.trajectory import trajectory as Trajectory
 from miscellaneous.elia.formatting import esfmt, warning, float_format
-from miscellaneous.elia.formatting import matrix2str
-from miscellaneous.elia.physics import oxidation_number
+from miscellaneous.elia.physics import bec_from_oxidation_number
 
 #---------------------------------------#
 # Description of the script's purpose
@@ -40,25 +39,22 @@ def main(args):
 
     #------------------#
     print("\tCreating BECs ... ", end="")
-    Natoms = atoms.get_global_number_of_atoms()
-    bec = np.zeros((Natoms,3,3))
-    for n in range(Natoms):
-        bec[n,:,:] = on[n] * np.eye(3)
-    bec = bec.reshape((-1,3))
+    bec = bec_from_oxidation_number(atoms,on)
     print("done")
 
     #------------------#
-    if not np.allclose(bec.sum(axis=0),np.zeros(3)):
+    
+    if not bec.check_asr(0):
         print("\t{:s}: the BECs do not satisfy the acoutsitc sum rule --> subtracting the average.".format(warning))
-        bec_old = bec.copy()
-        mean = bec.mean()
-        print("\tSubtracted average: {:f}".format(mean))
-        bec -= mean
+        mean = bec.force_asr()
+        print("\tSubtracted average: {:f}".format(mean.isel(structure=0)))
+        if not bec.check_asr(0):
+            raise ValueError("coding error")
 
     #------------------#    
     args.output = str(args.output)
     print("\n\tSaving BECs to file '{:s}' ... ".format(args.output), end="")
-    np.savetxt(args.output, bec,fmt=float_format)
+    np.savetxt(args.output, bec.isel(structure=0).to_numpy(),fmt=float_format)
     print("done")
 
 #---------------------------------------#

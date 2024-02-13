@@ -17,17 +17,34 @@ class dipoleLM(pickleIO):
     def __post_init__(self):
         self.Natoms = self.ref.get_global_number_of_atoms()  # Set Natoms based on the shape of self.ref
 
-        if self.bec.shape[0] != 3 * self.Natoms:
-            raise ValueError(f"Invalid shape[0] for 'bec'. Expected {3 * self.Natoms}, got {self.bec.shape}")
-        if self.bec.shape[1] != 3:
-            raise ValueError(f"Invalid shape[1] for 'bec'. Expected 3, got {self.bec.shape}")
+        if self.bec is None:
+            self.bec = np.full((3*self.Natoms,3),np.nan)
+        
+        self._check_bec()
+        # if self.bec.shape[0] != 3 * self.Natoms:
+        #     raise ValueError(f"Invalid shape[0] for 'bec'. Expected {3 * self.Natoms}, got {self.bec.shape}")
+        # if self.bec.shape[1] != 3:
+        #     raise ValueError(f"Invalid shape[1] for 'bec'. Expected 3, got {self.bec.shape}")
 
         if self.dipole.shape != (3,):
             raise ValueError(f"Invalid shape for 'dipole'. Expected (3,), got {self.dipole.shape}")
 
         # if self.frame not in ["global", "eckart"]:
         #     raise ValueError(f"Invalid value for 'frame'. Expected 'global' or 'eckart', got {self.frame}")
+    
+    def _check_bec(self,bec=None):
+        if bec is None:
+            bec = self.bec
+        if bec.shape[0] != 3 * self.Natoms:
+            raise ValueError(f"Invalid shape[0] for 'bec'. Expected {3 * self.Natoms}, got {self.bec.shape}")
+        if bec.shape[1] != 3:
+            raise ValueError(f"Invalid shape[1] for 'bec'. Expected 3, got {self.bec.shape}")
+        return True
         
+    def set_bec(self,bec):
+        if self._check_bec(bec):
+            self.bec = bec
+
     def get(self,traj:List[Atoms],frame:str="global"):
         """Compute the dipole according to a linear model in the cartesian displacements."""
         # raise ValueError()

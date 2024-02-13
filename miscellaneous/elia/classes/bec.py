@@ -33,7 +33,8 @@ class bec(xr.DataArray,pickleIO):
         # array = np.atleast_3d(array)
 
         if len(array.shape) != 3:
-            raise ValueError("only 3D array are supported")
+            # raise ValueError("only 3D array are supported")
+            array = array.reshape((1,*array.shape))
         
         Nstruc = array.shape[0]
         if array.shape[2] == 9:
@@ -64,3 +65,17 @@ class bec(xr.DataArray,pickleIO):
         delta = delta/self.natoms
         # delta = np.sqrt(delta)
         return delta
+    
+    def check_asr(self,index:int=None):
+        """Check whether a specific BEC satisfies the Acoustic Sum Rule."""
+        if index is not None:
+            array = self.isel(structure=index)
+            return np.allclose(array.sum(dim='dof'),np.zeros(3))
+        else:
+            return np.asarray([ self.isel(structure=i) for i in range(self.shape[0]) ])
+        
+    def force_asr(self,index:int=None):
+        """Enforce the Acoustic Sum Rule."""
+        mean = self.mean(dim="dof")
+        self = self-mean
+        return mean
